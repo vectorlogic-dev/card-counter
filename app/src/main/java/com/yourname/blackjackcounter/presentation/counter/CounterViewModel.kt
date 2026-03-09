@@ -74,6 +74,7 @@ class CounterViewModel : ViewModel() {
             withDerivedValues(
                 current.copy(
                     runningCount = 0.0,
+                    decksRemaining = current.totalDecks.toDouble(),
                     acesSeen = 0
                 )
             )
@@ -188,7 +189,7 @@ class CounterViewModel : ViewModel() {
         val totalCards = state.totalDecks * CARDS_PER_DECK
         val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
-        val acesExpected = CounterCalculations.calculateExpectedAces(cardsDrawn)
+        val acesExpected = CounterCalculations.calculateExpectedAces(state.decksRemaining)
 
         return state.copy(
             trueCount = calculateTrueCount(state),

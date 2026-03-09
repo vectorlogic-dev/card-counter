@@ -30,7 +30,7 @@ class CounterViewModelTest {
 
         val updated = viewModel.uiState.value
         assertEquals(1, updated.acesSeen)
-        assertEquals(0.1, updated.acesExpected, 0.0001)
+        assertEquals(23.9, updated.acesExpected, 0.0001)
     }
 
     @Test
@@ -48,14 +48,13 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `resetCount clears running and true count while keeping shoe position`() {
+    fun `resetCount clears running and shoe state`() {
         val viewModel = CounterViewModel()
 
         repeat(5) {
             viewModel.onCardSeen(CardRank.FIVE)
         }
         viewModel.onCardSeen(CardRank.ACE)
-        val penetrationBeforeReset = viewModel.uiState.value.deckPenetrationPercent
 
         viewModel.resetCount()
 
@@ -63,7 +62,9 @@ class CounterViewModelTest {
         assertEquals(0.0, updated.runningCount, 0.0001)
         assertEquals(0.0, updated.trueCount, 0.0001)
         assertEquals(0, updated.acesSeen)
-        assertEquals(penetrationBeforeReset, updated.deckPenetrationPercent, 0.0001)
+        assertEquals(0.0, updated.deckPenetrationPercent, 0.0001)
+        assertEquals(0, updated.cardsDrawn)
+        assertEquals(updated.totalCards, updated.cardsLeft)
     }
 
     @Test

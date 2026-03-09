@@ -44,6 +44,7 @@ fun DeckControlCard(
     val minDecksRemaining = 0.25f
     val sliderMax = totalDecks.toFloat().coerceAtLeast(minDecksRemaining)
     val sliderSteps = (((sliderMax - minDecksRemaining) / 0.25f).roundToInt() - 1).coerceAtLeast(0)
+    val aceOutlook = calculateAceOutlook(totalDecks = totalDecks, acesSeen = acesSeen, acesExpected = acesExpected)
 
     Card(modifier = modifier) {
         Column(
@@ -98,11 +99,17 @@ fun DeckControlCard(
                     modifier = Modifier.weight(1f)
                 )
                 CardsMetricChip(
-                    label = "Aces Expected",
+                    label = "Aces Expected Left",
                     value = formatAcesExpected(acesExpected),
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Text(
+                text = aceOutlook,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             ExposedDropdownMenuBox(
                 expanded = menuExpanded,
@@ -203,4 +210,20 @@ private fun formatPenetration(value: Double): String {
 
 private fun formatAcesExpected(value: Double): String {
     return String.format(Locale.US, "%.1f", value)
+}
+
+private fun calculateAceOutlook(
+    totalDecks: Int,
+    acesSeen: Int,
+    acesExpected: Double
+): String {
+    if (totalDecks <= 0) return "Ace outlook: N/A"
+
+    val diff = acesSeen - acesExpected
+
+    return when {
+        diff > 0.5 -> "Ace outlook: Less likely than average to see an Ace."
+        diff < -0.5 -> "Ace outlook: More likely than average to see an Ace."
+        else -> "Ace outlook: About average Ace frequency."
+    }
 }
