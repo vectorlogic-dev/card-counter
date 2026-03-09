@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.util.Locale
@@ -34,6 +35,7 @@ fun DeckControlCard(
     cardsDrawn: Int,
     cardsLeft: Int,
     totalCards: Int,
+    showAceSideCount: Boolean,
     acesSeen: Int,
     acesExpected: Double,
     onTotalDecksChanged: (Int) -> Unit,
@@ -44,7 +46,13 @@ fun DeckControlCard(
     val minDecksRemaining = 0.25f
     val sliderMax = totalDecks.toFloat().coerceAtLeast(minDecksRemaining)
     val sliderSteps = (((sliderMax - minDecksRemaining) / 0.25f).roundToInt() - 1).coerceAtLeast(0)
-    val aceOutlook = calculateAceOutlook(totalDecks = totalDecks, acesSeen = acesSeen, acesExpected = acesExpected)
+    val aceDiff = acesSeen - acesExpected
+    val aceStatusColor = when {
+        aceDiff > 1.0 -> MaterialTheme.colorScheme.error
+        aceDiff < -1.0 -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val aceOutlook = calculateAceOutlook(acesSeen = acesSeen, acesExpected = acesExpected)
 
     Card(modifier = modifier) {
         Column(
@@ -89,27 +97,31 @@ fun DeckControlCard(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CardsMetricChip(
-                    label = "Aces Seen",
-                    value = acesSeen.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-                CardsMetricChip(
-                    label = "Aces Expected Left",
-                    value = formatAcesExpected(acesExpected),
-                    modifier = Modifier.weight(1f)
+            if (showAceSideCount) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CardsMetricChip(
+                        label = "Aces Seen",
+                        value = acesSeen.toString(),
+                        valueColor = aceStatusColor,
+                        modifier = Modifier.weight(1f)
+                    )
+                    CardsMetricChip(
+                        label = "Aces Expected",
+                        value = formatAcesExpected(acesExpected),
+                        valueColor = aceStatusColor,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Text(
+                    text = aceOutlook,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = aceStatusColor
                 )
             }
-
-            Text(
-                text = aceOutlook,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
             ExposedDropdownMenuBox(
                 expanded = menuExpanded,
@@ -176,8 +188,15 @@ fun DeckControlCard(
 private fun CardsMetricChip(
     label: String,
     value: String,
+    valueColor: Color = Color.Unspecified,
     modifier: Modifier = Modifier
 ) {
+    val resolvedValueColor = if (valueColor == Color.Unspecified) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        valueColor
+    }
+
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
@@ -194,7 +213,8 @@ private fun CardsMetricChip(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall,
+                color = resolvedValueColor
             )
         }
     }
@@ -213,17 +233,14 @@ private fun formatAcesExpected(value: Double): String {
 }
 
 private fun calculateAceOutlook(
-    totalDecks: Int,
     acesSeen: Int,
     acesExpected: Double
 ): String {
-    if (totalDecks <= 0) return "Ace outlook: N/A"
-
     val diff = acesSeen - acesExpected
 
     return when {
-        diff > 0.5 -> "Ace outlook: Less likely than average to see an Ace."
-        diff < -0.5 -> "Ace outlook: More likely than average to see an Ace."
+        diff > 1.0 -> "Ace outlook: Fewer aces likely ahead (seen above expected)."
+        diff < -1.0 -> "Ace outlook: More aces likely ahead (seen below expected)."
         else -> "Ace outlook: About average Ace frequency."
     }
 }

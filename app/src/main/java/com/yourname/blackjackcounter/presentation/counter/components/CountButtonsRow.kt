@@ -15,9 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourname.blackjackcounter.domain.model.CardRank
+import com.yourname.blackjackcounter.ui.theme.ChipGreenDark
+import com.yourname.blackjackcounter.ui.theme.ChipRedDark
 
 @Composable
 fun CountButtonsRow(
+    buttonTagValues: Map<CardRank, Double>,
     onCardSelected: (CardRank) -> Unit,
     onFaceCardsSelected: () -> Unit,
     modifier: Modifier = Modifier
@@ -28,28 +31,40 @@ fun CountButtonsRow(
             .padding(top = 2.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val aceTone = buttonTagValues.toTone(CardRank.ACE)
+        val twoTone = buttonTagValues.toTone(CardRank.TWO)
+        val threeTone = buttonTagValues.toTone(CardRank.THREE)
+        val fourTone = buttonTagValues.toTone(CardRank.FOUR)
+        val fiveTone = buttonTagValues.toTone(CardRank.FIVE)
+        val sixTone = buttonTagValues.toTone(CardRank.SIX)
+        val sevenTone = buttonTagValues.toTone(CardRank.SEVEN)
+        val eightTone = buttonTagValues.toTone(CardRank.EIGHT)
+        val nineTone = buttonTagValues.toTone(CardRank.NINE)
+        val tenTone = buttonTagValues.toTone(CardRank.TEN)
+        val faceTone = buttonTagValues.toTone(CardRank.JACK)
+
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "A",
-                tone = CardButtonTone.Negative,
+                tone = aceTone,
                 onClick = { onCardSelected(CardRank.ACE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "2",
-                tone = CardButtonTone.Positive,
+                tone = twoTone,
                 onClick = { onCardSelected(CardRank.TWO) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "3",
-                tone = CardButtonTone.Positive,
+                tone = threeTone,
                 onClick = { onCardSelected(CardRank.THREE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "4",
-                tone = CardButtonTone.Positive,
+                tone = fourTone,
                 onClick = { onCardSelected(CardRank.FOUR) },
                 modifier = Modifier.weight(1f)
             )
@@ -58,25 +73,25 @@ fun CountButtonsRow(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "5",
-                tone = CardButtonTone.Positive,
+                tone = fiveTone,
                 onClick = { onCardSelected(CardRank.FIVE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "6",
-                tone = CardButtonTone.Positive,
+                tone = sixTone,
                 onClick = { onCardSelected(CardRank.SIX) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "7",
-                tone = CardButtonTone.Neutral,
+                tone = sevenTone,
                 onClick = { onCardSelected(CardRank.SEVEN) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "8",
-                tone = CardButtonTone.Neutral,
+                tone = eightTone,
                 onClick = { onCardSelected(CardRank.EIGHT) },
                 modifier = Modifier.weight(1f)
             )
@@ -85,19 +100,19 @@ fun CountButtonsRow(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "9",
-                tone = CardButtonTone.Neutral,
+                tone = nineTone,
                 onClick = { onCardSelected(CardRank.NINE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "10",
-                tone = CardButtonTone.Negative,
+                tone = tenTone,
                 onClick = { onCardSelected(CardRank.TEN) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "T/J/Q/K",
-                tone = CardButtonTone.Negative,
+                tone = faceTone,
                 onClick = onFaceCardsSelected,
                 modifier = Modifier.weight(2f)
             )
@@ -117,12 +132,20 @@ private fun CardInputButton(
             containerColor = MaterialTheme.colorScheme.tertiary,
             contentColor = MaterialTheme.colorScheme.onTertiary
         )
+        CardButtonTone.PositiveStrong -> ButtonDefaults.buttonColors(
+            containerColor = ChipGreenDark,
+            contentColor = MaterialTheme.colorScheme.onTertiary
+        )
         CardButtonTone.Neutral -> ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         )
         CardButtonTone.Negative -> ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError
+        )
+        CardButtonTone.NegativeStrong -> ButtonDefaults.buttonColors(
+            containerColor = ChipRedDark,
             contentColor = MaterialTheme.colorScheme.onError
         )
     }
@@ -142,6 +165,23 @@ private fun CardInputButton(
 
 private enum class CardButtonTone {
     Positive,
+    PositiveStrong,
     Neutral,
-    Negative
+    Negative,
+    NegativeStrong
+}
+
+private fun Map<CardRank, Double>.toTone(rank: CardRank): CardButtonTone {
+    val tagValue = this[rank] ?: 0.0
+    return tagValueToTone(tagValue)
+}
+
+private fun tagValueToTone(tagValue: Double): CardButtonTone {
+    return when {
+        tagValue >= 2.0 -> CardButtonTone.PositiveStrong
+        tagValue > 0.0 -> CardButtonTone.Positive
+        tagValue <= -2.0 -> CardButtonTone.NegativeStrong
+        tagValue < 0.0 -> CardButtonTone.Negative
+        else -> CardButtonTone.Neutral
+    }
 }

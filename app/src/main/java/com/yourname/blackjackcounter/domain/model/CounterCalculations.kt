@@ -29,10 +29,12 @@ object CounterCalculations {
         return roundToOneDecimal((dealtDecks / totalDecks.toDouble()) * 100.0)
     }
 
-    fun calculateExpectedAces(decksRemaining: Double): Double {
-        val safeDecksRemaining = decksRemaining.coerceAtLeast(0.0)
-        return roundToOneDecimal(safeDecksRemaining * ACES_PER_DECK)
+    fun calculateExpectedAces(cardsDrawn: Int): Double {
+        val safeCardsDrawn = cardsDrawn.coerceAtLeast(0)
+        val expected = (safeCardsDrawn.toDouble() / CARDS_PER_DECK) * ACES_PER_DECK
+        return roundToOneDecimal(expected)
     }
 
+    private const val CARDS_PER_DECK = 52.0
     private const val ACES_PER_DECK = 4.0
 }

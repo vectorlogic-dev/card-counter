@@ -12,7 +12,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,7 +32,9 @@ import com.yourname.blackjackcounter.presentation.counter.components.CheatSheetC
 import com.yourname.blackjackcounter.presentation.counter.components.CountButtonsRow
 import com.yourname.blackjackcounter.presentation.counter.components.CountDisplayCard
 import com.yourname.blackjackcounter.presentation.counter.components.DeckControlCard
+import com.yourname.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
+import com.yourname.blackjackcounter.presentation.counter.components.SystemSelector
 import com.yourname.blackjackcounter.ui.theme.FeltGreen
 import com.yourname.blackjackcounter.ui.theme.GoldAccent
 import com.yourname.blackjackcounter.ui.theme.TableEdge
@@ -44,6 +45,8 @@ import kotlin.math.round
 fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
+    var showSystemSelector by remember { mutableStateOf(false) }
+    var showHelpDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -100,6 +103,20 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                 onDismissRequest = { menuExpanded = false }
                             ) {
                                 DropdownMenuItem(
+                                    text = { Text("Select Counting System") },
+                                    onClick = {
+                                        showSystemSelector = true
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Help") },
+                                    onClick = {
+                                        showHelpDialog = true
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Reset Count") },
                                     onClick = {
                                         viewModel.resetCount()
@@ -125,22 +142,6 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                         menuExpanded = false
                                     }
                                 )
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text("Counting System") },
-                                    onClick = {},
-                                    enabled = false
-                                )
-                                viewModel.availableSystems.forEach { system ->
-                                    val selectedMark = if (system.id == state.selectedCountingSystemId) "[x] " else ""
-                                    DropdownMenuItem(
-                                        text = { Text("$selectedMark${system.displayName}") },
-                                        onClick = {
-                                            viewModel.setCountingSystem(system.id)
-                                            menuExpanded = false
-                                        }
-                                    )
-                                }
                             }
                         }
                     }
@@ -187,6 +188,7 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     cardsDrawn = state.cardsDrawn,
                     cardsLeft = state.cardsLeft,
                     totalCards = state.totalCards,
+                    showAceSideCount = state.selectedSystemRecommendsAceSideCount,
                     acesSeen = state.acesSeen,
                     acesExpected = state.acesExpected,
                     onTotalDecksChanged = viewModel::setTotalDecks,
@@ -199,11 +201,62 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                 )
 
                 CountButtonsRow(
+                    buttonTagValues = state.buttonTagValues,
                     onCardSelected = viewModel::onCardSeen,
                     onFaceCardsSelected = viewModel::onFaceCardsSeen
                 )
 
                 ResetButton(onReset = viewModel::resetCount)
+            }
+
+            if (showSystemSelector) {
+                AlertDialog(
+                    onDismissRequest = { showSystemSelector = false },
+                    confirmButton = {
+                        TextButton(onClick = { showSystemSelector = false }) {
+                            Text("Close")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Counting System",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        SystemSelector(
+                            selectedSystemId = state.selectedCountingSystemId,
+                            availableSystems = viewModel.availableSystems,
+                            onSystemSelected = { systemId ->
+                                viewModel.setCountingSystem(systemId)
+                                showSystemSelector = false
+                            }
+                        )
+                    }
+                )
+            }
+
+            if (showHelpDialog) {
+                AlertDialog(
+                    onDismissRequest = { showHelpDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = { showHelpDialog = false }) {
+                            Text("Close")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Help",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        HelpDialogContent(
+                            countingSystemGuides = viewModel.countingSystemGuides,
+                            basicStrategySections = viewModel.basicStrategySections
+                        )
+                    }
+                )
             }
 
             if (state.showCheatSheet) {

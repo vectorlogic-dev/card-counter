@@ -23,14 +23,26 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `onCardSeen ace increments ace side count and expected aces`() {
+    fun `onCardSeen ace does not change ace side count on systems that do not need it`() {
         val viewModel = CounterViewModel()
 
         viewModel.onCardSeen(CardRank.ACE)
 
         val updated = viewModel.uiState.value
+        assertEquals(0, updated.acesSeen)
+        assertEquals(0.0, updated.acesExpected, 0.0001)
+    }
+
+    @Test
+    fun `onCardSeen ace increments ace side count for omega ii`() {
+        val viewModel = CounterViewModel()
+        viewModel.setCountingSystem("omega_ii")
+
+        viewModel.onCardSeen(CardRank.ACE)
+
+        val updated = viewModel.uiState.value
         assertEquals(1, updated.acesSeen)
-        assertEquals(23.9, updated.acesExpected, 0.0001)
+        assertEquals(0.1, updated.acesExpected, 0.0001)
     }
 
     @Test

@@ -25,6 +25,7 @@ data class CounterState(
     val selectedCountingSystemName: String = "Hi-Lo",
     val selectedSystemUsesTrueCount: Boolean = true,
     val selectedSystemRecommendsAceSideCount: Boolean = false,
+    val buttonTagValues: Map<CardRank, Double> = emptyMap(),
     val cheatSheetRows: List<CheatSheetRow> = emptyList(),
     val strategyDeviationRows: List<StrategyDeviationRow> = emptyList(),
     val showCheatSheet: Boolean = false

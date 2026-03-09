@@ -23,7 +23,28 @@ import kotlin.math.roundToInt
 
 data class CountingSystemOption(
     val id: String,
-    val displayName: String
+    val displayName: String,
+    val recommendsAceSideCount: Boolean
+)
+
+data class CountingSystemGuide(
+    val id: String,
+    val displayName: String,
+    val level: Int,
+    val isBalanced: Boolean,
+    val usesTrueCount: Boolean,
+    val recommendsAceSideCount: Boolean,
+    val tagRows: List<CheatSheetRow>
+)
+
+data class StrategyChartSection(
+    val title: String,
+    val rows: List<StrategyChartRow>
+)
+
+data class StrategyChartRow(
+    val hand: String,
+    val action: String
 )
 
 class CounterViewModel : ViewModel() {
@@ -41,8 +62,63 @@ class CounterViewModel : ViewModel() {
     private val systemsById: Map<String, CountingSystem> = allSystems.associateBy { it.id }
 
     val availableSystems: List<CountingSystemOption> = allSystems.map { system ->
-        CountingSystemOption(id = system.id, displayName = system.displayName)
+        CountingSystemOption(
+            id = system.id,
+            displayName = system.displayName,
+            recommendsAceSideCount = system.recommendsAceSideCount()
+        )
     }
+
+    val countingSystemGuides: List<CountingSystemGuide> = allSystems.map { system ->
+        CountingSystemGuide(
+            id = system.id,
+            displayName = system.displayName,
+            level = system.level,
+            isBalanced = system.isBalanced,
+            usesTrueCount = system.usesTrueCount(),
+            recommendsAceSideCount = system.recommendsAceSideCount(),
+            tagRows = calculateCheatSheetRows(system)
+        )
+    }
+
+    val basicStrategySections: List<StrategyChartSection> = listOf(
+        StrategyChartSection(
+            title = "Hard Totals",
+            rows = listOf(
+                StrategyChartRow("Hard 8 or less", "Hit"),
+                StrategyChartRow("Hard 9", "Double vs 3-6, otherwise Hit"),
+                StrategyChartRow("Hard 10", "Double vs 2-9, otherwise Hit"),
+                StrategyChartRow("Hard 11", "Double (otherwise Hit)"),
+                StrategyChartRow("Hard 12", "Stand vs 4-6, otherwise Hit"),
+                StrategyChartRow("Hard 13-16", "Stand vs 2-6, otherwise Hit"),
+                StrategyChartRow("Hard 17+", "Stand")
+            )
+        ),
+        StrategyChartSection(
+            title = "Soft Totals",
+            rows = listOf(
+                StrategyChartRow("A,2 or A,3", "Double vs 5-6, otherwise Hit"),
+                StrategyChartRow("A,4 or A,5", "Double vs 4-6, otherwise Hit"),
+                StrategyChartRow("A,6", "Double vs 3-6, otherwise Hit"),
+                StrategyChartRow("A,7", "Stand vs 2,7,8; Double vs 3-6; Hit vs 9,10,A"),
+                StrategyChartRow("A,8+", "Stand")
+            )
+        ),
+        StrategyChartSection(
+            title = "Pairs",
+            rows = listOf(
+                StrategyChartRow("A,A", "Split"),
+                StrategyChartRow("10,10", "Stand"),
+                StrategyChartRow("9,9", "Split vs 2-6,8,9; otherwise Stand"),
+                StrategyChartRow("8,8", "Split"),
+                StrategyChartRow("7,7", "Split vs 2-7, otherwise Hit"),
+                StrategyChartRow("6,6", "Split vs 2-6, otherwise Hit"),
+                StrategyChartRow("5,5", "Double vs 2-9, otherwise Hit"),
+                StrategyChartRow("4,4", "Split vs 5-6, otherwise Hit"),
+                StrategyChartRow("3,3 or 2,2", "Split vs 2-7, otherwise Hit")
+            )
+        )
+    )
 
     private val _uiState = MutableStateFlow(withDerivedValues(
         CounterState(
@@ -60,7 +136,7 @@ class CounterViewModel : ViewModel() {
         updateRunningCount(
             delta = delta,
             advancePenetration = true,
-            seenAce = cardRank == CardRank.ACE
+            seenAce = cardRank == CardRank.ACE && selectedSystem.recommendsAceSideCount()
         )
     }
 
@@ -112,11 +188,13 @@ class CounterViewModel : ViewModel() {
         val selectedSystem = systemsById[systemId] ?: return
 
         _uiState.update { current ->
+            val shouldTrackAces = selectedSystem.recommendsAceSideCount()
             val nextState = current.copy(
                 selectedCountingSystemId = selectedSystem.id,
                 selectedCountingSystemName = selectedSystem.displayName,
                 selectedSystemUsesTrueCount = selectedSystem.usesTrueCount(),
-                selectedSystemRecommendsAceSideCount = selectedSystem.recommendsAceSideCount()
+                selectedSystemRecommendsAceSideCount = shouldTrackAces,
+                acesSeen = if (shouldTrackAces) current.acesSeen else 0
             )
             withDerivedValues(nextState)
         }
@@ -189,7 +267,16 @@ class CounterViewModel : ViewModel() {
         val totalCards = state.totalDecks * CARDS_PER_DECK
         val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
-        val acesExpected = CounterCalculations.calculateExpectedAces(state.decksRemaining)
+        val shouldTrackAces = selectedSystem.recommendsAceSideCount()
+        val acesExpected = if (shouldTrackAces) {
+            CounterCalculations.calculateExpectedAces(cardsDrawn)
+        } else {
+            0.0
+        }
+        val acesSeen = if (shouldTrackAces) state.acesSeen else 0
+        val buttonTagValues = CardRank.entries.associateWith { rank ->
+            selectedSystem.getTagValue(rank)
+        }
 
         return state.copy(
             trueCount = calculateTrueCount(state),
@@ -197,8 +284,10 @@ class CounterViewModel : ViewModel() {
             totalCards = totalCards,
             cardsLeft = cardsLeft,
             cardsDrawn = cardsDrawn,
+            acesSeen = acesSeen,
             acesExpected = acesExpected,
-            selectedSystemRecommendsAceSideCount = selectedSystem.recommendsAceSideCount(),
+            selectedSystemRecommendsAceSideCount = shouldTrackAces,
+            buttonTagValues = buttonTagValues,
             cheatSheetRows = calculateCheatSheetRows(selectedSystem),
             strategyDeviationRows = calculateStrategyDeviationRows(selectedSystem)
         )

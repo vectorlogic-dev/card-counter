@@ -40,9 +40,9 @@ class CounterCalculationsTest {
     }
 
     @Test
-    fun `calculateExpectedAces is proportional to decks remaining`() {
-        val result = CounterCalculations.calculateExpectedAces(decksRemaining = 1.5)
+    fun `calculateExpectedAces is proportional to cards drawn`() {
+        val result = CounterCalculations.calculateExpectedAces(cardsDrawn = 26)
 
-        assertEquals(6.0, result, 0.0001)
+        assertEquals(2.0, result, 0.0001)
     }
 }

@@ -2,86 +2,63 @@ package com.yourname.blackjackcounter.presentation.counter.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourname.blackjackcounter.presentation.counter.CountingSystemOption
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SystemSelector(
-    selectedSystemName: String,
+    selectedSystemId: String,
     availableSystems: List<CountingSystemOption>,
     onSystemSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectorEnabled = availableSystems.size > 1
-
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = "Counting System",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { if (selectorEnabled) expanded = !expanded }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        availableSystems.forEach { system ->
+            val isSelected = system.id == selectedSystemId
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = isSelected,
+                        role = Role.RadioButton,
+                        onClick = { onSystemSelected(system.id) }
+                    )
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                TextField(
-                    value = selectedSystemName,
-                    onValueChange = {},
-                    readOnly = true,
-                    enabled = selectorEnabled,
-                    trailingIcon = {
-                        if (selectorEnabled) {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        }
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                RadioButton(
+                    selected = isSelected,
+                    onClick = null
                 )
-
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    availableSystems.forEach { system ->
-                        DropdownMenuItem(
-                            text = { Text(system.displayName) },
-                            onClick = {
-                                onSystemSelected(system.id)
-                                expanded = false
-                            }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = system.displayName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (system.recommendsAceSideCount) {
+                        Text(
+                            text = "Uses Ace side count",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
                         )
                     }
                 }
             }
-
-            Text(
-                text = "More systems are implemented in code and can be enabled later.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
