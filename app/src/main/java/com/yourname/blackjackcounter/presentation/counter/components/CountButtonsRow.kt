@@ -31,21 +31,25 @@ fun CountButtonsRow(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "A",
+                tone = CardButtonTone.Negative,
                 onClick = { onCardSelected(CardRank.ACE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "2",
+                tone = CardButtonTone.Positive,
                 onClick = { onCardSelected(CardRank.TWO) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "3",
+                tone = CardButtonTone.Positive,
                 onClick = { onCardSelected(CardRank.THREE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "4",
+                tone = CardButtonTone.Positive,
                 onClick = { onCardSelected(CardRank.FOUR) },
                 modifier = Modifier.weight(1f)
             )
@@ -54,21 +58,25 @@ fun CountButtonsRow(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "5",
+                tone = CardButtonTone.Positive,
                 onClick = { onCardSelected(CardRank.FIVE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "6",
+                tone = CardButtonTone.Positive,
                 onClick = { onCardSelected(CardRank.SIX) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "7",
+                tone = CardButtonTone.Neutral,
                 onClick = { onCardSelected(CardRank.SEVEN) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "8",
+                tone = CardButtonTone.Neutral,
                 onClick = { onCardSelected(CardRank.EIGHT) },
                 modifier = Modifier.weight(1f)
             )
@@ -77,16 +85,19 @@ fun CountButtonsRow(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "9",
+                tone = CardButtonTone.Neutral,
                 onClick = { onCardSelected(CardRank.NINE) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "10",
+                tone = CardButtonTone.Negative,
                 onClick = { onCardSelected(CardRank.TEN) },
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
                 label = "T/J/Q/K",
+                tone = CardButtonTone.Negative,
                 onClick = onFaceCardsSelected,
                 modifier = Modifier.weight(2f)
             )
@@ -97,16 +108,29 @@ fun CountButtonsRow(
 @Composable
 private fun CardInputButton(
     label: String,
+    tone: CardButtonTone,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(54.dp),
-        colors = ButtonDefaults.buttonColors(
+    val colors = when (tone) {
+        CardButtonTone.Positive -> ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.tertiary,
+            contentColor = MaterialTheme.colorScheme.onTertiary
+        )
+        CardButtonTone.Neutral -> ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         )
+        CardButtonTone.Negative -> ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError
+        )
+    }
+
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(54.dp),
+        colors = colors
     ) {
         Text(
             text = label,
@@ -114,4 +138,10 @@ private fun CardInputButton(
             style = MaterialTheme.typography.titleMedium
         )
     }
+}
+
+private enum class CardButtonTone {
+    Positive,
+    Neutral,
+    Negative
 }

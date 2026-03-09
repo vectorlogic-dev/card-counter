@@ -12,23 +12,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.yourname.blackjackcounter.domain.model.CheatSheetRow
 
 @Composable
-fun CheatSheetCard(modifier: Modifier = Modifier) {
+fun CheatSheetCard(
+    systemName: String,
+    rows: List<CheatSheetRow>,
+    modifier: Modifier = Modifier
+) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Hi-Lo Cheat Sheet",
+                text = "$systemName Cheat Sheet",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
-            CheatSheetRow(cards = "2, 3, 4, 5, 6", value = "+1")
-            CheatSheetRow(cards = "7, 8, 9", value = "0")
-            CheatSheetRow(cards = "10, J, Q, K, A", value = "-1")
+            rows.forEach { row ->
+                CheatSheetRow(cards = row.cardsLabel, value = row.tagValueLabel)
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -30,6 +31,9 @@ fun DeckControlCard(
     totalDecks: Int,
     decksRemaining: Double,
     deckPenetrationPercent: Double,
+    cardsDrawn: Int,
+    cardsLeft: Int,
+    totalCards: Int,
     onTotalDecksChanged: (Int) -> Unit,
     onDecksRemainingChanged: (Double) -> Unit,
     modifier: Modifier = Modifier
@@ -58,6 +62,27 @@ fun DeckControlCard(
                     text = "Penetration ${formatPenetration(deckPenetrationPercent)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CardsMetricChip(
+                    label = "Drawn",
+                    value = cardsDrawn.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                CardsMetricChip(
+                    label = "Left",
+                    value = cardsLeft.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                CardsMetricChip(
+                    label = "Total",
+                    value = totalCards.toString(),
+                    modifier = Modifier.weight(1f)
                 )
             }
 
@@ -118,6 +143,34 @@ fun DeckControlCard(
                     steps = sliderSteps
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CardsMetricChip(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall
+            )
         }
     }
 }

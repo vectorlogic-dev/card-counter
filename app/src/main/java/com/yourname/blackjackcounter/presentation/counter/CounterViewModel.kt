@@ -8,12 +8,15 @@ import com.yourname.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.yourname.blackjackcounter.data.counting.WongHalvesSystem
 import com.yourname.blackjackcounter.data.counting.ZenCountSystem
 import com.yourname.blackjackcounter.domain.model.CardRank
+import com.yourname.blackjackcounter.domain.model.CheatSheetRow
 import com.yourname.blackjackcounter.domain.model.CounterCalculations
 import com.yourname.blackjackcounter.domain.model.CounterState
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.math.roundToInt
 
 data class CountingSystemOption(
     val id: String,
@@ -103,8 +106,12 @@ class CounterViewModel : ViewModel() {
     }
 
     fun toggleCheatSheet() {
+        setCheatSheetVisible(!_uiState.value.showCheatSheet)
+    }
+
+    fun setCheatSheetVisible(visible: Boolean) {
         _uiState.update { current ->
-            current.copy(showCheatSheet = !current.showCheatSheet)
+            current.copy(showCheatSheet = visible)
         }
     }
 
@@ -158,10 +165,63 @@ class CounterViewModel : ViewModel() {
     }
 
     private fun withDerivedValues(state: CounterState): CounterState {
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val totalCards = state.totalDecks * CARDS_PER_DECK
+        val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
+        val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
+
         return state.copy(
             trueCount = calculateTrueCount(state),
-            deckPenetrationPercent = calculateDeckPenetrationPercent(state)
+            deckPenetrationPercent = calculateDeckPenetrationPercent(state),
+            totalCards = totalCards,
+            cardsLeft = cardsLeft,
+            cardsDrawn = cardsDrawn,
+            cheatSheetRows = calculateCheatSheetRows(selectedSystem)
         )
+    }
+
+    private fun calculateCheatSheetRows(system: CountingSystem): List<CheatSheetRow> {
+        val grouped = CardRank.entries
+            .groupBy { rank -> system.getTagValue(rank) }
+            .toList()
+            .sortedByDescending { (value, _) -> value }
+
+        return grouped.map { (value, ranks) ->
+            CheatSheetRow(
+                cardsLabel = ranks.joinToString(", ") { rank -> rank.toCardLabel() },
+                tagValueLabel = formatTagValue(value)
+            )
+        }
+    }
+
+    private fun CardRank.toCardLabel(): String {
+        return when (this) {
+            CardRank.TWO -> "2"
+            CardRank.THREE -> "3"
+            CardRank.FOUR -> "4"
+            CardRank.FIVE -> "5"
+            CardRank.SIX -> "6"
+            CardRank.SEVEN -> "7"
+            CardRank.EIGHT -> "8"
+            CardRank.NINE -> "9"
+            CardRank.TEN -> "10"
+            CardRank.JACK -> "J"
+            CardRank.QUEEN -> "Q"
+            CardRank.KING -> "K"
+            CardRank.ACE -> "A"
+        }
+    }
+
+    private fun formatTagValue(value: Double): String {
+        return if (value % 1.0 == 0.0) {
+            when {
+                value > 0 -> "+${value.toInt()}"
+                value < 0 -> value.toInt().toString()
+                else -> "0"
+            }
+        } else {
+            String.format(Locale.US, "%+.1f", value)
+        }
     }
 
     private companion object {
@@ -169,5 +229,6 @@ class CounterViewModel : ViewModel() {
         const val MAX_TOTAL_DECKS = 8
         const val MIN_DECKS_REMAINING = 0.25
         const val DECKS_PER_CARD = 1.0 / 52.0
+        const val CARDS_PER_DECK = 52
     }
 }
