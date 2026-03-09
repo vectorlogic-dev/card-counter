@@ -53,6 +53,27 @@ data class StrategyChartRow(
     val action: String
 )
 
+data class StrategyTableCell(
+    val action: String,
+    val isDeviation: Boolean
+)
+
+data class StrategyTableRow(
+    val handLabel: String,
+    val cells: List<StrategyTableCell>
+)
+
+data class StrategyTableSection(
+    val title: String,
+    val rows: List<StrategyTableRow>
+)
+
+data class StrategyChartModel(
+    val trueCountLabel: String,
+    val supportsTrueCount: Boolean,
+    val sections: List<StrategyTableSection>
+)
+
 class CounterViewModel : ViewModel() {
 
     private val allSystems: List<CountingSystem> = listOf(
@@ -164,6 +185,65 @@ class CounterViewModel : ViewModel() {
             StrategyChartSection(
                 title = "Count-Based Split Deviations (Advanced, Hi-Lo style)",
                 rows = baseRows
+            )
+        )
+    }
+
+    fun buildStrategyChartModel(state: CounterState): StrategyChartModel {
+        val hardRows = listOf(17, 16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
+            StrategyTableRow(
+                handLabel = if (total == 17) "17+" else total.toString(),
+                cells = dealerUpcards.map { dealer ->
+                    computeChartCell(
+                        handType = ChartHandType.HARD,
+                        handValue = total,
+                        dealerUpcard = dealer,
+                        state = state
+                    )
+                }
+            )
+        }
+
+        val softRows = listOf(9, 8, 7, 6, 5, 4, 3, 2).map { soft ->
+            StrategyTableRow(
+                handLabel = "A,$soft",
+                cells = dealerUpcards.map { dealer ->
+                    computeChartCell(
+                        handType = ChartHandType.SOFT,
+                        handValue = soft,
+                        dealerUpcard = dealer,
+                        state = state
+                    )
+                }
+            )
+        }
+
+        val pairRows = listOf(11, 10, 9, 8, 7, 6, 5, 4, 3, 2).map { pairRank ->
+            val label = if (pairRank == 11) "A,A" else "$pairRank,$pairRank"
+            StrategyTableRow(
+                handLabel = label,
+                cells = dealerUpcards.map { dealer ->
+                    computeChartCell(
+                        handType = ChartHandType.PAIR,
+                        handValue = pairRank,
+                        dealerUpcard = dealer,
+                        state = state
+                    )
+                }
+            )
+        }
+
+        return StrategyChartModel(
+            trueCountLabel = if (state.selectedSystemUsesTrueCount) {
+                String.format(Locale.US, "TC %.1f", state.trueCount)
+            } else {
+                "TC N/A"
+            },
+            supportsTrueCount = state.selectedSystemUsesTrueCount,
+            sections = listOf(
+                StrategyTableSection(title = "Hard Totals", rows = hardRows),
+                StrategyTableSection(title = "Soft Totals", rows = softRows),
+                StrategyTableSection(title = "Pairs", rows = pairRows)
             )
         )
     }
@@ -432,6 +512,246 @@ class CounterViewModel : ViewModel() {
         )
     }
 
+    private fun computeChartCell(
+        handType: ChartHandType,
+        handValue: Int,
+        dealerUpcard: Int,
+        state: CounterState
+    ): StrategyTableCell {
+        val baseAction = getBaseAction(
+            handType = handType,
+            handValue = handValue,
+            dealerUpcard = dealerUpcard,
+            rules = state.tableRules
+        )
+        val baseAdjusted = applyRuleAdjustments(
+            action = baseAction,
+            handType = handType,
+            handValue = handValue,
+            dealerUpcard = dealerUpcard,
+            rules = state.tableRules
+        )
+
+        if (!state.selectedSystemUsesTrueCount) {
+            return StrategyTableCell(action = baseAdjusted, isDeviation = false)
+        }
+
+        val deviationAction = getCountDeviationAction(
+            handType = handType,
+            handValue = handValue,
+            dealerUpcard = dealerUpcard,
+            trueCount = state.trueCount
+        )
+
+        if (deviationAction == null) {
+            return StrategyTableCell(action = baseAdjusted, isDeviation = false)
+        }
+
+        val deviationAdjusted = applyRuleAdjustments(
+            action = deviationAction,
+            handType = handType,
+            handValue = handValue,
+            dealerUpcard = dealerUpcard,
+            rules = state.tableRules
+        )
+
+        return if (deviationAdjusted != baseAdjusted) {
+            StrategyTableCell(action = deviationAdjusted, isDeviation = true)
+        } else {
+            StrategyTableCell(action = baseAdjusted, isDeviation = false)
+        }
+    }
+
+    private fun getBaseAction(
+        handType: ChartHandType,
+        handValue: Int,
+        dealerUpcard: Int,
+        rules: TableRules
+    ): String {
+        return when (handType) {
+            ChartHandType.HARD -> getBaseHardAction(
+                hardTotal = handValue,
+                dealerUpcard = dealerUpcard,
+                rules = rules
+            )
+            ChartHandType.SOFT -> getBaseSoftAction(
+                softCard = handValue,
+                dealerUpcard = dealerUpcard,
+                rules = rules
+            )
+            ChartHandType.PAIR -> getBasePairAction(
+                pairRank = handValue,
+                dealerUpcard = dealerUpcard,
+                rules = rules
+            )
+        }
+    }
+
+    private fun getBaseHardAction(
+        hardTotal: Int,
+        dealerUpcard: Int,
+        rules: TableRules
+    ): String {
+        val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
+        return when {
+            hardTotal >= 17 -> "S"
+            hardTotal == 16 -> when {
+                surrenderAllowed && dealerUpcard in listOf(9, 10, 11) -> "Rh"
+                dealerUpcard in 2..6 -> "S"
+                else -> "H"
+            }
+            hardTotal == 15 -> when {
+                surrenderAllowed && dealerUpcard == 10 -> "Rh"
+                dealerUpcard in 2..6 -> "S"
+                else -> "H"
+            }
+            hardTotal in 13..14 -> if (dealerUpcard in 2..6) "S" else "H"
+            hardTotal == 12 -> if (dealerUpcard in 4..6) "S" else "H"
+            hardTotal == 11 -> {
+                if (dealerUpcard == 11 && rules.dealerSoft17Rule == DealerSoft17Rule.STAND) "H" else "D"
+            }
+            hardTotal == 10 -> if (dealerUpcard in 2..9) "D" else "H"
+            hardTotal == 9 -> if (dealerUpcard in 3..6) "D" else "H"
+            else -> "H"
+        }
+    }
+
+    private fun getBaseSoftAction(
+        softCard: Int,
+        dealerUpcard: Int,
+        rules: TableRules
+    ): String {
+        return when (softCard) {
+            9, 8 -> "S"
+            7 -> when {
+                dealerUpcard in 3..6 -> "Ds"
+                dealerUpcard in listOf(2, 7, 8) -> {
+                    if (dealerUpcard == 2 && rules.dealerSoft17Rule == DealerSoft17Rule.HIT) "Ds" else "S"
+                }
+                else -> "H"
+            }
+            6 -> if (dealerUpcard in 3..6) "D" else "H"
+            5, 4 -> if (dealerUpcard in 4..6) "D" else "H"
+            3, 2 -> if (dealerUpcard in 5..6) "D" else "H"
+            else -> "H"
+        }
+    }
+
+    private fun getBasePairAction(
+        pairRank: Int,
+        dealerUpcard: Int,
+        rules: TableRules
+    ): String {
+        return when (pairRank) {
+            11 -> if (rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN && dealerUpcard == 11) "H" else "P"
+            10 -> "S"
+            9 -> if (dealerUpcard in listOf(2, 3, 4, 5, 6, 8, 9)) "P" else "S"
+            8 -> {
+                if (rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN && dealerUpcard in listOf(10, 11)) "H" else "P"
+            }
+            7 -> if (dealerUpcard in 2..7) "P" else "H"
+            6 -> {
+                if (rules.doubleAfterSplit) {
+                    if (dealerUpcard in 2..6) "P" else "H"
+                } else {
+                    if (dealerUpcard in 3..6) "P" else "H"
+                }
+            }
+            5 -> if (dealerUpcard in 2..9) "D" else "H"
+            4 -> {
+                if (rules.doubleAfterSplit && dealerUpcard in 5..6) "P" else "H"
+            }
+            3, 2 -> {
+                if (rules.doubleAfterSplit) {
+                    if (dealerUpcard in 2..7) "P" else "H"
+                } else {
+                    if (dealerUpcard in 4..7) "P" else "H"
+                }
+            }
+            else -> "H"
+        }
+    }
+
+    private fun getCountDeviationAction(
+        handType: ChartHandType,
+        handValue: Int,
+        dealerUpcard: Int,
+        trueCount: Double
+    ): String? {
+        if (handType == ChartHandType.HARD) {
+            return when {
+                handValue == 16 && dealerUpcard == 10 && trueCount >= 0.0 -> "S"
+                handValue == 15 && dealerUpcard == 10 && trueCount >= 4.0 -> "S"
+                handValue == 12 && dealerUpcard == 3 && trueCount >= 2.0 -> "S"
+                handValue == 12 && dealerUpcard == 2 && trueCount >= 3.0 -> "S"
+                handValue == 11 && dealerUpcard == 11 && trueCount >= 1.0 -> "D"
+                handValue == 10 && dealerUpcard == 10 && trueCount >= 4.0 -> "D"
+                handValue == 9 && dealerUpcard == 2 && trueCount >= 1.0 -> "D"
+                handValue == 9 && dealerUpcard == 7 && trueCount >= 3.0 -> "D"
+                else -> null
+            }
+        }
+
+        if (handType == ChartHandType.PAIR && handValue == 10) {
+            return when {
+                dealerUpcard == 5 && trueCount >= 5.0 -> "P"
+                dealerUpcard == 6 && trueCount >= 4.0 -> "P"
+                else -> null
+            }
+        }
+
+        return null
+    }
+
+    private fun applyRuleAdjustments(
+        action: String,
+        handType: ChartHandType,
+        handValue: Int,
+        dealerUpcard: Int,
+        rules: TableRules
+    ): String {
+        var adjusted = action
+
+        if (adjusted.startsWith("R") && rules.surrenderRule == SurrenderRule.NONE) {
+            adjusted = "H"
+        }
+
+        val noPeekOnTen = rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN
+        if (adjusted in listOf("D", "Ds")) {
+            val allowedByDoubleRule = isDoubleAllowed(
+                handType = handType,
+                handValue = handValue,
+                rule = rules.doubleDownRule
+            )
+            val blockedByNoPeek = noPeekOnTen && dealerUpcard in listOf(10, 11)
+            if (!allowedByDoubleRule || blockedByNoPeek) {
+                adjusted = if (adjusted == "Ds") "S" else "H"
+            }
+        }
+
+        return adjusted
+    }
+
+    private fun isDoubleAllowed(
+        handType: ChartHandType,
+        handValue: Int,
+        rule: DoubleDownRule
+    ): Boolean {
+        if (rule == DoubleDownRule.ANY_TWO_CARDS) return true
+
+        val totalForRule = when (handType) {
+            ChartHandType.HARD -> handValue
+            ChartHandType.SOFT -> 11 + handValue
+            ChartHandType.PAIR -> handValue * 2
+        }
+
+        return when (rule) {
+            DoubleDownRule.ANY_TWO_CARDS -> true
+            DoubleDownRule.NINE_TO_ELEVEN -> totalForRule in 9..11
+            DoubleDownRule.TEN_TO_ELEVEN -> totalForRule in 10..11
+        }
+    }
+
     private fun CardRank.toCardLabel(): String {
         return when (this) {
             CardRank.TWO -> "2"
@@ -463,10 +783,17 @@ class CounterViewModel : ViewModel() {
     }
 
     private companion object {
+        val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
         const val MIN_TOTAL_DECKS = 1
         const val MAX_TOTAL_DECKS = 8
         const val MIN_DECKS_REMAINING = 0.25
         const val DECKS_PER_CARD = 1.0 / 52.0
         const val CARDS_PER_DECK = 52
+    }
+
+    private enum class ChartHandType {
+        HARD,
+        SOFT,
+        PAIR
     }
 }

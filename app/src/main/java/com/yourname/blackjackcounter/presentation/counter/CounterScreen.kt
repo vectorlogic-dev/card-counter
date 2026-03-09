@@ -34,6 +34,8 @@ import com.yourname.blackjackcounter.presentation.counter.components.CountDispla
 import com.yourname.blackjackcounter.presentation.counter.components.DeckControlCard
 import com.yourname.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
+import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartButton
+import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartDialogContent
 import com.yourname.blackjackcounter.presentation.counter.components.SystemSelector
 import com.yourname.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.yourname.blackjackcounter.ui.theme.FeltGreen
@@ -49,6 +51,7 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
+    var showStrategyChartDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -237,6 +240,8 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                 )
 
                 ResetButton(onReset = viewModel::resetCount)
+
+                StrategyChartButton(onClick = { showStrategyChartDialog = true })
             }
 
             if (showSystemSelector) {
@@ -337,6 +342,28 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                             rows = state.cheatSheetRows,
                             strategyRows = state.strategyDeviationRows,
                             showTrueCountDisclaimer = !state.selectedSystemUsesTrueCount
+                        )
+                    }
+                )
+            }
+
+            if (showStrategyChartDialog) {
+                AlertDialog(
+                    onDismissRequest = { showStrategyChartDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = { showStrategyChartDialog = false }) {
+                            Text("Close")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Strategy Chart",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        StrategyChartDialogContent(
+                            model = viewModel.buildStrategyChartModel(state)
                         )
                     }
                 )

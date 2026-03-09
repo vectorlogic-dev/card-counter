@@ -164,4 +164,42 @@ class CounterViewModelTest {
         assertTrue(rows.any { it.hand == "After splitting A,A" })
         assertTrue(rows.any { it.hand == "A,A vs 10/A" })
     }
+
+    @Test
+    fun `strategy chart applies count-based 10 vs 10 double deviation`() {
+        val viewModel = CounterViewModel()
+        repeat(4) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+
+        val state = viewModel.uiState.value
+        val chart = viewModel.buildStrategyChartModel(state)
+        val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        val dealerTenCell = hardTenRow.cells[8]
+
+        assertTrue(dealerTenCell.action.startsWith("D"))
+        assertTrue(dealerTenCell.isDeviation)
+    }
+
+    @Test
+    fun `strategy chart avoids 10 vs 10 double and adjusts ace split on no-peek`() {
+        val viewModel = CounterViewModel()
+        viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
+        repeat(4) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+
+        val state = viewModel.uiState.value
+        val chart = viewModel.buildStrategyChartModel(state)
+        val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        val dealerTenCell = hardTenRow.cells[8]
+        val pairsSection = chart.sections.first { it.title == "Pairs" }
+        val acePairRow = pairsSection.rows.first { it.handLabel == "A,A" }
+        val dealerAceCell = acePairRow.cells[9]
+
+        assertEquals("H", dealerTenCell.action)
+        assertEquals("H", dealerAceCell.action)
+    }
 }
