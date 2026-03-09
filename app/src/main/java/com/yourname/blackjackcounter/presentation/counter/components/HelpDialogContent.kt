@@ -23,6 +23,7 @@ import com.yourname.blackjackcounter.presentation.counter.StrategyChartSection
 fun HelpDialogContent(
     countingSystemGuides: List<CountingSystemGuide>,
     basicStrategySections: List<StrategyChartSection>,
+    splitDeviationSections: List<StrategyChartSection>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -39,6 +40,7 @@ fun HelpDialogContent(
         }
 
         BasicStrategyChartCard(sections = basicStrategySections)
+        SplitDeviationChartCard(sections = splitDeviationSections)
     }
 }
 
@@ -125,6 +127,47 @@ private fun BasicStrategyChartCard(sections: List<StrategyChartSection>) {
         ) {
             Text(
                 text = "Basic Strategy Chart",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            sections.forEach { section ->
+                HorizontalDivider()
+                Text(
+                    text = section.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                section.rows.forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = row.hand,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = row.action,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SplitDeviationChartCard(sections: List<StrategyChartSection>) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Split Deviations",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )

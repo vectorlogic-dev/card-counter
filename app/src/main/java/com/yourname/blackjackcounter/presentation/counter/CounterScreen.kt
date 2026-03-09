@@ -253,7 +253,8 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     text = {
                         HelpDialogContent(
                             countingSystemGuides = viewModel.countingSystemGuides,
-                            basicStrategySections = viewModel.basicStrategySections
+                            basicStrategySections = viewModel.basicStrategySections,
+                            splitDeviationSections = viewModel.splitDeviationSections
                         )
                     }
                 )

@@ -120,6 +120,19 @@ class CounterViewModel : ViewModel() {
         )
     )
 
+    val splitDeviationSections: List<StrategyChartSection> = listOf(
+        StrategyChartSection(
+            title = "Count-Based Split Deviations (Advanced, Hi-Lo style)",
+            rows = listOf(
+                StrategyChartRow("10,10 vs 5", "Split at very high TC (commonly around +5)"),
+                StrategyChartRow("10,10 vs 6", "Split at very high TC (commonly around +4)"),
+                StrategyChartRow("9,9 vs 7", "Can shift by count/rules; use your index chart"),
+                StrategyChartRow("A,A and 8,8", "Usually always split regardless of count"),
+                StrategyChartRow("All split deviations", "Rule and system dependent; verify table rules")
+            )
+        )
+    )
+
     private val _uiState = MutableStateFlow(withDerivedValues(
         CounterState(
             selectedCountingSystemId = HiLoCountingSystem.id,
