@@ -148,7 +148,9 @@ class CounterViewModel : ViewModel() {
     )
 
     fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
-        val noPeekOnTen = tableRules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN
+        val noPeekOnTen = tableRules.dealerPeekRule == DealerPeekRule.ACE_ONLY ||
+            tableRules.dealerPeekRule == DealerPeekRule.NO_PEEK
+        val noPeekOnAce = tableRules.dealerPeekRule == DealerPeekRule.NO_PEEK
 
         val baseRows = mutableListOf(
             StrategyChartRow("10,10 vs 5", "Split at very high TC (commonly around +5)"),
@@ -156,7 +158,7 @@ class CounterViewModel : ViewModel() {
             StrategyChartRow(
                 "10 vs 10 (double deviation)",
                 if (noPeekOnTen) {
-                    "Avoid if no-peek on 10/A is active."
+                    "Avoid if no-peek on 10 is active."
                 } else {
                     "Double only at high TC (commonly around +4)."
                 }
@@ -177,7 +179,12 @@ class CounterViewModel : ViewModel() {
         }
         if (noPeekOnTen) {
             baseRows.add(
-                StrategyChartRow("A,A vs 10/A", "Use a no-peek strategy chart (ace split EV changes).")
+                StrategyChartRow("A,A vs 10", "Use no-peek-on-10 chart adjustments.")
+            )
+        }
+        if (noPeekOnAce) {
+            baseRows.add(
+                StrategyChartRow("A,A vs A", "Use no-peek-on-A chart adjustments.")
             )
         }
 
@@ -642,12 +649,17 @@ class CounterViewModel : ViewModel() {
         dealerUpcard: Int,
         rules: TableRules
     ): String {
+        val noPeekOnTen = rules.dealerPeekRule == DealerPeekRule.ACE_ONLY ||
+            rules.dealerPeekRule == DealerPeekRule.NO_PEEK
+        val noPeekOnAce = rules.dealerPeekRule == DealerPeekRule.NO_PEEK
+
         return when (pairRank) {
-            11 -> if (rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN && dealerUpcard == 11) "H" else "P"
+            11 -> if (noPeekOnAce && dealerUpcard == 11) "H" else "P"
             10 -> "S"
             9 -> if (dealerUpcard in listOf(2, 3, 4, 5, 6, 8, 9)) "P" else "S"
             8 -> {
-                if (rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN && dealerUpcard in listOf(10, 11)) "H" else "P"
+                val blocked = (noPeekOnTen && dealerUpcard == 10) || (noPeekOnAce && dealerUpcard == 11)
+                if (blocked) "H" else "P"
             }
             7 -> if (dealerUpcard in 2..7) "P" else "H"
             6 -> {
@@ -685,9 +697,13 @@ class CounterViewModel : ViewModel() {
                 handValue == 12 && dealerUpcard == 3 && trueCount >= 2.0 -> "S"
                 handValue == 12 && dealerUpcard == 2 && trueCount >= 3.0 -> "S"
                 handValue == 11 && dealerUpcard == 11 && trueCount >= 1.0 -> "D"
+                handValue == 10 && dealerUpcard == 11 && trueCount >= 4.0 -> "D"
                 handValue == 10 && dealerUpcard == 10 && trueCount >= 4.0 -> "D"
                 handValue == 9 && dealerUpcard == 2 && trueCount >= 1.0 -> "D"
                 handValue == 9 && dealerUpcard == 7 && trueCount >= 3.0 -> "D"
+                handValue == 16 && dealerUpcard == 9 && trueCount >= 5.0 -> "S"
+                handValue == 15 && dealerUpcard == 9 && trueCount >= 2.0 -> "S"
+                handValue == 15 && dealerUpcard == 11 && trueCount >= 5.0 -> "S"
                 else -> null
             }
         }
@@ -716,14 +732,16 @@ class CounterViewModel : ViewModel() {
             adjusted = "H"
         }
 
-        val noPeekOnTen = rules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN
+        val noPeekOnTenOnly = rules.dealerPeekRule == DealerPeekRule.ACE_ONLY
+        val noPeekOnTenAndAce = rules.dealerPeekRule == DealerPeekRule.NO_PEEK
         if (adjusted in listOf("D", "Ds")) {
             val allowedByDoubleRule = isDoubleAllowed(
                 handType = handType,
                 handValue = handValue,
                 rule = rules.doubleDownRule
             )
-            val blockedByNoPeek = noPeekOnTen && dealerUpcard in listOf(10, 11)
+            val blockedByNoPeek = (noPeekOnTenOnly && dealerUpcard == 10) ||
+                (noPeekOnTenAndAce && dealerUpcard in listOf(10, 11))
             if (!allowedByDoubleRule || blockedByNoPeek) {
                 adjusted = if (adjusted == "Ds") "S" else "H"
             }

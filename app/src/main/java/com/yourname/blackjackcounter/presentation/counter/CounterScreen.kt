@@ -35,7 +35,7 @@ import com.yourname.blackjackcounter.presentation.counter.components.DeckControl
 import com.yourname.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
 import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartButton
-import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartDialogContent
+import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartFullScreen
 import com.yourname.blackjackcounter.presentation.counter.components.SystemSelector
 import com.yourname.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.yourname.blackjackcounter.ui.theme.FeltGreen
@@ -57,6 +57,15 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+        if (showStrategyChartDialog) {
+            StrategyChartFullScreen(
+                model = viewModel.buildStrategyChartModel(state),
+                onBack = { showStrategyChartDialog = false },
+                modifier = Modifier.fillMaxSize()
+            )
+            return@Surface
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -347,27 +356,6 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                 )
             }
 
-            if (showStrategyChartDialog) {
-                AlertDialog(
-                    onDismissRequest = { showStrategyChartDialog = false },
-                    confirmButton = {
-                        TextButton(onClick = { showStrategyChartDialog = false }) {
-                            Text("Close")
-                        }
-                    },
-                    title = {
-                        Text(
-                            text = "Strategy Chart",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    },
-                    text = {
-                        StrategyChartDialogContent(
-                            model = viewModel.buildStrategyChartModel(state)
-                        )
-                    }
-                )
-            }
         }
     }
 }

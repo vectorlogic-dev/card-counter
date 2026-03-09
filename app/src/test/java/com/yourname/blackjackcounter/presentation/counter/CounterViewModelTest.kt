@@ -162,7 +162,7 @@ class CounterViewModelTest {
         assertTrue(rows.any { it.hand == "10 vs 10 (double deviation)" && it.action.contains("Avoid") })
         assertTrue(rows.any { it.hand == "A,A re-split" })
         assertTrue(rows.any { it.hand == "After splitting A,A" })
-        assertTrue(rows.any { it.hand == "A,A vs 10/A" })
+        assertTrue(rows.any { it.hand == "A,A vs 10" })
     }
 
     @Test
@@ -200,6 +200,20 @@ class CounterViewModelTest {
         val dealerAceCell = acePairRow.cells[9]
 
         assertEquals("H", dealerTenCell.action)
+        assertEquals("P", dealerAceCell.action)
+    }
+
+    @Test
+    fun `strategy chart hits split aces vs ace on no-peek for ace and ten`() {
+        val viewModel = CounterViewModel()
+        viewModel.setDealerPeekRule(DealerPeekRule.NO_PEEK)
+
+        val state = viewModel.uiState.value
+        val chart = viewModel.buildStrategyChartModel(state)
+        val pairsSection = chart.sections.first { it.title == "Pairs" }
+        val acePairRow = pairsSection.rows.first { it.handLabel == "A,A" }
+        val dealerAceCell = acePairRow.cells[9]
+
         assertEquals("H", dealerAceCell.action)
     }
 }
