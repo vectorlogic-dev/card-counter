@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -54,7 +55,9 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
     var showStrategyChartDialog by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding(),
         color = MaterialTheme.colorScheme.background
     ) {
         if (showStrategyChartDialog) {
