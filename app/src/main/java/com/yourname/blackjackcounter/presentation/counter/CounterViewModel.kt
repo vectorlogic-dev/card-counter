@@ -13,7 +13,13 @@ import com.yourname.blackjackcounter.domain.model.CardRank
 import com.yourname.blackjackcounter.domain.model.CheatSheetRow
 import com.yourname.blackjackcounter.domain.model.CounterCalculations
 import com.yourname.blackjackcounter.domain.model.CounterState
+import com.yourname.blackjackcounter.domain.model.DealerPeekRule
+import com.yourname.blackjackcounter.domain.model.DealerSoft17Rule
+import com.yourname.blackjackcounter.domain.model.BlackjackPayoutRule
+import com.yourname.blackjackcounter.domain.model.DoubleDownRule
+import com.yourname.blackjackcounter.domain.model.SurrenderRule
 import com.yourname.blackjackcounter.domain.model.StrategyDeviationRow
+import com.yourname.blackjackcounter.domain.model.TableRules
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,18 +126,47 @@ class CounterViewModel : ViewModel() {
         )
     )
 
-    val splitDeviationSections: List<StrategyChartSection> = listOf(
-        StrategyChartSection(
-            title = "Count-Based Split Deviations (Advanced, Hi-Lo style)",
-            rows = listOf(
-                StrategyChartRow("10,10 vs 5", "Split at very high TC (commonly around +5)"),
-                StrategyChartRow("10,10 vs 6", "Split at very high TC (commonly around +4)"),
-                StrategyChartRow("9,9 vs 7", "Can shift by count/rules; use your index chart"),
-                StrategyChartRow("A,A and 8,8", "Usually always split regardless of count"),
-                StrategyChartRow("All split deviations", "Rule and system dependent; verify table rules")
+    fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
+        val noPeekOnTen = tableRules.dealerPeekRule != DealerPeekRule.ACE_AND_TEN
+
+        val baseRows = mutableListOf(
+            StrategyChartRow("10,10 vs 5", "Split at very high TC (commonly around +5)"),
+            StrategyChartRow("10,10 vs 6", "Split at very high TC (commonly around +4)"),
+            StrategyChartRow(
+                "10 vs 10 (double deviation)",
+                if (noPeekOnTen) {
+                    "Avoid if no-peek on 10/A is active."
+                } else {
+                    "Double only at high TC (commonly around +4)."
+                }
+            ),
+            StrategyChartRow("9,9 vs 7", "Can shift by count/rules; use your index chart"),
+            StrategyChartRow("All split deviations", "Rule and system dependent; verify table rules")
+        )
+
+        if (!tableRules.resplitAces) {
+            baseRows.add(
+                StrategyChartRow("A,A re-split", "Not allowed at this table.")
+            )
+        }
+        if (!tableRules.hitSplitAces) {
+            baseRows.add(
+                StrategyChartRow("After splitting A,A", "No hit after split aces.")
+            )
+        }
+        if (noPeekOnTen) {
+            baseRows.add(
+                StrategyChartRow("A,A vs 10/A", "Use a no-peek strategy chart (ace split EV changes).")
+            )
+        }
+
+        return listOf(
+            StrategyChartSection(
+                title = "Count-Based Split Deviations (Advanced, Hi-Lo style)",
+                rows = baseRows
             )
         )
-    )
+    }
 
     private val _uiState = MutableStateFlow(withDerivedValues(
         CounterState(
@@ -213,6 +248,47 @@ class CounterViewModel : ViewModel() {
         }
     }
 
+    fun setDealerSoft17Rule(rule: DealerSoft17Rule) {
+        updateTableRules { it.copy(dealerSoft17Rule = rule) }
+    }
+
+    fun setDealerPeekRule(rule: DealerPeekRule) {
+        updateTableRules { it.copy(dealerPeekRule = rule) }
+    }
+
+    fun setBlackjackPayoutRule(rule: BlackjackPayoutRule) {
+        updateTableRules { it.copy(blackjackPayoutRule = rule) }
+    }
+
+    fun setDoubleDownRule(rule: DoubleDownRule) {
+        updateTableRules { it.copy(doubleDownRule = rule) }
+    }
+
+    fun setDoubleAfterSplit(enabled: Boolean) {
+        updateTableRules { it.copy(doubleAfterSplit = enabled) }
+    }
+
+    fun setSurrenderRule(rule: SurrenderRule) {
+        updateTableRules { it.copy(surrenderRule = rule) }
+    }
+
+    fun setResplitAces(enabled: Boolean) {
+        updateTableRules { it.copy(resplitAces = enabled) }
+    }
+
+    fun setHitSplitAces(enabled: Boolean) {
+        updateTableRules { it.copy(hitSplitAces = enabled) }
+    }
+
+    fun setSixCardCharlieAutoWin(enabled: Boolean) {
+        updateTableRules { it.copy(sixCardCharlieAutoWin = enabled) }
+    }
+
+    fun setMaxSplitHands(maxHands: Int) {
+        val safeMaxHands = maxHands.coerceIn(2, 6)
+        updateTableRules { it.copy(maxSplitHands = safeMaxHands) }
+    }
+
     fun toggleCheatSheet() {
         setCheatSheetVisible(!_uiState.value.showCheatSheet)
     }
@@ -277,10 +353,17 @@ class CounterViewModel : ViewModel() {
 
     private fun withDerivedValues(state: CounterState): CounterState {
         val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val usesTrueCount = selectedSystem.usesTrueCount()
         val totalCards = state.totalDecks * CARDS_PER_DECK
         val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
         val shouldTrackAces = selectedSystem.recommendsAceSideCount()
+        val trueCount = calculateTrueCount(state)
+        val estimatedPlayerEdgePercent = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = trueCount,
+            usesTrueCount = usesTrueCount,
+            tableRules = state.tableRules
+        )
         val acesExpected = if (shouldTrackAces) {
             CounterCalculations.calculateExpectedAces(cardsDrawn)
         } else {
@@ -292,18 +375,30 @@ class CounterViewModel : ViewModel() {
         }
 
         return state.copy(
-            trueCount = calculateTrueCount(state),
+            trueCount = trueCount,
             deckPenetrationPercent = calculateDeckPenetrationPercent(state),
             totalCards = totalCards,
             cardsLeft = cardsLeft,
             cardsDrawn = cardsDrawn,
             acesSeen = acesSeen,
             acesExpected = acesExpected,
+            estimatedPlayerEdgePercent = estimatedPlayerEdgePercent,
+            canEstimateEdge = usesTrueCount,
             selectedSystemRecommendsAceSideCount = shouldTrackAces,
             buttonTagValues = buttonTagValues,
             cheatSheetRows = calculateCheatSheetRows(selectedSystem),
             strategyDeviationRows = calculateStrategyDeviationRows(selectedSystem)
         )
+    }
+
+    private fun updateTableRules(update: (TableRules) -> TableRules) {
+        _uiState.update { current ->
+            withDerivedValues(
+                current.copy(
+                    tableRules = update(current.tableRules)
+                )
+            )
+        }
     }
 
     private fun calculateCheatSheetRows(system: CountingSystem): List<CheatSheetRow> {

@@ -1,6 +1,7 @@
 package com.yourname.blackjackcounter.domain.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CounterCalculationsTest {
@@ -44,5 +45,34 @@ class CounterCalculationsTest {
         val result = CounterCalculations.calculateExpectedAces(cardsDrawn = 26)
 
         assertEquals(2.0, result, 0.0001)
+    }
+
+    @Test
+    fun `estimateHouseEdgePercent decreases when six card charlie is enabled`() {
+        val baseRules = TableRules()
+        val charlieRules = TableRules(sixCardCharlieAutoWin = true)
+
+        val baseHouseEdge = CounterCalculations.estimateHouseEdgePercent(baseRules)
+        val charlieHouseEdge = CounterCalculations.estimateHouseEdgePercent(charlieRules)
+
+        assertTrue(charlieHouseEdge < baseHouseEdge)
+    }
+
+    @Test
+    fun `calculateEstimatedPlayerEdgePercent increases with higher true count`() {
+        val rules = TableRules()
+
+        val lowCountEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 0.0,
+            usesTrueCount = true,
+            tableRules = rules
+        )
+        val highCountEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 4.0,
+            usesTrueCount = true,
+            tableRules = rules
+        )
+
+        assertTrue(highCountEdge > lowCountEdge)
     }
 }

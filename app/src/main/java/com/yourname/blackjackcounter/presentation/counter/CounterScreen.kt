@@ -35,6 +35,7 @@ import com.yourname.blackjackcounter.presentation.counter.components.DeckControl
 import com.yourname.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
 import com.yourname.blackjackcounter.presentation.counter.components.SystemSelector
+import com.yourname.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.yourname.blackjackcounter.ui.theme.FeltGreen
 import com.yourname.blackjackcounter.ui.theme.GoldAccent
 import com.yourname.blackjackcounter.ui.theme.TableEdge
@@ -46,6 +47,7 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
+    var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
 
     Surface(
@@ -117,6 +119,13 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                     }
                                 )
                                 DropdownMenuItem(
+                                    text = { Text("Table Rules") },
+                                    onClick = {
+                                        showRulesDialog = true
+                                        menuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Reset Count") },
                                     onClick = {
                                         viewModel.resetCount()
@@ -173,6 +182,27 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                         },
                         valueColor = if (state.selectedSystemUsesTrueCount) {
                             countColor(trueCountValue)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        compact = true,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    val edgeValue = if (state.canEstimateEdge) {
+                        state.estimatedPlayerEdgePercent
+                    } else {
+                        0.0
+                    }
+                    CountDisplayCard(
+                        title = "Edge %",
+                        value = if (state.canEstimateEdge) {
+                            formatSignedPercent(state.estimatedPlayerEdgePercent)
+                        } else {
+                            "N/A"
+                        },
+                        valueColor = if (state.canEstimateEdge) {
+                            countColor(edgeValue)
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
@@ -254,7 +284,40 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                         HelpDialogContent(
                             countingSystemGuides = viewModel.countingSystemGuides,
                             basicStrategySections = viewModel.basicStrategySections,
-                            splitDeviationSections = viewModel.splitDeviationSections
+                            splitDeviationSections = viewModel.getSplitDeviationSections(state.tableRules),
+                            tableRules = state.tableRules
+                        )
+                    }
+                )
+            }
+
+            if (showRulesDialog) {
+                AlertDialog(
+                    onDismissRequest = { showRulesDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = { showRulesDialog = false }) {
+                            Text("Done")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Table Rules",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        TableRulesDialogContent(
+                            rules = state.tableRules,
+                            onDealerSoft17RuleChanged = viewModel::setDealerSoft17Rule,
+                            onDealerPeekRuleChanged = viewModel::setDealerPeekRule,
+                            onBlackjackPayoutRuleChanged = viewModel::setBlackjackPayoutRule,
+                            onDoubleDownRuleChanged = viewModel::setDoubleDownRule,
+                            onDoubleAfterSplitChanged = viewModel::setDoubleAfterSplit,
+                            onSurrenderRuleChanged = viewModel::setSurrenderRule,
+                            onResplitAcesChanged = viewModel::setResplitAces,
+                            onHitSplitAcesChanged = viewModel::setHitSplitAces,
+                            onSixCardCharlieAutoWinChanged = viewModel::setSixCardCharlieAutoWin,
+                            onMaxSplitHandsChanged = viewModel::setMaxSplitHands
                         )
                     }
                 )
@@ -294,6 +357,12 @@ private fun formatSignedCount(
     }
 
     return if (rounded > 0) "+$formatted" else formatted
+}
+
+private fun formatSignedPercent(value: Double): String {
+    val rounded = round(value * 10.0) / 10.0
+    val prefix = if (rounded > 0.0) "+" else ""
+    return "$prefix${String.format(Locale.US, "%.1f", rounded)}%"
 }
 
 @Composable

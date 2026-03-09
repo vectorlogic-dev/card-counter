@@ -18,12 +18,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourname.blackjackcounter.presentation.counter.CountingSystemGuide
 import com.yourname.blackjackcounter.presentation.counter.StrategyChartSection
+import com.yourname.blackjackcounter.domain.model.BlackjackPayoutRule
+import com.yourname.blackjackcounter.domain.model.DealerPeekRule
+import com.yourname.blackjackcounter.domain.model.DealerSoft17Rule
+import com.yourname.blackjackcounter.domain.model.DoubleDownRule
+import com.yourname.blackjackcounter.domain.model.SurrenderRule
+import com.yourname.blackjackcounter.domain.model.TableRules
 
 @Composable
 fun HelpDialogContent(
     countingSystemGuides: List<CountingSystemGuide>,
     basicStrategySections: List<StrategyChartSection>,
     splitDeviationSections: List<StrategyChartSection>,
+    tableRules: TableRules,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -33,7 +40,8 @@ fun HelpDialogContent(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        HelpHeaderCard()
+        HelpHeaderCard(tableRules = tableRules)
+        CurrentRulesCard(tableRules = tableRules)
 
         countingSystemGuides.forEach { guide ->
             CountingSystemGuideCard(guide = guide)
@@ -45,7 +53,7 @@ fun HelpDialogContent(
 }
 
 @Composable
-private fun HelpHeaderCard() {
+private fun HelpHeaderCard(tableRules: TableRules) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -62,11 +70,59 @@ private fun HelpHeaderCard() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Basic strategy chart assumes multi-deck S17, DAS, no surrender.",
+                text = "Strategy chart is baseline. Use current table rules below for context.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Current core rule: ${tableRules.dealerSoft17Rule.toLabel()}, " +
+                    "${tableRules.dealerPeekRule.toLabel()}.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun CurrentRulesCard(tableRules: TableRules) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Current Table Rules",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            RuleLine("Dealer soft 17", tableRules.dealerSoft17Rule.toLabel())
+            RuleLine("Dealer peek", tableRules.dealerPeekRule.toLabel())
+            RuleLine("Blackjack payout", tableRules.blackjackPayoutRule.toLabel())
+            RuleLine("Double down", tableRules.doubleDownRule.toLabel())
+            RuleLine("Double after split", if (tableRules.doubleAfterSplit) "Allowed" else "Not allowed")
+            RuleLine("Surrender", tableRules.surrenderRule.toLabel())
+            RuleLine("Resplit aces", if (tableRules.resplitAces) "Allowed" else "Not allowed")
+            RuleLine("Hit split aces", if (tableRules.hitSplitAces) "Allowed" else "Not allowed")
+            RuleLine("6-card Charlie", if (tableRules.sixCardCharlieAutoWin) "Enabled" else "Disabled")
+            RuleLine("Max split hands", tableRules.maxSplitHands.toString())
+        }
+    }
+}
+
+@Composable
+private fun RuleLine(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -198,4 +254,32 @@ private fun SplitDeviationChartCard(sections: List<StrategyChartSection>) {
             }
         }
     }
+}
+
+private fun DealerSoft17Rule.toLabel(): String = when (this) {
+    DealerSoft17Rule.STAND -> "S17 (Dealer stands on soft 17)"
+    DealerSoft17Rule.HIT -> "H17 (Dealer hits soft 17)"
+}
+
+private fun DealerPeekRule.toLabel(): String = when (this) {
+    DealerPeekRule.ACE_AND_TEN -> "Peek on Ace and 10"
+    DealerPeekRule.ACE_ONLY -> "Peek on Ace only (no peek on 10)"
+    DealerPeekRule.NO_PEEK -> "No peek"
+}
+
+private fun BlackjackPayoutRule.toLabel(): String = when (this) {
+    BlackjackPayoutRule.THREE_TO_TWO -> "3:2"
+    BlackjackPayoutRule.SIX_TO_FIVE -> "6:5"
+}
+
+private fun DoubleDownRule.toLabel(): String = when (this) {
+    DoubleDownRule.ANY_TWO_CARDS -> "Any 2 cards"
+    DoubleDownRule.NINE_TO_ELEVEN -> "9-11 only"
+    DoubleDownRule.TEN_TO_ELEVEN -> "10-11 only"
+}
+
+private fun SurrenderRule.toLabel(): String = when (this) {
+    SurrenderRule.NONE -> "None"
+    SurrenderRule.LATE -> "Late"
+    SurrenderRule.EARLY -> "Early"
 }

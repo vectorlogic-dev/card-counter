@@ -1,6 +1,8 @@
 package com.yourname.blackjackcounter.presentation.counter
 
 import com.yourname.blackjackcounter.domain.model.CardRank
+import com.yourname.blackjackcounter.domain.model.DealerPeekRule
+import com.yourname.blackjackcounter.domain.model.DealerSoft17Rule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -107,6 +109,7 @@ class CounterViewModelTest {
 
         val updated = viewModel.uiState.value
         assertFalse(updated.selectedSystemUsesTrueCount)
+        assertFalse(updated.canEstimateEdge)
         assertTrue(updated.strategyDeviationRows.isEmpty())
     }
 
@@ -118,5 +121,47 @@ class CounterViewModelTest {
 
         val updated = viewModel.uiState.value
         assertTrue(updated.strategyDeviationRows.any { it.playLabel == "16 vs 10" && it.indexLabel.contains("TC 0+") })
+    }
+
+    @Test
+    fun `table rules can be updated from menu settings`() {
+        val viewModel = CounterViewModel()
+
+        viewModel.setDealerSoft17Rule(DealerSoft17Rule.HIT)
+        viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
+        viewModel.setMaxSplitHands(6)
+
+        val updated = viewModel.uiState.value
+        assertEquals(DealerSoft17Rule.HIT, updated.tableRules.dealerSoft17Rule)
+        assertEquals(DealerPeekRule.ACE_ONLY, updated.tableRules.dealerPeekRule)
+        assertEquals(6, updated.tableRules.maxSplitHands)
+    }
+
+    @Test
+    fun `enabling six card charlie improves estimated edge`() {
+        val viewModel = CounterViewModel()
+        val edgeBefore = viewModel.uiState.value.estimatedPlayerEdgePercent
+
+        viewModel.setSixCardCharlieAutoWin(true)
+
+        val updated = viewModel.uiState.value
+        assertTrue(updated.tableRules.sixCardCharlieAutoWin)
+        assertTrue(updated.estimatedPlayerEdgePercent > edgeBefore)
+    }
+
+    @Test
+    fun `split deviations include no-peek adjustments and ace split notes`() {
+        val viewModel = CounterViewModel()
+        viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
+        viewModel.setResplitAces(false)
+        viewModel.setHitSplitAces(false)
+
+        val sections = viewModel.getSplitDeviationSections(viewModel.uiState.value.tableRules)
+        val rows = sections.flatMap { it.rows }
+
+        assertTrue(rows.any { it.hand == "10 vs 10 (double deviation)" && it.action.contains("Avoid") })
+        assertTrue(rows.any { it.hand == "A,A re-split" })
+        assertTrue(rows.any { it.hand == "After splitting A,A" })
+        assertTrue(rows.any { it.hand == "A,A vs 10/A" })
     }
 }
