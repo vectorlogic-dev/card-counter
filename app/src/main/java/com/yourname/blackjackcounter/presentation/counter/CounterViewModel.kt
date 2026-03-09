@@ -40,6 +40,7 @@ data class CountingSystemGuide(
     val isBalanced: Boolean,
     val usesTrueCount: Boolean,
     val recommendsAceSideCount: Boolean,
+    val explanation: String,
     val tagRows: List<CheatSheetRow>
 )
 
@@ -104,6 +105,7 @@ class CounterViewModel : ViewModel() {
             isBalanced = system.isBalanced,
             usesTrueCount = system.usesTrueCount(),
             recommendsAceSideCount = system.recommendsAceSideCount(),
+            explanation = getSystemExplanation(system),
             tagRows = calculateCheatSheetRows(system)
         )
     }
@@ -383,17 +385,6 @@ class CounterViewModel : ViewModel() {
     fun setCheatSheetVisible(visible: Boolean) {
         _uiState.update { current ->
             current.copy(showCheatSheet = visible)
-        }
-    }
-
-    fun resetShoe() {
-        _uiState.update { current ->
-            val nextState = current.copy(
-                runningCount = 0.0,
-                decksRemaining = current.totalDecks.toDouble(),
-                acesSeen = 0
-            )
-            withDerivedValues(nextState)
         }
     }
 
@@ -725,6 +716,19 @@ class CounterViewModel : ViewModel() {
         }
 
         return null
+    }
+
+    private fun getSystemExplanation(system: CountingSystem): String {
+        return when (system.id) {
+            HiLoCountingSystem.id -> "Most common beginner system: simple +1/-1 tags, balanced, and true-count based."
+            KOCountingSystem.id -> "Beginner-friendly unbalanced system that uses running count only and avoids true-count conversion."
+            ReKOCountingSystem.id -> "Refined KO variant that keeps KO's simple running-count workflow with adjusted key-count references."
+            HiOptIICountingSystem.id -> "Higher-power level-2 system for betting and play deviations; strongest with an Ace side count."
+            OmegaIICountingSystem.id -> "Advanced level-2 balanced count with strong betting correlation; often paired with Ace side count."
+            ZenCountSystem.id -> "Balanced level-2 count with heavier weights on 4-6 cards for stronger precision than level-1 systems."
+            WongHalvesSystem.id -> "Very high-precision balanced system using half-point tags; powerful but slower to use under pressure."
+            else -> "Card-counting system with custom tag values for betting and deviation decisions."
+        }
     }
 
     private fun applyRuleAdjustments(

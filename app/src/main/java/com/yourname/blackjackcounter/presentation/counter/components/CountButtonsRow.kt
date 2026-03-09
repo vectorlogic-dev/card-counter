@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourname.blackjackcounter.domain.model.CardRank
@@ -42,7 +44,7 @@ fun CountButtonsRow(
         val nineTone = buttonTagValues.toTone(CardRank.NINE)
         val faceTone = buttonTagValues.toTone(CardRank.JACK)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "A",
                 tone = aceTone,
@@ -67,15 +69,15 @@ fun CountButtonsRow(
                 onClick = { onCardSelected(CardRank.FOUR) },
                 modifier = Modifier.weight(1f)
             )
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "5",
                 tone = fiveTone,
                 onClick = { onCardSelected(CardRank.FIVE) },
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "6",
                 tone = sixTone,
@@ -94,9 +96,6 @@ fun CountButtonsRow(
                 onClick = { onCardSelected(CardRank.EIGHT) },
                 modifier = Modifier.weight(1f)
             )
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "9",
                 tone = nineTone,
@@ -146,12 +145,15 @@ private fun CardInputButton(
     Button(
         onClick = onClick,
         modifier = modifier.height(46.dp),
-        colors = colors
+        colors = colors,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
     ) {
         Text(
             text = label,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Clip
         )
     }
 }

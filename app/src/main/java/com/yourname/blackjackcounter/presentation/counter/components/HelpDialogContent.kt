@@ -70,6 +70,11 @@ private fun HelpHeaderCard(tableRules: TableRules) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
+                text = "Each card also includes a quick summary of how that system is typically used.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
                 text = "Strategy chart is baseline. Use current table rules below for context.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -143,6 +148,10 @@ private fun CountingSystemGuideCard(guide: CountingSystemGuide) {
                     "${if (guide.usesTrueCount) "Uses True Count" else "Running Count Only"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = guide.explanation,
+                style = MaterialTheme.typography.bodySmall
             )
             if (guide.recommendsAceSideCount) {
                 Text(

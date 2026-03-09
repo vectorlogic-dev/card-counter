@@ -146,13 +146,6 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Reset Shoe") },
-                                        onClick = {
-                                            viewModel.resetShoe()
-                                            menuExpanded = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
                                         text = {
                                             Text(
                                                 if (state.showCheatSheet) "Hide Cheat Sheet"
