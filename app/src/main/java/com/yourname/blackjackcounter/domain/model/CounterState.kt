@@ -5,6 +5,11 @@ data class CheatSheetRow(
     val tagValueLabel: String
 )
 
+data class StrategyDeviationRow(
+    val playLabel: String,
+    val indexLabel: String
+)
+
 data class CounterState(
     val runningCount: Double = 0.0,
     val trueCount: Double = 0.0,
@@ -14,9 +19,13 @@ data class CounterState(
     val totalCards: Int = 312,
     val cardsDrawn: Int = 0,
     val cardsLeft: Int = 312,
+    val acesSeen: Int = 0,
+    val acesExpected: Double = 0.0,
     val selectedCountingSystemId: String = "hi_lo",
     val selectedCountingSystemName: String = "Hi-Lo",
     val selectedSystemUsesTrueCount: Boolean = true,
+    val selectedSystemRecommendsAceSideCount: Boolean = false,
     val cheatSheetRows: List<CheatSheetRow> = emptyList(),
+    val strategyDeviationRows: List<StrategyDeviationRow> = emptyList(),
     val showCheatSheet: Boolean = false
 )

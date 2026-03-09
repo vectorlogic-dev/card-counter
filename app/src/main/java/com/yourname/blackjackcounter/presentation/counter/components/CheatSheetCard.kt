@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,11 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourname.blackjackcounter.domain.model.CheatSheetRow
+import com.yourname.blackjackcounter.domain.model.StrategyDeviationRow
 
 @Composable
 fun CheatSheetCard(
     systemName: String,
     rows: List<CheatSheetRow>,
+    strategyRows: List<StrategyDeviationRow>,
+    showTrueCountDisclaimer: Boolean,
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -33,6 +37,30 @@ fun CheatSheetCard(
 
             rows.forEach { row ->
                 CheatSheetRow(cards = row.cardsLabel, value = row.tagValueLabel)
+            }
+
+            if (strategyRows.isNotEmpty()) {
+                HorizontalDivider()
+                Text(
+                    text = "Strategy Deviations",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Rule-dependent guide (common 6D S17 Hi-Lo style indices).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                strategyRows.forEach { row ->
+                    CheatSheetRow(cards = row.playLabel, value = row.indexLabel)
+                }
+            } else if (showTrueCountDisclaimer) {
+                HorizontalDivider()
+                Text(
+                    text = "Strategy deviations hidden for running-count systems.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

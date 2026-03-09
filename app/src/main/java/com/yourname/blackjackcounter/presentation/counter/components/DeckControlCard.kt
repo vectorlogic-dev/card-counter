@@ -34,6 +34,8 @@ fun DeckControlCard(
     cardsDrawn: Int,
     cardsLeft: Int,
     totalCards: Int,
+    acesSeen: Int,
+    acesExpected: Double,
     onTotalDecksChanged: (Int) -> Unit,
     onDecksRemainingChanged: (Double) -> Unit,
     modifier: Modifier = Modifier
@@ -82,6 +84,22 @@ fun DeckControlCard(
                 CardsMetricChip(
                     label = "Total",
                     value = totalCards.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CardsMetricChip(
+                    label = "Aces Seen",
+                    value = acesSeen.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                CardsMetricChip(
+                    label = "Aces Expected",
+                    value = formatAcesExpected(acesExpected),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -181,4 +199,8 @@ private fun formatDecksRemaining(value: Double): String {
 
 private fun formatPenetration(value: Double): String {
     return String.format(Locale.US, "%.1f%%", value)
+}
+
+private fun formatAcesExpected(value: Double): String {
+    return String.format(Locale.US, "%.1f", value)
 }

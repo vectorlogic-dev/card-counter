@@ -82,6 +82,13 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            if (state.selectedSystemRecommendsAceSideCount) {
+                                Text(
+                                    text = "Ace side count recommended",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
                         }
 
                         Box {
@@ -180,6 +187,8 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     cardsDrawn = state.cardsDrawn,
                     cardsLeft = state.cardsLeft,
                     totalCards = state.totalCards,
+                    acesSeen = state.acesSeen,
+                    acesExpected = state.acesExpected,
                     onTotalDecksChanged = viewModel::setTotalDecks,
                     onDecksRemainingChanged = viewModel::setDecksRemaining
                 )
@@ -208,7 +217,9 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     text = {
                         CheatSheetCard(
                             systemName = state.selectedCountingSystemName,
-                            rows = state.cheatSheetRows
+                            rows = state.cheatSheetRows,
+                            strategyRows = state.strategyDeviationRows,
+                            showTrueCountDisclaimer = !state.selectedSystemUsesTrueCount
                         )
                     }
                 )

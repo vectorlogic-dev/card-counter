@@ -10,4 +10,7 @@ interface CountingSystem {
 
     fun getTagValue(cardRank: CardRank): Double
     fun usesTrueCount(): Boolean
+
+    // Some systems are strongest only when aces are tracked separately.
+    fun recommendsAceSideCount(): Boolean = false
 }

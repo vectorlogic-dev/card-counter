@@ -38,4 +38,11 @@ class CounterCalculationsTest {
 
         assertEquals(27.2, result, 0.0001)
     }
+
+    @Test
+    fun `calculateExpectedAces is proportional to cards drawn`() {
+        val result = CounterCalculations.calculateExpectedAces(cardsDrawn = 26)
+
+        assertEquals(2.0, result, 0.0001)
+    }
 }

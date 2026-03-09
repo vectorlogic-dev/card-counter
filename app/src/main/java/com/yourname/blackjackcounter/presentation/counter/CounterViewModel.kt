@@ -3,14 +3,17 @@ package com.yourname.blackjackcounter.presentation.counter
 import androidx.lifecycle.ViewModel
 import com.yourname.blackjackcounter.data.counting.CountingSystem
 import com.yourname.blackjackcounter.data.counting.HiLoCountingSystem
+import com.yourname.blackjackcounter.data.counting.HiOptIICountingSystem
 import com.yourname.blackjackcounter.data.counting.KOCountingSystem
 import com.yourname.blackjackcounter.data.counting.OmegaIICountingSystem
+import com.yourname.blackjackcounter.data.counting.ReKOCountingSystem
 import com.yourname.blackjackcounter.data.counting.WongHalvesSystem
 import com.yourname.blackjackcounter.data.counting.ZenCountSystem
 import com.yourname.blackjackcounter.domain.model.CardRank
 import com.yourname.blackjackcounter.domain.model.CheatSheetRow
 import com.yourname.blackjackcounter.domain.model.CounterCalculations
 import com.yourname.blackjackcounter.domain.model.CounterState
+import com.yourname.blackjackcounter.domain.model.StrategyDeviationRow
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,8 @@ class CounterViewModel : ViewModel() {
     private val allSystems: List<CountingSystem> = listOf(
         HiLoCountingSystem,
         KOCountingSystem,
+        ReKOCountingSystem,
+        HiOptIICountingSystem,
         OmegaIICountingSystem,
         ZenCountSystem,
         WongHalvesSystem
@@ -43,7 +48,8 @@ class CounterViewModel : ViewModel() {
         CounterState(
             selectedCountingSystemId = HiLoCountingSystem.id,
             selectedCountingSystemName = HiLoCountingSystem.displayName,
-            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount()
+            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
+            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount()
         )
     ))
     val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
@@ -51,7 +57,11 @@ class CounterViewModel : ViewModel() {
     fun onCardSeen(cardRank: CardRank) {
         val selectedSystem = getSelectedSystem(_uiState.value.selectedCountingSystemId)
         val delta = selectedSystem.getTagValue(cardRank)
-        updateRunningCount(delta = delta, advancePenetration = true)
+        updateRunningCount(
+            delta = delta,
+            advancePenetration = true,
+            seenAce = cardRank == CardRank.ACE
+        )
     }
 
     fun onFaceCardsSeen() {
@@ -61,7 +71,12 @@ class CounterViewModel : ViewModel() {
 
     fun resetCount() {
         _uiState.update { current ->
-            withDerivedValues(current.copy(runningCount = 0.0))
+            withDerivedValues(
+                current.copy(
+                    runningCount = 0.0,
+                    acesSeen = 0
+                )
+            )
         }
     }
 
@@ -99,7 +114,8 @@ class CounterViewModel : ViewModel() {
             val nextState = current.copy(
                 selectedCountingSystemId = selectedSystem.id,
                 selectedCountingSystemName = selectedSystem.displayName,
-                selectedSystemUsesTrueCount = selectedSystem.usesTrueCount()
+                selectedSystemUsesTrueCount = selectedSystem.usesTrueCount(),
+                selectedSystemRecommendsAceSideCount = selectedSystem.recommendsAceSideCount()
             )
             withDerivedValues(nextState)
         }
@@ -119,7 +135,8 @@ class CounterViewModel : ViewModel() {
         _uiState.update { current ->
             val nextState = current.copy(
                 runningCount = 0.0,
-                decksRemaining = current.totalDecks.toDouble()
+                decksRemaining = current.totalDecks.toDouble(),
+                acesSeen = 0
             )
             withDerivedValues(nextState)
         }
@@ -127,7 +144,8 @@ class CounterViewModel : ViewModel() {
 
     private fun updateRunningCount(
         delta: Double,
-        advancePenetration: Boolean = false
+        advancePenetration: Boolean = false,
+        seenAce: Boolean = false
     ) {
         _uiState.update { current ->
             val nextDecksRemaining = if (advancePenetration) {
@@ -138,7 +156,8 @@ class CounterViewModel : ViewModel() {
 
             val nextState = current.copy(
                 runningCount = current.runningCount + delta,
-                decksRemaining = nextDecksRemaining
+                decksRemaining = nextDecksRemaining,
+                acesSeen = if (seenAce) current.acesSeen + 1 else current.acesSeen
             )
             withDerivedValues(nextState)
         }
@@ -169,6 +188,7 @@ class CounterViewModel : ViewModel() {
         val totalCards = state.totalDecks * CARDS_PER_DECK
         val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
+        val acesExpected = CounterCalculations.calculateExpectedAces(cardsDrawn)
 
         return state.copy(
             trueCount = calculateTrueCount(state),
@@ -176,7 +196,10 @@ class CounterViewModel : ViewModel() {
             totalCards = totalCards,
             cardsLeft = cardsLeft,
             cardsDrawn = cardsDrawn,
-            cheatSheetRows = calculateCheatSheetRows(selectedSystem)
+            acesExpected = acesExpected,
+            selectedSystemRecommendsAceSideCount = selectedSystem.recommendsAceSideCount(),
+            cheatSheetRows = calculateCheatSheetRows(selectedSystem),
+            strategyDeviationRows = calculateStrategyDeviationRows(selectedSystem)
         )
     }
 
@@ -192,6 +215,23 @@ class CounterViewModel : ViewModel() {
                 tagValueLabel = formatTagValue(value)
             )
         }
+    }
+
+    private fun calculateStrategyDeviationRows(system: CountingSystem): List<StrategyDeviationRow> {
+        if (!system.usesTrueCount()) return emptyList()
+
+        // Common true-count index plays (rough Hi-Lo style references).
+        return listOf(
+            StrategyDeviationRow(playLabel = "Insurance vs A", indexLabel = "Take at TC +3"),
+            StrategyDeviationRow(playLabel = "16 vs 10", indexLabel = "Stand at TC 0+"),
+            StrategyDeviationRow(playLabel = "15 vs 10", indexLabel = "Stand at TC +4"),
+            StrategyDeviationRow(playLabel = "10 vs 10", indexLabel = "Double at TC +4"),
+            StrategyDeviationRow(playLabel = "12 vs 3", indexLabel = "Stand at TC +2"),
+            StrategyDeviationRow(playLabel = "12 vs 2", indexLabel = "Stand at TC +3"),
+            StrategyDeviationRow(playLabel = "11 vs A", indexLabel = "Double at TC +1"),
+            StrategyDeviationRow(playLabel = "9 vs 2", indexLabel = "Double at TC +1"),
+            StrategyDeviationRow(playLabel = "9 vs 7", indexLabel = "Double at TC +3")
+        )
     }
 
     private fun CardRank.toCardLabel(): String {

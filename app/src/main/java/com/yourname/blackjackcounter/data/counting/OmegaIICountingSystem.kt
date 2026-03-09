@@ -19,4 +19,6 @@ object OmegaIICountingSystem : CountingSystem {
     }
 
     override fun usesTrueCount(): Boolean = true
+
+    override fun recommendsAceSideCount(): Boolean = true
 }
