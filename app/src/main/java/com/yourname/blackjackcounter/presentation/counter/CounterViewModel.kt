@@ -32,10 +32,7 @@ class CounterViewModel : ViewModel() {
 
     private val systemsById: Map<String, CountingSystem> = allSystems.associateBy { it.id }
 
-    // V1 exposes only Hi-Lo in the UI, while additional systems are already wired for later use.
-    private val uiExposedSystems: List<CountingSystem> = listOf(HiLoCountingSystem)
-
-    val availableSystems: List<CountingSystemOption> = uiExposedSystems.map { system ->
+    val availableSystems: List<CountingSystemOption> = allSystems.map { system ->
         CountingSystemOption(id = system.id, displayName = system.displayName)
     }
 
@@ -100,6 +97,22 @@ class CounterViewModel : ViewModel() {
                 selectedCountingSystemId = selectedSystem.id,
                 selectedCountingSystemName = selectedSystem.displayName,
                 selectedSystemUsesTrueCount = selectedSystem.usesTrueCount()
+            )
+            withDerivedValues(nextState)
+        }
+    }
+
+    fun toggleCheatSheet() {
+        _uiState.update { current ->
+            current.copy(showCheatSheet = !current.showCheatSheet)
+        }
+    }
+
+    fun resetShoe() {
+        _uiState.update { current ->
+            val nextState = current.copy(
+                runningCount = 0.0,
+                decksRemaining = current.totalDecks.toDouble()
             )
             withDerivedValues(nextState)
         }

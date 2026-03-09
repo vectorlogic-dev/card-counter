@@ -8,5 +8,6 @@ data class CounterState(
     val decksRemaining: Double = 6.0,
     val selectedCountingSystemId: String = "hi_lo",
     val selectedCountingSystemName: String = "Hi-Lo",
-    val selectedSystemUsesTrueCount: Boolean = true
+    val selectedSystemUsesTrueCount: Boolean = true,
+    val showCheatSheet: Boolean = false
 )
