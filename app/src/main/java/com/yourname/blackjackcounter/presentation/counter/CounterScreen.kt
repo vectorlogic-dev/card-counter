@@ -112,61 +112,59 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                             }
                         }
 
-                        Box {
-                            TextButton(onClick = { menuExpanded = true }) {
-                                Text("Menu")
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            TextButton(onClick = { showHelpDialog = true }) {
+                                Text("Help")
                             }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Select Counting System") },
-                                    onClick = {
-                                        showSystemSelector = true
-                                        menuExpanded = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Help") },
-                                    onClick = {
-                                        showHelpDialog = true
-                                        menuExpanded = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Table Rules") },
-                                    onClick = {
-                                        showRulesDialog = true
-                                        menuExpanded = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Reset Count") },
-                                    onClick = {
-                                        viewModel.resetCount()
-                                        menuExpanded = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Reset Shoe") },
-                                    onClick = {
-                                        viewModel.resetShoe()
-                                        menuExpanded = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            if (state.showCheatSheet) "Hide Cheat Sheet"
-                                            else "Show Cheat Sheet"
-                                        )
-                                    },
-                                    onClick = {
-                                        viewModel.toggleCheatSheet()
-                                        menuExpanded = false
-                                    }
-                                )
+                            Box {
+                                TextButton(onClick = { menuExpanded = true }) {
+                                    Text("Menu")
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Select Counting System") },
+                                        onClick = {
+                                            showSystemSelector = true
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Table Rules") },
+                                        onClick = {
+                                            showRulesDialog = true
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Reset Count") },
+                                        onClick = {
+                                            viewModel.resetCount()
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Reset Shoe") },
+                                        onClick = {
+                                            viewModel.resetShoe()
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (state.showCheatSheet) "Hide Cheat Sheet"
+                                                else "Show Cheat Sheet"
+                                            )
+                                        },
+                                        onClick = {
+                                            viewModel.toggleCheatSheet()
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
