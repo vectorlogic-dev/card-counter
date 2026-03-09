@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android Verify Workflow"
+  short_description: "Build, test, and lint workflow for this Android repo."
+  default_prompt: "Use $android-verify-workflow to run compile checks and summarize actionable failures."

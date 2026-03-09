@@ -1,0 +1,131 @@
+package com.yourname.blackjackcounter.presentation.counter.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import java.util.Locale
+import kotlin.math.roundToInt
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeckControlCard(
+    totalDecks: Int,
+    decksRemaining: Double,
+    deckPenetrationPercent: Double,
+    onTotalDecksChanged: (Int) -> Unit,
+    onDecksRemainingChanged: (Double) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val minDecksRemaining = 0.25f
+    val sliderMax = totalDecks.toFloat().coerceAtLeast(minDecksRemaining)
+    val sliderSteps = (((sliderMax - minDecksRemaining) / 0.25f).roundToInt() - 1).coerceAtLeast(0)
+
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Deck Controls",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "Penetration ${formatPenetration(deckPenetrationPercent)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = menuExpanded,
+                onExpandedChange = { menuExpanded = !menuExpanded }
+            ) {
+                TextField(
+                    value = totalDecks.toString(),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Total Decks in Shoe") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    (1..8).forEach { deckOption ->
+                        DropdownMenuItem(
+                            text = { Text(deckOption.toString()) },
+                            onClick = {
+                                onTotalDecksChanged(deckOption)
+                                menuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Decks Remaining",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = formatDecksRemaining(decksRemaining),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Slider(
+                    value = decksRemaining.toFloat().coerceIn(minDecksRemaining, sliderMax),
+                    onValueChange = { raw ->
+                        val snapped = (raw / 0.25f).roundToInt() * 0.25f
+                        onDecksRemainingChanged(snapped.coerceIn(minDecksRemaining, sliderMax).toDouble())
+                    },
+                    valueRange = minDecksRemaining..sliderMax,
+                    steps = sliderSteps
+                )
+            }
+        }
+    }
+}
+
+private fun formatDecksRemaining(value: Double): String {
+    return String.format(Locale.US, "%.2f", value)
+}
+
+private fun formatPenetration(value: Double): String {
+    return String.format(Locale.US, "%.1f%%", value)
+}
