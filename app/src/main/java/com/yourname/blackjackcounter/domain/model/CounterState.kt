@@ -13,6 +13,9 @@ data class StrategyDeviationRow(
 data class CounterState(
     val runningCount: Double = 0.0,
     val trueCount: Double = 0.0,
+    val recommendedBetUnits: Int = 1,
+    val betSizingCountLabel: String = "TC",
+    val betSizingCountValue: Double = 0.0,
     val deckPenetrationPercent: Double = 0.0,
     val totalDecks: Int = 6,
     val decksRemaining: Double = 6.0,

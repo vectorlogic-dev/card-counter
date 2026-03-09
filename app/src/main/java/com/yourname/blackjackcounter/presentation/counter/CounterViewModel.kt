@@ -451,6 +451,11 @@ class CounterViewModel : ViewModel() {
             usesTrueCount = usesTrueCount,
             tableRules = state.tableRules
         )
+        val betSizingCountValue = if (usesTrueCount) trueCount else state.runningCount
+        val recommendedBetUnits = CounterCalculations.calculateRecommendedBetUnits(
+            countValue = betSizingCountValue,
+            usesTrueCount = usesTrueCount
+        )
         val acesExpected = if (shouldTrackAces) {
             CounterCalculations.calculateExpectedAces(cardsDrawn)
         } else {
@@ -463,6 +468,9 @@ class CounterViewModel : ViewModel() {
 
         return state.copy(
             trueCount = trueCount,
+            recommendedBetUnits = recommendedBetUnits,
+            betSizingCountLabel = if (usesTrueCount) "TC" else "RC",
+            betSizingCountValue = betSizingCountValue,
             deckPenetrationPercent = calculateDeckPenetrationPercent(state),
             totalCards = totalCards,
             cardsLeft = cardsLeft,

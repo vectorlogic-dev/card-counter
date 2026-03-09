@@ -29,7 +29,7 @@ fun CountButtonsRow(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         val aceTone = buttonTagValues.toTone(CardRank.ACE)
         val twoTone = buttonTagValues.toTone(CardRank.TWO)
@@ -40,10 +40,9 @@ fun CountButtonsRow(
         val sevenTone = buttonTagValues.toTone(CardRank.SEVEN)
         val eightTone = buttonTagValues.toTone(CardRank.EIGHT)
         val nineTone = buttonTagValues.toTone(CardRank.NINE)
-        val tenTone = buttonTagValues.toTone(CardRank.TEN)
         val faceTone = buttonTagValues.toTone(CardRank.JACK)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "A",
                 tone = aceTone,
@@ -70,7 +69,7 @@ fun CountButtonsRow(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "5",
                 tone = fiveTone,
@@ -97,7 +96,7 @@ fun CountButtonsRow(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             CardInputButton(
                 label = "9",
                 tone = nineTone,
@@ -105,16 +104,10 @@ fun CountButtonsRow(
                 modifier = Modifier.weight(1f)
             )
             CardInputButton(
-                label = "10",
-                tone = tenTone,
-                onClick = { onCardSelected(CardRank.TEN) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
                 label = "T/J/Q/K",
                 tone = faceTone,
                 onClick = onFaceCardsSelected,
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -152,13 +145,13 @@ private fun CardInputButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(54.dp),
+        modifier = modifier.height(46.dp),
         colors = colors
     ) {
         Text(
             text = label,
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }

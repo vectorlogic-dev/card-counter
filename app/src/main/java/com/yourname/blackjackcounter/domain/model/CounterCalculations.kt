@@ -103,6 +103,29 @@ object CounterCalculations {
         return roundToOneDecimal(houseEdge)
     }
 
+    fun calculateRecommendedBetUnits(
+        countValue: Double,
+        usesTrueCount: Boolean
+    ): Int {
+        return if (usesTrueCount) {
+            when {
+                countValue < 1.0 -> 1
+                countValue < 2.0 -> 2
+                countValue < 3.0 -> 4
+                countValue < 4.0 -> 8
+                else -> 12
+            }
+        } else {
+            when {
+                countValue < 2.0 -> 1
+                countValue < 4.0 -> 2
+                countValue < 6.0 -> 4
+                countValue < 8.0 -> 8
+                else -> 12
+            }
+        }
+    }
+
     private const val CARDS_PER_DECK = 52.0
     private const val ACES_PER_DECK = 4.0
     private const val BASE_HOUSE_EDGE_PERCENT = 0.5

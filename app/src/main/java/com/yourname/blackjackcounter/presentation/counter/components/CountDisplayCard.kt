@@ -25,18 +25,18 @@ fun CountDisplayCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = if (compact) 12.dp else 18.dp,
-                    vertical = if (compact) 12.dp else 16.dp
+                    horizontal = if (compact) 10.dp else 16.dp,
+                    vertical = if (compact) 8.dp else 12.dp
                 )
         ) {
             Text(
                 text = title,
-                style = if (compact) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.titleMedium,
+                style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,
-                style = if (compact) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = valueColor
             )

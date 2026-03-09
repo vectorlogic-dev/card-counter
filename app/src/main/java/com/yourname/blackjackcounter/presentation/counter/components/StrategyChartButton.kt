@@ -19,11 +19,11 @@ fun StrategyChartButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(44.dp)
     ) {
         Text(
             text = "Open Strategy Chart",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
     }

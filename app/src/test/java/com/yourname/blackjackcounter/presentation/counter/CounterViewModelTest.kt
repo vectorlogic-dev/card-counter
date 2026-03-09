@@ -216,4 +216,32 @@ class CounterViewModelTest {
 
         assertEquals("H", dealerAceCell.action)
     }
+
+    @Test
+    fun `bet recommendation uses true count for balanced systems`() {
+        val viewModel = CounterViewModel()
+        repeat(3) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+
+        val updated = viewModel.uiState.value
+        assertEquals("TC", updated.betSizingCountLabel)
+        assertEquals(3.0, updated.betSizingCountValue, 0.0001)
+        assertEquals(8, updated.recommendedBetUnits)
+    }
+
+    @Test
+    fun `bet recommendation uses running count for unbalanced systems`() {
+        val viewModel = CounterViewModel()
+        viewModel.setCountingSystem("ko")
+        repeat(5) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+
+        val updated = viewModel.uiState.value
+        assertEquals("RC", updated.betSizingCountLabel)
+        assertEquals(5.0, updated.betSizingCountValue, 0.0001)
+        assertEquals(4, updated.recommendedBetUnits)
+    }
 }

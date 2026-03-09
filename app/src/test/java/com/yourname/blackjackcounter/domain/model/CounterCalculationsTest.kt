@@ -75,4 +75,22 @@ class CounterCalculationsTest {
 
         assertTrue(highCountEdge > lowCountEdge)
     }
+
+    @Test
+    fun `calculateRecommendedBetUnits scales with true count`() {
+        assertEquals(1, CounterCalculations.calculateRecommendedBetUnits(0.9, usesTrueCount = true))
+        assertEquals(2, CounterCalculations.calculateRecommendedBetUnits(1.2, usesTrueCount = true))
+        assertEquals(4, CounterCalculations.calculateRecommendedBetUnits(2.7, usesTrueCount = true))
+        assertEquals(8, CounterCalculations.calculateRecommendedBetUnits(3.2, usesTrueCount = true))
+        assertEquals(12, CounterCalculations.calculateRecommendedBetUnits(4.0, usesTrueCount = true))
+    }
+
+    @Test
+    fun `calculateRecommendedBetUnits scales with running count for unbalanced systems`() {
+        assertEquals(1, CounterCalculations.calculateRecommendedBetUnits(1.5, usesTrueCount = false))
+        assertEquals(2, CounterCalculations.calculateRecommendedBetUnits(2.0, usesTrueCount = false))
+        assertEquals(4, CounterCalculations.calculateRecommendedBetUnits(4.5, usesTrueCount = false))
+        assertEquals(8, CounterCalculations.calculateRecommendedBetUnits(6.3, usesTrueCount = false))
+        assertEquals(12, CounterCalculations.calculateRecommendedBetUnits(8.0, usesTrueCount = false))
+    }
 }

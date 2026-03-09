@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yourname.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.yourname.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.yourname.blackjackcounter.presentation.counter.components.CountButtonsRow
 import com.yourname.blackjackcounter.presentation.counter.components.CountDisplayCard
@@ -81,25 +82,25 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
                                 text = "Blackjack Counter",
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = "System: ${state.selectedCountingSystemName}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (state.selectedSystemRecommendsAceSideCount) {
@@ -226,6 +227,13 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     )
                 }
 
+                BetRecommendationCard(
+                    units = state.recommendedBetUnits,
+                    countLabel = state.betSizingCountLabel,
+                    countValue = state.betSizingCountValue,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 DeckControlCard(
                     totalDecks = state.totalDecks,
                     decksRemaining = state.decksRemaining,
@@ -242,7 +250,7 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
 
                 Text(
                     text = "Tap each card rank as it appears",
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.bodySmall
                 )
 
                 CountButtonsRow(

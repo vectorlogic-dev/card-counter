@@ -19,11 +19,11 @@ fun ResetButton(
         onClick = onReset,
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(44.dp)
     ) {
         Text(
             text = "Reset Count",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
     }
