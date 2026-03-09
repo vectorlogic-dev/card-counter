@@ -1,17 +1,22 @@
 package com.yourname.blackjackcounter.presentation.counter
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,6 +25,8 @@ import com.yourname.blackjackcounter.presentation.counter.components.CountButton
 import com.yourname.blackjackcounter.presentation.counter.components.CountDisplayCard
 import com.yourname.blackjackcounter.presentation.counter.components.DeckControlCard
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
+import com.yourname.blackjackcounter.ui.theme.FeltGreen
+import com.yourname.blackjackcounter.ui.theme.TableEdge
 import java.util.Locale
 import kotlin.math.round
 
@@ -31,66 +38,93 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(TableEdge, FeltGreen.copy(alpha = 0.55f), TableEdge)
+                    )
+                )
         ) {
-            Text(
-                text = "Blackjack Counter",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "System: ${state.selectedCountingSystemName}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                CountDisplayCard(
-                    title = "Running",
-                    value = formatSignedCount(state.runningCount),
-                    compact = true,
-                    modifier = Modifier.weight(1f)
-                )
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = "Blackjack Counter",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "System: ${state.selectedCountingSystemName}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
-                CountDisplayCard(
-                    title = "True",
-                    value = if (state.selectedSystemUsesTrueCount) {
-                        formatSignedCount(state.trueCount, alwaysOneDecimal = true)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CountDisplayCard(
+                        title = "Running",
+                        value = formatSignedCount(state.runningCount),
+                        valueColor = countColor(state.runningCount),
+                        compact = true,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    val trueCountValue = if (state.selectedSystemUsesTrueCount) {
+                        state.trueCount
                     } else {
-                        "N/A"
-                    },
-                    compact = true,
-                    modifier = Modifier.weight(1f)
+                        0.0
+                    }
+                    CountDisplayCard(
+                        title = "True",
+                        value = if (state.selectedSystemUsesTrueCount) {
+                            formatSignedCount(state.trueCount, alwaysOneDecimal = true)
+                        } else {
+                            "N/A"
+                        },
+                        valueColor = if (state.selectedSystemUsesTrueCount) {
+                            countColor(trueCountValue)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        compact = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                DeckControlCard(
+                    totalDecks = state.totalDecks,
+                    decksRemaining = state.decksRemaining,
+                    deckPenetrationPercent = state.deckPenetrationPercent,
+                    onTotalDecksChanged = viewModel::setTotalDecks,
+                    onDecksRemainingChanged = viewModel::setDecksRemaining
                 )
+
+                Text(
+                    text = "Tap each card rank as it appears",
+                    style = MaterialTheme.typography.titleSmall
+                )
+
+                CountButtonsRow(
+                    onCardSelected = viewModel::onCardSeen,
+                    onFaceCardsSelected = viewModel::onFaceCardsSeen
+                )
+
+                ResetButton(onReset = viewModel::resetCount)
             }
-
-            DeckControlCard(
-                totalDecks = state.totalDecks,
-                decksRemaining = state.decksRemaining,
-                deckPenetrationPercent = state.deckPenetrationPercent,
-                onTotalDecksChanged = viewModel::setTotalDecks,
-                onDecksRemainingChanged = viewModel::setDecksRemaining
-            )
-
-            Text(
-                text = "Tap each card rank as it appears",
-                style = MaterialTheme.typography.titleSmall
-            )
-
-            CountButtonsRow(
-                onCardSelected = viewModel::onCardSeen,
-                onFaceCardsSelected = viewModel::onFaceCardsSeen
-            )
-
-            ResetButton(onReset = viewModel::resetCount)
         }
     }
 }
@@ -107,4 +141,13 @@ private fun formatSignedCount(
     }
 
     return if (rounded > 0) "+$formatted" else formatted
+}
+
+@Composable
+private fun countColor(value: Double): Color {
+    return when {
+        value > 0 -> MaterialTheme.colorScheme.tertiary
+        value < 0 -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurface
+    }
 }

@@ -8,8 +8,8 @@ import com.yourname.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.yourname.blackjackcounter.data.counting.WongHalvesSystem
 import com.yourname.blackjackcounter.data.counting.ZenCountSystem
 import com.yourname.blackjackcounter.domain.model.CardRank
+import com.yourname.blackjackcounter.domain.model.CounterCalculations
 import com.yourname.blackjackcounter.domain.model.CounterState
-import kotlin.math.round
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,23 +48,10 @@ class CounterViewModel : ViewModel() {
     ))
     val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
 
-    fun incrementPositive() {
-        updateRunningCount(delta = 1.0)
-    }
-
-    fun incrementNeutral() {
-        // Included for explicit 0-value tracking button in training workflow.
-        _uiState.update { current -> current.copy(trueCount = calculateTrueCount(current)) }
-    }
-
-    fun incrementNegative() {
-        updateRunningCount(delta = -1.0)
-    }
-
     fun onCardSeen(cardRank: CardRank) {
         val selectedSystem = getSelectedSystem(_uiState.value.selectedCountingSystemId)
         val delta = selectedSystem.getTagValue(cardRank)
-        updateRunningCount(delta = delta)
+        updateRunningCount(delta = delta, advancePenetration = true)
     }
 
     fun onFaceCardsSeen() {
@@ -118,9 +105,21 @@ class CounterViewModel : ViewModel() {
         }
     }
 
-    private fun updateRunningCount(delta: Double) {
+    private fun updateRunningCount(
+        delta: Double,
+        advancePenetration: Boolean = false
+    ) {
         _uiState.update { current ->
-            val nextState = current.copy(runningCount = current.runningCount + delta)
+            val nextDecksRemaining = if (advancePenetration) {
+                (current.decksRemaining - DECKS_PER_CARD).coerceAtLeast(MIN_DECKS_REMAINING)
+            } else {
+                current.decksRemaining
+            }
+
+            val nextState = current.copy(
+                runningCount = current.runningCount + delta,
+                decksRemaining = nextDecksRemaining
+            )
             withDerivedValues(nextState)
         }
     }
@@ -130,22 +129,19 @@ class CounterViewModel : ViewModel() {
     }
 
     private fun calculateTrueCount(state: CounterState): Double {
-        if (!state.selectedSystemUsesTrueCount) return 0.0
-
-        // Safety guard in case deck control is ever changed and allows 0.
-        val safeDecksRemaining = state.decksRemaining.coerceAtLeast(MIN_DECKS_REMAINING)
-        val rawTrueCount = state.runningCount / safeDecksRemaining
-        return roundToOneDecimal(rawTrueCount)
-    }
-
-    private fun roundToOneDecimal(value: Double): Double {
-        return round(value * 10.0) / 10.0
+        return CounterCalculations.calculateTrueCount(
+            runningCount = state.runningCount,
+            decksRemaining = state.decksRemaining,
+            usesTrueCount = state.selectedSystemUsesTrueCount,
+            minDecksRemaining = MIN_DECKS_REMAINING
+        )
     }
 
     private fun calculateDeckPenetrationPercent(state: CounterState): Double {
-        val dealtDecks = (state.totalDecks - state.decksRemaining).coerceAtLeast(0.0)
-        val penetration = (dealtDecks / state.totalDecks.toDouble()) * 100.0
-        return roundToOneDecimal(penetration)
+        return CounterCalculations.calculateDeckPenetrationPercent(
+            totalDecks = state.totalDecks,
+            decksRemaining = state.decksRemaining
+        )
     }
 
     private fun withDerivedValues(state: CounterState): CounterState {
@@ -159,5 +155,6 @@ class CounterViewModel : ViewModel() {
         const val MIN_TOTAL_DECKS = 1
         const val MAX_TOTAL_DECKS = 8
         const val MIN_DECKS_REMAINING = 0.25
+        const val DECKS_PER_CARD = 1.0 / 52.0
     }
 }
