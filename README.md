@@ -183,6 +183,19 @@ macOS/Linux:
 Optional verification script:
 - `powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1`
 
+## Release Checklist
+- Use real production values in `app/src/main/res/values/strings.xml`:
+  - `admob_app_id`
+  - `admob_banner_ad_unit_id`
+- Keep debug ad testing IDs in `app/src/debug/res/values/strings.xml`.
+- Verify Google Play Billing products exist and are active:
+  - `pro_unlock`
+  - `full_unlock`
+- Build and lint release before upload:
+  - `.\gradlew.bat assembleRelease lintRelease`
+- Test purchase/restore flows in Play internal testing.
+- Confirm free tier shows banner ads and Pro/Full remove ads.
+
 ## Project Structure
 - `app/src/main/java/com/vectorlogic/blackjackcounter/data/counting`
   - Counting system interface + implementations

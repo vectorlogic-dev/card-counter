@@ -18,6 +18,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.vectorlogic.blackjackcounter.BuildConfig
 import com.vectorlogic.blackjackcounter.R
 
 private const val AD_LOG_TAG = "FreeTierBannerAd"
@@ -35,16 +36,18 @@ fun FreeTierBannerAd(
         AdView(context).apply {
             setAdSize(AdSize.BANNER)
             this.adUnitId = adUnitId
-            adListener = object : AdListener() {
-                override fun onAdLoaded() {
-                    Log.d(AD_LOG_TAG, "Banner loaded.")
-                }
+            if (BuildConfig.DEBUG) {
+                adListener = object : AdListener() {
+                    override fun onAdLoaded() {
+                        Log.d(AD_LOG_TAG, "Banner loaded.")
+                    }
 
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    Log.e(
-                        AD_LOG_TAG,
-                        "Banner failed: code=${loadAdError.code}, message=${loadAdError.message}"
-                    )
+                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                        Log.e(
+                            AD_LOG_TAG,
+                            "Banner failed: code=${loadAdError.code}, message=${loadAdError.message}"
+                        )
+                    }
                 }
             }
         }

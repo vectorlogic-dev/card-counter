@@ -1,12 +1,19 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import android.app.Activity
+import com.vectorlogic.blackjackcounter.data.monetization.MonetizationRepository
+import com.vectorlogic.blackjackcounter.data.monetization.MonetizationStatus
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
+import com.vectorlogic.blackjackcounter.domain.model.EntitlementTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class CounterViewModelTest {
 
@@ -294,4 +301,73 @@ class CounterViewModelTest {
         assertTrue(dealerTenCell.action.startsWith("D"))
         assertTrue(dealerTenCell.isDeviation)
     }
+
+    @Test
+    fun `free tier keeps advanced systems locked and ads enabled`() {
+        val viewModel = CounterViewModel.createForTests(
+            monetizationRepository = FakeMonetizationRepository(
+                MonetizationStatus(
+                    tier = EntitlementTier.FREE,
+                    hasFullUnlock = false,
+                    isBillingReady = true
+                )
+            )
+        )
+
+        assertEquals(SystemLockType.FULL, viewModel.getSystemLockType("hi_opt_ii"))
+        assertFalse(viewModel.setCountingSystem("hi_opt_ii"))
+        assertEquals("hi_lo", viewModel.uiState.value.selectedCountingSystemId)
+        assertTrue(viewModel.uiState.value.showAds)
+    }
+
+    @Test
+    fun `pro tier is ad free but still requires full for advanced systems`() {
+        val viewModel = CounterViewModel.createForTests(
+            monetizationRepository = FakeMonetizationRepository(
+                MonetizationStatus(
+                    tier = EntitlementTier.PRO,
+                    hasFullUnlock = false,
+                    isBillingReady = true
+                )
+            )
+        )
+
+        assertEquals(SystemLockType.FULL, viewModel.getSystemLockType("zen_count"))
+        assertFalse(viewModel.setCountingSystem("zen_count"))
+        assertFalse(viewModel.uiState.value.showAds)
+    }
+
+    @Test
+    fun `full unlock enables wong halves and advanced systems`() {
+        val viewModel = CounterViewModel.createForTests(
+            monetizationRepository = FakeMonetizationRepository(
+                MonetizationStatus(
+                    tier = EntitlementTier.PRO,
+                    hasFullUnlock = true,
+                    isBillingReady = true
+                )
+            )
+        )
+
+        assertNull(viewModel.getSystemLockType("wong_halves"))
+        assertTrue(viewModel.setCountingSystem("wong_halves"))
+        assertEquals("wong_halves", viewModel.uiState.value.selectedCountingSystemId)
+    }
+}
+
+private class FakeMonetizationRepository(
+    initialStatus: MonetizationStatus
+) : MonetizationRepository {
+    private val mutableStatus = MutableStateFlow(initialStatus)
+    override val status: StateFlow<MonetizationStatus> = mutableStatus
+
+    override fun refresh() = Unit
+
+    override fun launchProPurchase(activity: Activity) = Unit
+
+    override fun launchFullPurchase(activity: Activity) = Unit
+
+    override fun clearMessage() = Unit
+
+    override fun release() = Unit
 }

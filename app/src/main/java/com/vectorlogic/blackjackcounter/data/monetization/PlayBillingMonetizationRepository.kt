@@ -19,8 +19,10 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.vectorlogic.blackjackcounter.domain.model.EntitlementTier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -43,6 +45,8 @@ class PlayBillingMonetizationRepository(
     private val cachedFullUnlockedKey = booleanPreferencesKey("full_unlocked")
     private var proProductDetails: ProductDetails? = null
     private var fullProductDetails: ProductDetails? = null
+    private var reconnectAttempts: Int = 0
+    private var reconnectJob: Job? = null
 
     private val billingClient: BillingClient = BillingClient.newBuilder(appContext)
         .setListener(this)
@@ -152,6 +156,9 @@ class PlayBillingMonetizationRepository(
                     }
 
                     if (ready) {
+                        reconnectAttempts = 0
+                        reconnectJob?.cancel()
+                        reconnectJob = null
                         queryProductDetails()
                         queryOwnedPurchases()
                     } else {
@@ -163,9 +170,23 @@ class PlayBillingMonetizationRepository(
 
                 override fun onBillingServiceDisconnected() {
                     mutableStatus.update { it.copy(isBillingReady = false) }
+                    scheduleReconnect()
                 }
             }
         )
+    }
+
+    private fun scheduleReconnect() {
+        if (billingClient.isReady) return
+        if (reconnectJob?.isActive == true) return
+
+        val delayMs = (1_000L shl reconnectAttempts.coerceAtMost(5))
+        reconnectAttempts = (reconnectAttempts + 1).coerceAtMost(6)
+
+        reconnectJob = scope.launch {
+            delay(delayMs)
+            connect()
+        }
     }
 
     private fun queryProductDetails() {
