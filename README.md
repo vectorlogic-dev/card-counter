@@ -82,6 +82,7 @@ Monetization defaults:
 AdMob defaults in this repo use Google test IDs in `strings.xml`.
 Replace `admob_app_id` and `admob_banner_ad_unit_id` before publishing.
 Use your own production app/ad unit IDs in Google Play releases.
+Debug builds (`app/src/debug/res/values/strings.xml`) force Google sample test IDs so ads reliably render during local testing.
 
 All systems implement a shared `CountingSystem` interface.
 
