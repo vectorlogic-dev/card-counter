@@ -26,39 +26,49 @@ object AdsConsentManager {
     private var mobileAdsInitialized: Boolean = false
 
     fun requestConsentAndInitializeAds(activity: Activity) {
-        val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
+        try {
+            val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
 
-        // Respect previously stored consent immediately while refreshing status in background.
-        updateConsentState(consentInformation, activity.applicationContext)
+            // Respect previously stored consent immediately while refreshing status in background.
+            updateConsentState(consentInformation, activity.applicationContext)
 
-        val requestParameters = ConsentRequestParameters.Builder().build()
-        consentInformation.requestConsentInfoUpdate(
-            activity,
-            requestParameters,
-            {
-                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { formError ->
-                    if (formError != null && BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "Consent form dismissed with error: ${formError.message}")
+            val requestParameters = ConsentRequestParameters.Builder().build()
+            consentInformation.requestConsentInfoUpdate(
+                activity,
+                requestParameters,
+                {
+                    UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { formError ->
+                        if (formError != null && BuildConfig.DEBUG) {
+                            Log.w(LOG_TAG, "Consent form dismissed with error: ${formError.message}")
+                        }
+                        updateConsentState(consentInformation, activity.applicationContext)
+                    }
+                },
+                { requestError ->
+                    if (BuildConfig.DEBUG) {
+                        logConsentError("Consent info update failed", requestError)
                     }
                     updateConsentState(consentInformation, activity.applicationContext)
                 }
-            },
-            { requestError ->
-                if (BuildConfig.DEBUG) {
-                    logConsentError("Consent info update failed", requestError)
-                }
-                updateConsentState(consentInformation, activity.applicationContext)
-            }
-        )
+            )
+        } catch (error: Throwable) {
+            mutableCanRequestAds.value = false
+            mutableCanShowPrivacyOptions.value = false
+            Log.e(LOG_TAG, "Consent flow initialization failed", error)
+        }
     }
 
     fun showPrivacyOptionsForm(activity: Activity) {
-        UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
-            if (formError != null && BuildConfig.DEBUG) {
-                Log.w(LOG_TAG, "Privacy options form error: ${formError.message}")
+        try {
+            UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
+                if (formError != null && BuildConfig.DEBUG) {
+                    Log.w(LOG_TAG, "Privacy options form error: ${formError.message}")
+                }
+                val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
+                updateConsentState(consentInformation, activity.applicationContext)
             }
-            val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
-            updateConsentState(consentInformation, activity.applicationContext)
+        } catch (error: Throwable) {
+            Log.e(LOG_TAG, "Privacy options form failed", error)
         }
     }
 
@@ -79,8 +89,13 @@ object AdsConsentManager {
     @Synchronized
     private fun initializeMobileAds(context: Context) {
         if (mobileAdsInitialized) return
-        MobileAds.initialize(context)
-        mobileAdsInitialized = true
+        try {
+            MobileAds.initialize(context)
+            mobileAdsInitialized = true
+        } catch (error: Throwable) {
+            mutableCanRequestAds.value = false
+            Log.e(LOG_TAG, "Mobile ads initialization failed", error)
+        }
     }
 
     private fun logConsentError(prefix: String, error: FormError) {

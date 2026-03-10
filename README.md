@@ -206,6 +206,10 @@ Optional verification script:
 - Test purchase/restore flows in Play internal testing.
 - Confirm free tier shows banner ads and Pro/Full remove ads.
 
+## Privacy Policy (Play Console)
+- Privacy policy file in this repo: `docs/privacy-policy.md`
+- Host this file on a public HTTPS URL (for example via GitHub Pages) and paste that URL into Play Console -> App content -> Privacy Policy.
+
 ## Project Structure
 - `app/src/main/java/com/vectorlogic/blackjackcounter/data/counting`
   - Counting system interface + implementations
