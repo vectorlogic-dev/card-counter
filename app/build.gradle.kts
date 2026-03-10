@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.google.play.billing.ktx)
     implementation(libs.google.play.services.ads)
+    implementation(libs.google.user.messaging.platform)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

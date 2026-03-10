@@ -191,6 +191,8 @@ Optional verification script:
 - Verify Google Play Billing products exist and are active:
   - `pro_unlock`
   - `full_unlock`
+- Verify UMP consent flow is configured in AdMob:
+  - EEA/UK and US state privacy messaging setup completed in AdMob console
 - Build and lint release before upload:
   - `.\gradlew.bat assembleRelease lintRelease`
 - Test purchase/restore flows in Play internal testing.

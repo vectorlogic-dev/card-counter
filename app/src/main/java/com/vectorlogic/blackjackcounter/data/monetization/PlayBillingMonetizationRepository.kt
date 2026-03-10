@@ -2,9 +2,6 @@ package com.vectorlogic.blackjackcounter.data.monetization
 
 import android.app.Activity
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -25,12 +22,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-private val Context.monetizationDataStore by preferencesDataStore(name = "monetization")
 
 class PlayBillingMonetizationRepository(
     context: Context
@@ -41,8 +34,6 @@ class PlayBillingMonetizationRepository(
 
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val cachedProUnlockedKey = booleanPreferencesKey("pro_unlocked")
-    private val cachedFullUnlockedKey = booleanPreferencesKey("full_unlocked")
     private var proProductDetails: ProductDetails? = null
     private var fullProductDetails: ProductDetails? = null
     private var reconnectAttempts: Int = 0
@@ -58,24 +49,6 @@ class PlayBillingMonetizationRepository(
         .build()
 
     init {
-        scope.launch {
-            val cachedValues = appContext.monetizationDataStore.data
-                .map { prefs ->
-                    Pair(
-                        prefs[cachedProUnlockedKey] ?: false,
-                        prefs[cachedFullUnlockedKey] ?: false
-                    )
-                }
-                .first()
-
-            val hasPro = cachedValues.first || cachedValues.second
-            mutableStatus.update { current ->
-                current.copy(
-                    tier = if (hasPro) EntitlementTier.PRO else EntitlementTier.FREE,
-                    hasFullUnlock = cachedValues.second
-                )
-            }
-        }
         connect()
     }
 
@@ -327,12 +300,6 @@ class PlayBillingMonetizationRepository(
                 tier = if (hasPro) EntitlementTier.PRO else EntitlementTier.FREE,
                 hasFullUnlock = hasFull
             )
-        }
-        scope.launch {
-            appContext.monetizationDataStore.edit { prefs ->
-                prefs[cachedProUnlockedKey] = hasPro
-                prefs[cachedFullUnlockedKey] = hasFull
-            }
         }
     }
 

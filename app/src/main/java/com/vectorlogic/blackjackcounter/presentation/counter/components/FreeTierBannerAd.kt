@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +22,7 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.vectorlogic.blackjackcounter.BuildConfig
 import com.vectorlogic.blackjackcounter.R
+import com.vectorlogic.blackjackcounter.data.monetization.AdsConsentManager
 
 private const val AD_LOG_TAG = "FreeTierBannerAd"
 
@@ -28,7 +31,8 @@ fun FreeTierBannerAd(
     isVisible: Boolean,
     modifier: Modifier = Modifier
 ) {
-    if (!isVisible) return
+    val canRequestAds by AdsConsentManager.canRequestAds.collectAsState()
+    if (!isVisible || !canRequestAds) return
 
     val context = LocalContext.current
     val adUnitId = stringResource(id = R.string.admob_banner_ad_unit_id)

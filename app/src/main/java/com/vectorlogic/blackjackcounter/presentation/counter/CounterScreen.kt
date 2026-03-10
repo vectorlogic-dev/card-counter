@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vectorlogic.blackjackcounter.data.monetization.AdsConsentManager
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.EntitlementTier
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
@@ -67,6 +68,7 @@ fun CounterScreen() {
         }
     )
     val state by viewModel.uiState.collectAsState()
+    val canShowPrivacyOptions by AdsConsentManager.canShowPrivacyOptions.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
@@ -193,6 +195,17 @@ fun CounterScreen() {
                                             menuExpanded = false
                                         }
                                     )
+                                    if (canShowPrivacyOptions) {
+                                        DropdownMenuItem(
+                                            text = { Text("Privacy Choices") },
+                                            onClick = {
+                                                context.findActivity()?.let { activity ->
+                                                    AdsConsentManager.showPrivacyOptionsForm(activity)
+                                                }
+                                                menuExpanded = false
+                                            }
+                                        )
+                                    }
                                     DropdownMenuItem(
                                         text = { Text("Reset Count") },
                                         onClick = {
