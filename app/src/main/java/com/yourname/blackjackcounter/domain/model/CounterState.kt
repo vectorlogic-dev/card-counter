@@ -10,6 +10,12 @@ data class StrategyDeviationRow(
     val indexLabel: String
 )
 
+data class SeenCard(
+    val rank: CardRank,
+    val deltaApplied: Double,
+    val countedAce: Boolean
+)
+
 data class CounterState(
     val runningCount: Double = 0.0,
     val trueCount: Double = 0.0,
@@ -30,6 +36,15 @@ data class CounterState(
     val selectedCountingSystemName: String = "Hi-Lo",
     val selectedSystemUsesTrueCount: Boolean = true,
     val selectedSystemRecommendsAceSideCount: Boolean = false,
+    val entitlementTier: EntitlementTier = EntitlementTier.FREE,
+    val hasFullUnlock: Boolean = false,
+    val showAds: Boolean = true,
+    val billingReady: Boolean = false,
+    val purchaseInFlight: Boolean = false,
+    val proPriceLabel: String = "\$2.99",
+    val fullPriceLabel: String = "\$4.99",
+    val monetizationMessage: String? = null,
+    val seenCards: List<SeenCard> = emptyList(),
     val tableRules: TableRules = TableRules(),
     val buttonTagValues: Map<CardRank, Double> = emptyMap(),
     val cheatSheetRows: List<CheatSheetRow> = emptyList(),

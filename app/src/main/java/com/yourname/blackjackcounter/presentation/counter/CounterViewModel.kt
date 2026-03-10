@@ -1,6 +1,10 @@
 package com.yourname.blackjackcounter.presentation.counter
 
+import android.app.Activity
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.yourname.blackjackcounter.data.counting.CountingSystemProfiles
 import com.yourname.blackjackcounter.data.counting.CountingSystem
 import com.yourname.blackjackcounter.data.counting.HiLoCountingSystem
 import com.yourname.blackjackcounter.data.counting.HiOptIICountingSystem
@@ -9,6 +13,9 @@ import com.yourname.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.yourname.blackjackcounter.data.counting.ReKOCountingSystem
 import com.yourname.blackjackcounter.data.counting.WongHalvesSystem
 import com.yourname.blackjackcounter.data.counting.ZenCountSystem
+import com.yourname.blackjackcounter.data.monetization.MonetizationRepository
+import com.yourname.blackjackcounter.data.monetization.MonetizationStatus
+import com.yourname.blackjackcounter.data.monetization.PlayBillingMonetizationRepository
 import com.yourname.blackjackcounter.domain.model.CardRank
 import com.yourname.blackjackcounter.domain.model.CheatSheetRow
 import com.yourname.blackjackcounter.domain.model.CounterCalculations
@@ -17,20 +24,41 @@ import com.yourname.blackjackcounter.domain.model.DealerPeekRule
 import com.yourname.blackjackcounter.domain.model.DealerSoft17Rule
 import com.yourname.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.yourname.blackjackcounter.domain.model.DoubleDownRule
+import com.yourname.blackjackcounter.domain.model.EntitlementTier
 import com.yourname.blackjackcounter.domain.model.SurrenderRule
+import com.yourname.blackjackcounter.domain.model.SeenCard
 import com.yourname.blackjackcounter.domain.model.StrategyDeviationRow
 import com.yourname.blackjackcounter.domain.model.TableRules
+import com.yourname.blackjackcounter.domain.model.TrueCountIntegerization
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 data class CountingSystemOption(
     val id: String,
     val displayName: String,
-    val recommendsAceSideCount: Boolean
+    val recommendsAceSideCount: Boolean,
+    val requiresPro: Boolean,
+    val requiresFullUnlock: Boolean
+)
+
+enum class SystemLockType {
+    PRO,
+    FULL
+}
+
+private data class RunningCountTotals(
+    val runningCount: Double,
+    val acesSeen: Int
 )
 
 data class CountingSystemGuide(
@@ -75,7 +103,9 @@ data class StrategyChartModel(
     val sections: List<StrategyTableSection>
 )
 
-class CounterViewModel : ViewModel() {
+class CounterViewModel private constructor(
+    private val monetizationRepository: MonetizationRepository
+) : ViewModel() {
 
     private val allSystems: List<CountingSystem> = listOf(
         HiLoCountingSystem,
@@ -87,13 +117,43 @@ class CounterViewModel : ViewModel() {
         WongHalvesSystem
     )
 
+    private val proSystemIds: Set<String> = setOf(
+        HiOptIICountingSystem.id,
+        OmegaIICountingSystem.id,
+        ZenCountSystem.id
+    )
+    private val fullOnlySystemIds: Set<String> = setOf(WongHalvesSystem.id)
     private val systemsById: Map<String, CountingSystem> = allSystems.associateBy { it.id }
+    private val profilesBySystemId = allSystems.associate { system ->
+        system.id to CountingSystemProfiles.profileFor(system.id)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val initialMonetizationStatus = monetizationRepository.status.value
+    private val _uiState = MutableStateFlow(withDerivedValues(
+        CounterState(
+            selectedCountingSystemId = HiLoCountingSystem.id,
+            selectedCountingSystemName = HiLoCountingSystem.displayName,
+            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
+            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount(),
+            entitlementTier = initialMonetizationStatus.tier,
+            hasFullUnlock = initialMonetizationStatus.hasFullUnlock,
+            showAds = initialMonetizationStatus.tier == EntitlementTier.FREE,
+            billingReady = initialMonetizationStatus.isBillingReady,
+            purchaseInFlight = initialMonetizationStatus.isPurchaseInFlight,
+            proPriceLabel = initialMonetizationStatus.proDisplayPrice,
+            fullPriceLabel = initialMonetizationStatus.fullDisplayPrice,
+            monetizationMessage = initialMonetizationStatus.message
+        )
+    ))
+    val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
 
     val availableSystems: List<CountingSystemOption> = allSystems.map { system ->
         CountingSystemOption(
             id = system.id,
             displayName = system.displayName,
-            recommendsAceSideCount = system.recommendsAceSideCount()
+            recommendsAceSideCount = system.recommendsAceSideCount(),
+            requiresPro = requiresPro(system.id),
+            requiresFullUnlock = requiresFullUnlock(system.id)
         )
     }
 
@@ -148,6 +208,42 @@ class CounterViewModel : ViewModel() {
             )
         )
     )
+
+    init {
+        scope.launch {
+            monetizationRepository.status.collectLatest { status ->
+                _uiState.update { current ->
+                    var nextState = current.copy(
+                        entitlementTier = status.tier,
+                        hasFullUnlock = status.hasFullUnlock,
+                        showAds = status.tier == EntitlementTier.FREE,
+                        billingReady = status.isBillingReady,
+                        purchaseInFlight = status.isPurchaseInFlight,
+                        proPriceLabel = status.proDisplayPrice,
+                        fullPriceLabel = status.fullDisplayPrice,
+                        monetizationMessage = status.message
+                    )
+
+                    if (getSystemLockType(nextState.selectedCountingSystemId, nextState) != null) {
+                        nextState = nextState.copy(
+                            selectedCountingSystemId = HiLoCountingSystem.id,
+                            selectedCountingSystemName = HiLoCountingSystem.displayName,
+                            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
+                            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount(),
+                            runningCount = initialRunningCount(
+                                systemId = HiLoCountingSystem.id,
+                                totalDecks = nextState.totalDecks
+                            ),
+                            acesSeen = 0,
+                            seenCards = emptyList()
+                        )
+                    }
+
+                    withDerivedValues(nextState)
+                }
+            }
+        }
+    }
 
     fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
         val noPeekOnTen = tableRules.dealerPeekRule == DealerPeekRule.ACE_ONLY ||
@@ -257,38 +353,35 @@ class CounterViewModel : ViewModel() {
         )
     }
 
-    private val _uiState = MutableStateFlow(withDerivedValues(
-        CounterState(
-            selectedCountingSystemId = HiLoCountingSystem.id,
-            selectedCountingSystemName = HiLoCountingSystem.displayName,
-            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
-            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount()
-        )
-    ))
-    val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
-
     fun onCardSeen(cardRank: CardRank) {
         val selectedSystem = getSelectedSystem(_uiState.value.selectedCountingSystemId)
         val delta = selectedSystem.getTagValue(cardRank)
+        val countedAce = cardRank == CardRank.ACE && selectedSystem.recommendsAceSideCount()
         updateRunningCount(
             delta = delta,
             advancePenetration = true,
-            seenAce = cardRank == CardRank.ACE && selectedSystem.recommendsAceSideCount()
+            seenAce = countedAce,
+            seenCardRank = cardRank
         )
     }
 
     fun onFaceCardsSeen() {
         // In current systems, J/Q/K share the same tag value, so one grouped button is safe.
-        onCardSeen(CardRank.JACK)
+        onCardSeen(CardRank.TEN)
     }
 
     fun resetCount() {
         _uiState.update { current ->
+            val selectedSystem = getSelectedSystem(current.selectedCountingSystemId)
             withDerivedValues(
                 current.copy(
-                    runningCount = 0.0,
+                    runningCount = initialRunningCount(
+                        systemId = selectedSystem.id,
+                        totalDecks = current.totalDecks
+                    ),
                     decksRemaining = current.totalDecks.toDouble(),
-                    acesSeen = 0
+                    acesSeen = 0,
+                    seenCards = emptyList()
                 )
             )
         }
@@ -306,7 +399,9 @@ class CounterViewModel : ViewModel() {
                 totalDecks = normalizedTotalDecks,
                 decksRemaining = normalizedDecksRemaining
             )
-            withDerivedValues(nextState)
+            withDerivedValues(
+                recalculateSystemState(nextState)
+            )
         }
     }
 
@@ -321,17 +416,72 @@ class CounterViewModel : ViewModel() {
         }
     }
 
-    fun setCountingSystem(systemId: String) {
-        val selectedSystem = systemsById[systemId] ?: return
+    fun setCountingSystem(systemId: String): Boolean {
+        if (getSystemLockType(systemId) != null) return false
+
+        val selectedSystem = systemsById[systemId] ?: return false
 
         _uiState.update { current ->
             val shouldTrackAces = selectedSystem.recommendsAceSideCount()
+            val remappedSeenCards = current.seenCards.map { seen ->
+                seen.copy(
+                    deltaApplied = selectedSystem.getTagValue(seen.rank),
+                    countedAce = shouldTrackAces && seen.rank == CardRank.ACE
+                )
+            }
+            val countTotals = replayCountForSystem(
+                system = selectedSystem,
+                totalDecks = current.totalDecks,
+                seenCards = remappedSeenCards
+            )
             val nextState = current.copy(
                 selectedCountingSystemId = selectedSystem.id,
                 selectedCountingSystemName = selectedSystem.displayName,
                 selectedSystemUsesTrueCount = selectedSystem.usesTrueCount(),
                 selectedSystemRecommendsAceSideCount = shouldTrackAces,
-                acesSeen = if (shouldTrackAces) current.acesSeen else 0
+                runningCount = countTotals.runningCount,
+                acesSeen = countTotals.acesSeen,
+                seenCards = remappedSeenCards
+            )
+            withDerivedValues(nextState)
+        }
+
+        return true
+    }
+
+    fun getSystemLockType(systemId: String): SystemLockType? {
+        return getSystemLockType(systemId, _uiState.value)
+    }
+
+    fun launchProPurchase(activity: Activity) {
+        monetizationRepository.launchProPurchase(activity)
+    }
+
+    fun launchFullPurchase(activity: Activity) {
+        monetizationRepository.launchFullPurchase(activity)
+    }
+
+    fun refreshMonetization() {
+        monetizationRepository.refresh()
+    }
+
+    fun dismissMonetizationMessage() {
+        monetizationRepository.clearMessage()
+    }
+
+    fun undoLastCard() {
+        _uiState.update { current ->
+            val lastSeen = current.seenCards.lastOrNull() ?: return@update current
+            val nextState = current.copy(
+                runningCount = current.runningCount - lastSeen.deltaApplied,
+                decksRemaining = (current.decksRemaining + DECKS_PER_CARD)
+                    .coerceAtMost(current.totalDecks.toDouble()),
+                acesSeen = if (lastSeen.countedAce) {
+                    (current.acesSeen - 1).coerceAtLeast(0)
+                } else {
+                    current.acesSeen
+                },
+                seenCards = current.seenCards.dropLast(1)
             )
             withDerivedValues(nextState)
         }
@@ -391,7 +541,8 @@ class CounterViewModel : ViewModel() {
     private fun updateRunningCount(
         delta: Double,
         advancePenetration: Boolean = false,
-        seenAce: Boolean = false
+        seenAce: Boolean = false,
+        seenCardRank: CardRank? = null
     ) {
         _uiState.update { current ->
             val nextDecksRemaining = if (advancePenetration) {
@@ -403,7 +554,16 @@ class CounterViewModel : ViewModel() {
             val nextState = current.copy(
                 runningCount = current.runningCount + delta,
                 decksRemaining = nextDecksRemaining,
-                acesSeen = if (seenAce) current.acesSeen + 1 else current.acesSeen
+                acesSeen = if (seenAce) current.acesSeen + 1 else current.acesSeen,
+                seenCards = if (seenCardRank != null && advancePenetration) {
+                    current.seenCards + SeenCard(
+                        rank = seenCardRank,
+                        deltaApplied = delta,
+                        countedAce = seenAce
+                    )
+                } else {
+                    current.seenCards
+                }
             )
             withDerivedValues(nextState)
         }
@@ -413,13 +573,98 @@ class CounterViewModel : ViewModel() {
         return systemsById[systemId] ?: HiLoCountingSystem
     }
 
-    private fun calculateTrueCount(state: CounterState): Double {
-        return CounterCalculations.calculateTrueCount(
+    private fun requiresPro(systemId: String): Boolean {
+        return systemId in proSystemIds
+    }
+
+    private fun requiresFullUnlock(systemId: String): Boolean {
+        return systemId in fullOnlySystemIds
+    }
+
+    private fun getSystemLockType(
+        systemId: String,
+        state: CounterState
+    ): SystemLockType? {
+        if (requiresFullUnlock(systemId) && !state.hasFullUnlock) {
+            return SystemLockType.FULL
+        }
+        if (requiresPro(systemId) && state.entitlementTier != EntitlementTier.PRO) {
+            return SystemLockType.PRO
+        }
+        return null
+    }
+
+    private fun calculateRawTrueCount(
+        state: CounterState,
+        usesTrueCount: Boolean
+    ): Double {
+        return CounterCalculations.calculateRawTrueCount(
             runningCount = state.runningCount,
             decksRemaining = state.decksRemaining,
-            usesTrueCount = state.selectedSystemUsesTrueCount,
+            usesTrueCount = usesTrueCount,
             minDecksRemaining = MIN_DECKS_REMAINING
         )
+    }
+
+    private fun profileFor(systemId: String) =
+        profilesBySystemId[systemId] ?: CountingSystemProfiles.profileFor(systemId)
+
+    private fun initialRunningCount(systemId: String, totalDecks: Int): Double {
+        return profileFor(systemId).initialRunningCount(totalDecks).toDouble()
+    }
+
+    private fun recalculateSystemState(state: CounterState): CounterState {
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val shouldTrackAces = selectedSystem.recommendsAceSideCount()
+        val remappedSeenCards = state.seenCards.map { seen ->
+            seen.copy(
+                deltaApplied = selectedSystem.getTagValue(seen.rank),
+                countedAce = shouldTrackAces && seen.rank == CardRank.ACE
+            )
+        }
+        val totals = replayCountForSystem(
+            system = selectedSystem,
+            totalDecks = state.totalDecks,
+            seenCards = remappedSeenCards
+        )
+        return state.copy(
+            runningCount = totals.runningCount,
+            acesSeen = totals.acesSeen,
+            seenCards = remappedSeenCards
+        )
+    }
+
+    private fun replayCountForSystem(
+        system: CountingSystem,
+        totalDecks: Int,
+        seenCards: List<SeenCard>
+    ): RunningCountTotals {
+        val shouldTrackAces = system.recommendsAceSideCount()
+        val runningCount = seenCards.fold(
+            initialRunningCount(system.id, totalDecks)
+        ) { total, seen ->
+            total + system.getTagValue(seen.rank)
+        }
+        val acesSeen = if (shouldTrackAces) {
+            seenCards.count { it.rank == CardRank.ACE }
+        } else {
+            0
+        }
+        return RunningCountTotals(runningCount = runningCount, acesSeen = acesSeen)
+    }
+
+    private fun decisionCountValue(
+        state: CounterState,
+        selectedSystem: CountingSystem,
+        rawTrueCount: Double
+    ): Double {
+        val profile = profileFor(selectedSystem.id)
+        return if (selectedSystem.usesTrueCount()) {
+            val method = profile.trueCountIntegerization ?: TrueCountIntegerization.TRUNCATE
+            CounterCalculations.integerizeTrueCount(rawTrueCount, method).toDouble()
+        } else {
+            state.runningCount
+        }
     }
 
     private fun calculateDeckPenetrationPercent(state: CounterState): Double {
@@ -432,20 +677,32 @@ class CounterViewModel : ViewModel() {
     private fun withDerivedValues(state: CounterState): CounterState {
         val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
         val usesTrueCount = selectedSystem.usesTrueCount()
+        val profile = profileFor(selectedSystem.id)
         val totalCards = state.totalDecks * CARDS_PER_DECK
         val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
         val shouldTrackAces = selectedSystem.recommendsAceSideCount()
-        val trueCount = calculateTrueCount(state)
+        val rawTrueCount = calculateRawTrueCount(state, usesTrueCount)
+        val trueCount = CounterCalculations.roundToOneDecimal(rawTrueCount)
         val estimatedPlayerEdgePercent = CounterCalculations.calculateEstimatedPlayerEdgePercent(
-            trueCount = trueCount,
+            trueCount = rawTrueCount,
             usesTrueCount = usesTrueCount,
-            tableRules = state.tableRules
+            tableRules = state.tableRules,
+            totalDecks = state.totalDecks
         )
-        val betSizingCountValue = if (usesTrueCount) trueCount else state.runningCount
+        val betSizingCountValue = decisionCountValue(
+            state = state,
+            selectedSystem = selectedSystem,
+            rawTrueCount = rawTrueCount
+        )
+        val betRamp = if (usesTrueCount) {
+            profile.balancedBetRamp
+        } else {
+            profile.runningCountBetRamp(state.totalDecks)
+        }
         val recommendedBetUnits = CounterCalculations.calculateRecommendedBetUnits(
             countValue = betSizingCountValue,
-            usesTrueCount = usesTrueCount
+            ramp = betRamp
         )
         val acesExpected = if (shouldTrackAces) {
             CounterCalculations.calculateExpectedAces(cardsDrawn)
@@ -470,10 +727,14 @@ class CounterViewModel : ViewModel() {
             acesExpected = acesExpected,
             estimatedPlayerEdgePercent = estimatedPlayerEdgePercent,
             canEstimateEdge = usesTrueCount,
+            selectedSystemUsesTrueCount = usesTrueCount,
             selectedSystemRecommendsAceSideCount = shouldTrackAces,
             buttonTagValues = buttonTagValues,
             cheatSheetRows = calculateCheatSheetRows(selectedSystem),
-            strategyDeviationRows = calculateStrategyDeviationRows(selectedSystem)
+            strategyDeviationRows = calculateStrategyDeviationRows(
+                system = selectedSystem,
+                state = state
+            )
         )
     }
 
@@ -501,8 +762,33 @@ class CounterViewModel : ViewModel() {
         }
     }
 
-    private fun calculateStrategyDeviationRows(system: CountingSystem): List<StrategyDeviationRow> {
-        if (!system.usesTrueCount()) return emptyList()
+    private fun calculateStrategyDeviationRows(
+        system: CountingSystem,
+        state: CounterState
+    ): List<StrategyDeviationRow> {
+        if (!system.usesTrueCount()) {
+            val profile = profileFor(system.id)
+            val keyCount = profile.keyCount(state.totalDecks)
+            val pivot = profile.pivot(state.totalDecks)
+            return listOfNotNull(
+                if (keyCount != null) {
+                    StrategyDeviationRow(
+                        playLabel = "Key Count (${state.totalDecks}D)",
+                        indexLabel = "RC $keyCount"
+                    )
+                } else {
+                    null
+                },
+                if (pivot != null) {
+                    StrategyDeviationRow(
+                        playLabel = "Pivot (${state.totalDecks}D)",
+                        indexLabel = "RC $pivot"
+                    )
+                } else {
+                    null
+                }
+            )
+        }
 
         // Common true-count index plays (rough Hi-Lo style references).
         return listOf(
@@ -542,11 +828,22 @@ class CounterViewModel : ViewModel() {
             return StrategyTableCell(action = baseAdjusted, isDeviation = false)
         }
 
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val rawTrueCount = calculateRawTrueCount(
+            state = state,
+            usesTrueCount = true
+        )
+        val decisionTrueCount = decisionCountValue(
+            state = state,
+            selectedSystem = selectedSystem,
+            rawTrueCount = rawTrueCount
+        ).toInt()
+
         val deviationAction = getCountDeviationAction(
             handType = handType,
             handValue = handValue,
             dealerUpcard = dealerUpcard,
-            trueCount = state.trueCount
+            trueCount = decisionTrueCount
         )
 
         if (deviationAction == null) {
@@ -687,30 +984,30 @@ class CounterViewModel : ViewModel() {
         handType: ChartHandType,
         handValue: Int,
         dealerUpcard: Int,
-        trueCount: Double
+        trueCount: Int
     ): String? {
         if (handType == ChartHandType.HARD) {
             return when {
-                handValue == 16 && dealerUpcard == 10 && trueCount >= 0.0 -> "S"
-                handValue == 15 && dealerUpcard == 10 && trueCount >= 4.0 -> "S"
-                handValue == 12 && dealerUpcard == 3 && trueCount >= 2.0 -> "S"
-                handValue == 12 && dealerUpcard == 2 && trueCount >= 3.0 -> "S"
-                handValue == 11 && dealerUpcard == 11 && trueCount >= 1.0 -> "D"
-                handValue == 10 && dealerUpcard == 11 && trueCount >= 4.0 -> "D"
-                handValue == 10 && dealerUpcard == 10 && trueCount >= 4.0 -> "D"
-                handValue == 9 && dealerUpcard == 2 && trueCount >= 1.0 -> "D"
-                handValue == 9 && dealerUpcard == 7 && trueCount >= 3.0 -> "D"
-                handValue == 16 && dealerUpcard == 9 && trueCount >= 5.0 -> "S"
-                handValue == 15 && dealerUpcard == 9 && trueCount >= 2.0 -> "S"
-                handValue == 15 && dealerUpcard == 11 && trueCount >= 5.0 -> "S"
+                handValue == 16 && dealerUpcard == 10 && trueCount >= 0 -> "S"
+                handValue == 15 && dealerUpcard == 10 && trueCount >= 4 -> "S"
+                handValue == 12 && dealerUpcard == 3 && trueCount >= 2 -> "S"
+                handValue == 12 && dealerUpcard == 2 && trueCount >= 3 -> "S"
+                handValue == 11 && dealerUpcard == 11 && trueCount >= 1 -> "D"
+                handValue == 10 && dealerUpcard == 11 && trueCount >= 4 -> "D"
+                handValue == 10 && dealerUpcard == 10 && trueCount >= 4 -> "D"
+                handValue == 9 && dealerUpcard == 2 && trueCount >= 1 -> "D"
+                handValue == 9 && dealerUpcard == 7 && trueCount >= 3 -> "D"
+                handValue == 16 && dealerUpcard == 9 && trueCount >= 5 -> "S"
+                handValue == 15 && dealerUpcard == 9 && trueCount >= 2 -> "S"
+                handValue == 15 && dealerUpcard == 11 && trueCount >= 5 -> "S"
                 else -> null
             }
         }
 
         if (handType == ChartHandType.PAIR && handValue == 10) {
             return when {
-                dealerUpcard == 5 && trueCount >= 5.0 -> "P"
-                dealerUpcard == 6 && trueCount >= 4.0 -> "P"
+                dealerUpcard == 5 && trueCount >= 5 -> "P"
+                dealerUpcard == 6 && trueCount >= 4 -> "P"
                 else -> null
             }
         }
@@ -720,13 +1017,13 @@ class CounterViewModel : ViewModel() {
 
     private fun getSystemExplanation(system: CountingSystem): String {
         return when (system.id) {
-            HiLoCountingSystem.id -> "Most common beginner system: simple +1/-1 tags, balanced, and true-count based."
-            KOCountingSystem.id -> "Beginner-friendly unbalanced system that uses running count only and avoids true-count conversion."
-            ReKOCountingSystem.id -> "Refined KO variant that keeps KO's simple running-count workflow with adjusted key-count references."
-            HiOptIICountingSystem.id -> "Higher-power level-2 system for betting and play deviations; strongest with an Ace side count."
-            OmegaIICountingSystem.id -> "Advanced level-2 balanced count with strong betting correlation; often paired with Ace side count."
-            ZenCountSystem.id -> "Balanced level-2 count with heavier weights on 4-6 cards for stronger precision than level-1 systems."
-            WongHalvesSystem.id -> "Very high-precision balanced system using half-point tags; powerful but slower to use under pressure."
+            HiLoCountingSystem.id -> "Most common beginner system: balanced +1/-1 tags with truncated true-count decisions."
+            KOCountingSystem.id -> "Unbalanced running-count system using deck-specific initial running counts, key counts, and a pivot."
+            ReKOCountingSystem.id -> "Refined KO variant with deck-specific initial running counts and key-count references."
+            HiOptIICountingSystem.id -> "Higher-power level-2 system with truncated true-count decisions; strongest with an Ace side count."
+            OmegaIICountingSystem.id -> "Advanced level-2 balanced count using truncated true-count decisions; often paired with Ace side count."
+            ZenCountSystem.id -> "Balanced level-2 count with heavier 4-6 tags and truncated true-count decision handling."
+            WongHalvesSystem.id -> "High-precision balanced system with half-point tags and truncated true-count decision handling."
             else -> "Card-counting system with custom tag values for betting and deviation decisions."
         }
     }
@@ -812,13 +1109,38 @@ class CounterViewModel : ViewModel() {
         }
     }
 
-    private companion object {
-        val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-        const val MIN_TOTAL_DECKS = 1
-        const val MAX_TOTAL_DECKS = 8
-        const val MIN_DECKS_REMAINING = 0.25
-        const val DECKS_PER_CARD = 1.0 / 52.0
-        const val CARDS_PER_DECK = 52
+    companion object {
+        internal fun createForTests(
+            monetizationRepository: MonetizationRepository = NoOpMonetizationRepository
+        ): CounterViewModel {
+            return CounterViewModel(monetizationRepository)
+        }
+
+        fun provideFactory(
+            appContext: Context
+        ): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return CounterViewModel(
+                        monetizationRepository = PlayBillingMonetizationRepository(appContext)
+                    ) as T
+                }
+            }
+        }
+
+        private val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+        private const val MIN_TOTAL_DECKS = 1
+        private const val MAX_TOTAL_DECKS = 8
+        private const val MIN_DECKS_REMAINING = 0.25
+        private const val DECKS_PER_CARD = 1.0 / 52.0
+        private const val CARDS_PER_DECK = 52
+    }
+
+    override fun onCleared() {
+        scope.cancel()
+        monetizationRepository.release()
+        super.onCleared()
     }
 
     private enum class ChartHandType {
@@ -826,4 +1148,24 @@ class CounterViewModel : ViewModel() {
         SOFT,
         PAIR
     }
+}
+
+private object NoOpMonetizationRepository : MonetizationRepository {
+    override val status: StateFlow<MonetizationStatus> = MutableStateFlow(
+        MonetizationStatus(
+            tier = EntitlementTier.PRO,
+            hasFullUnlock = true,
+            isBillingReady = true
+        )
+    )
+
+    override fun refresh() = Unit
+
+    override fun launchProPurchase(activity: Activity) = Unit
+
+    override fun launchFullPurchase(activity: Activity) = Unit
+
+    override fun clearMessage() = Unit
+
+    override fun release() = Unit
 }

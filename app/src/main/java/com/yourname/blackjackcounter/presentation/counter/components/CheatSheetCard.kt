@@ -47,7 +47,7 @@ fun CheatSheetCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Rule-dependent guide (common 6D S17 Hi-Lo style indices).",
+                    text = "System-aware guide. Verify rules and deck count before using live.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

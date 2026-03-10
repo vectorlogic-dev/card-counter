@@ -1,5 +1,8 @@
 package com.yourname.blackjackcounter.presentation.counter
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -17,24 +20,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yourname.blackjackcounter.domain.model.CardRank
+import com.yourname.blackjackcounter.domain.model.EntitlementTier
 import com.yourname.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.yourname.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.yourname.blackjackcounter.presentation.counter.components.CountButtonsRow
 import com.yourname.blackjackcounter.presentation.counter.components.CountDisplayCard
 import com.yourname.blackjackcounter.presentation.counter.components.DeckControlCard
+import com.yourname.blackjackcounter.presentation.counter.components.FullUpgradeDialogContent
+import com.yourname.blackjackcounter.presentation.counter.components.FreeTierBannerAd
 import com.yourname.blackjackcounter.presentation.counter.components.HelpDialogContent
+import com.yourname.blackjackcounter.presentation.counter.components.ProUpgradeDialogContent
+import com.yourname.blackjackcounter.presentation.counter.components.RecentCardsCard
 import com.yourname.blackjackcounter.presentation.counter.components.ResetButton
 import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartButton
 import com.yourname.blackjackcounter.presentation.counter.components.StrategyChartFullScreen
@@ -47,13 +58,46 @@ import java.util.Locale
 import kotlin.math.round
 
 @Composable
-fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
+fun CounterScreen() {
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+    val viewModel: CounterViewModel = viewModel(
+        factory = remember(appContext) {
+            CounterViewModel.provideFactory(appContext)
+        }
+    )
     val state by viewModel.uiState.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showStrategyChartDialog by remember { mutableStateOf(false) }
+    var showProUpgradeDialog by remember { mutableStateOf(false) }
+    var showFullUpgradeDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.entitlementTier) {
+        if (state.entitlementTier == EntitlementTier.PRO) {
+            showProUpgradeDialog = false
+        }
+    }
+
+    LaunchedEffect(state.hasFullUnlock) {
+        if (state.hasFullUnlock) {
+            showFullUpgradeDialog = false
+        }
+    }
+
+    LaunchedEffect(showProUpgradeDialog) {
+        if (showProUpgradeDialog) {
+            viewModel.refreshMonetization()
+        }
+    }
+
+    LaunchedEffect(showFullUpgradeDialog) {
+        if (showFullUpgradeDialog) {
+            viewModel.refreshMonetization()
+        }
+    }
 
     Surface(
         modifier = Modifier
@@ -103,6 +147,17 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Text(
+                                text = if (state.hasFullUnlock) {
+                                    "Full unlock active"
+                                } else if (state.entitlementTier == EntitlementTier.PRO) {
+                                    "Pro unlock active"
+                                } else {
+                                    "Free tier (light ads)"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             if (state.selectedSystemRecommendsAceSideCount) {
                                 Text(
                                     text = "Ace side count recommended",
@@ -145,6 +200,24 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                                             menuExpanded = false
                                         }
                                     )
+                                    if (state.entitlementTier == EntitlementTier.FREE) {
+                                        DropdownMenuItem(
+                                            text = { Text("Upgrade to Pro") },
+                                            onClick = {
+                                                showProUpgradeDialog = true
+                                                menuExpanded = false
+                                            }
+                                        )
+                                    }
+                                    if (!state.hasFullUnlock) {
+                                        DropdownMenuItem(
+                                            text = { Text("Upgrade to Full") },
+                                            onClick = {
+                                                showFullUpgradeDialog = true
+                                                menuExpanded = false
+                                            }
+                                        )
+                                    }
                                     DropdownMenuItem(
                                         text = {
                                             Text(
@@ -250,9 +323,22 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                     onFaceCardsSelected = viewModel::onFaceCardsSeen
                 )
 
+                RecentCardsCard(
+                    recentCardLabels = state.seenCards
+                        .takeLast(15)
+                        .map { it.rank.toHistoryLabel() },
+                    onUndo = viewModel::undoLastCard,
+                    canUndo = state.seenCards.isNotEmpty()
+                )
+
                 ResetButton(onReset = viewModel::resetCount)
 
                 StrategyChartButton(onClick = { showStrategyChartDialog = true })
+
+                FreeTierBannerAd(
+                    isVisible = state.showAds,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             if (showSystemSelector) {
@@ -273,9 +359,23 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                         SystemSelector(
                             selectedSystemId = state.selectedCountingSystemId,
                             availableSystems = viewModel.availableSystems,
+                            hasPro = state.entitlementTier == EntitlementTier.PRO,
+                            hasFullUnlock = state.hasFullUnlock,
                             onSystemSelected = { systemId ->
-                                viewModel.setCountingSystem(systemId)
-                                showSystemSelector = false
+                                when (viewModel.getSystemLockType(systemId)) {
+                                    null -> {
+                                        viewModel.setCountingSystem(systemId)
+                                        showSystemSelector = false
+                                    }
+                                    SystemLockType.PRO -> {
+                                        showSystemSelector = false
+                                        showProUpgradeDialog = true
+                                    }
+                                    SystemLockType.FULL -> {
+                                        showSystemSelector = false
+                                        showFullUpgradeDialog = true
+                                    }
+                                }
                             }
                         )
                     }
@@ -358,7 +458,135 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
                 )
             }
 
+            if (showProUpgradeDialog && state.entitlementTier == EntitlementTier.FREE) {
+                AlertDialog(
+                    onDismissRequest = { showProUpgradeDialog = false },
+                    confirmButton = {
+                        TextButton(
+                            enabled = !state.purchaseInFlight,
+                            onClick = {
+                                val activity = context.findActivity()
+                                if (activity != null) {
+                                    viewModel.launchProPurchase(activity)
+                                } else {
+                                    viewModel.refreshMonetization()
+                                }
+                            }
+                        ) {
+                            Text(
+                                if (state.purchaseInFlight) {
+                                    "Processing..."
+                                } else {
+                                    "Unlock Pro"
+                                }
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            enabled = !state.purchaseInFlight,
+                            onClick = {
+                                val activity = context.findActivity()
+                                if (activity != null) {
+                                    viewModel.launchFullPurchase(activity)
+                                } else {
+                                    viewModel.refreshMonetization()
+                                }
+                            }
+                        ) {
+                            Text("Unlock Full")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Upgrade to Pro",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        ProUpgradeDialogContent(
+                            proPriceLabel = state.proPriceLabel,
+                            isBillingReady = state.billingReady,
+                            isPurchaseInFlight = state.purchaseInFlight,
+                            message = state.monetizationMessage
+                        )
+                    }
+                )
+            }
+
+            if (showFullUpgradeDialog && !state.hasFullUnlock) {
+                AlertDialog(
+                    onDismissRequest = { showFullUpgradeDialog = false },
+                    confirmButton = {
+                        TextButton(
+                            enabled = !state.purchaseInFlight,
+                            onClick = {
+                                val activity = context.findActivity()
+                                if (activity != null) {
+                                    viewModel.launchFullPurchase(activity)
+                                } else {
+                                    viewModel.refreshMonetization()
+                                }
+                            }
+                        ) {
+                            Text(
+                                if (state.purchaseInFlight) {
+                                    "Processing..."
+                                } else {
+                                    "Unlock Full"
+                                }
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.dismissMonetizationMessage()
+                                showFullUpgradeDialog = false
+                            }
+                        ) {
+                            Text("Not now")
+                        }
+                    },
+                    title = {
+                        Text(
+                            text = "Upgrade to Full",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        FullUpgradeDialogContent(
+                            fullPriceLabel = state.fullPriceLabel,
+                            isBillingReady = state.billingReady,
+                            isPurchaseInFlight = state.purchaseInFlight,
+                            message = state.monetizationMessage
+                        )
+                    }
+                )
+            }
+
         }
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+private fun CardRank.toHistoryLabel(): String {
+    return when (this) {
+        CardRank.ACE -> "A"
+        CardRank.TWO -> "2"
+        CardRank.THREE -> "3"
+        CardRank.FOUR -> "4"
+        CardRank.FIVE -> "5"
+        CardRank.SIX -> "6"
+        CardRank.SEVEN -> "7"
+        CardRank.EIGHT -> "8"
+        CardRank.NINE -> "9"
+        CardRank.TEN, CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "T"
     }
 }
 

@@ -12,7 +12,7 @@ class CounterViewModelTest {
 
     @Test
     fun `onCardSeen updates running count true count and penetration`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         val initialDecksRemaining = viewModel.uiState.value.decksRemaining
 
         viewModel.onCardSeen(CardRank.TWO)
@@ -26,7 +26,7 @@ class CounterViewModelTest {
 
     @Test
     fun `onCardSeen ace does not change ace side count on systems that do not need it`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         viewModel.onCardSeen(CardRank.ACE)
 
@@ -37,7 +37,7 @@ class CounterViewModelTest {
 
     @Test
     fun `onCardSeen ace increments ace side count for omega ii`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         viewModel.setCountingSystem("omega_ii")
 
         viewModel.onCardSeen(CardRank.ACE)
@@ -49,7 +49,7 @@ class CounterViewModelTest {
 
     @Test
     fun `setDecksRemaining clamps to minimum and true count uses clamped value`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         repeat(2) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -63,7 +63,7 @@ class CounterViewModelTest {
 
     @Test
     fun `resetCount clears running and shoe state`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         repeat(5) {
             viewModel.onCardSeen(CardRank.FIVE)
@@ -83,7 +83,7 @@ class CounterViewModelTest {
 
     @Test
     fun `available systems includes reko and hi opt ii`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         val ids = viewModel.availableSystems.map { it.id }
 
         assertTrue(ids.contains("reko"))
@@ -92,7 +92,7 @@ class CounterViewModelTest {
 
     @Test
     fun `hi opt ii enables ace side count guidance`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         viewModel.setCountingSystem("hi_opt_ii")
 
@@ -102,20 +102,21 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `ko hides true count strategy deviations`() {
-        val viewModel = CounterViewModel()
+    fun `ko exposes running count key and pivot guidance`() {
+        val viewModel = CounterViewModel.createForTests()
 
         viewModel.setCountingSystem("ko")
 
         val updated = viewModel.uiState.value
         assertFalse(updated.selectedSystemUsesTrueCount)
         assertFalse(updated.canEstimateEdge)
-        assertTrue(updated.strategyDeviationRows.isEmpty())
+        assertTrue(updated.strategyDeviationRows.any { it.playLabel.contains("Key Count") })
+        assertTrue(updated.strategyDeviationRows.any { it.playLabel.contains("Pivot") })
     }
 
     @Test
     fun `hi lo exposes common 16 vs 10 deviation`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         viewModel.setCountingSystem("hi_lo")
 
@@ -125,7 +126,7 @@ class CounterViewModelTest {
 
     @Test
     fun `table rules can be updated from menu settings`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
 
         viewModel.setDealerSoft17Rule(DealerSoft17Rule.HIT)
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
@@ -139,7 +140,7 @@ class CounterViewModelTest {
 
     @Test
     fun `enabling six card charlie improves estimated edge`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         val edgeBefore = viewModel.uiState.value.estimatedPlayerEdgePercent
 
         viewModel.setSixCardCharlieAutoWin(true)
@@ -151,7 +152,7 @@ class CounterViewModelTest {
 
     @Test
     fun `split deviations include no-peek adjustments and ace split notes`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
         viewModel.setResplitAces(false)
         viewModel.setHitSplitAces(false)
@@ -167,7 +168,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart applies count-based 10 vs 10 double deviation`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         repeat(4) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -184,7 +185,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart avoids 10 vs 10 double and adjusts ace split on no-peek`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
         repeat(4) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -205,7 +206,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart hits split aces vs ace on no-peek for ace and ten`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         viewModel.setDealerPeekRule(DealerPeekRule.NO_PEEK)
 
         val state = viewModel.uiState.value
@@ -219,7 +220,7 @@ class CounterViewModelTest {
 
     @Test
     fun `bet recommendation uses true count for balanced systems`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         repeat(3) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -233,7 +234,7 @@ class CounterViewModelTest {
 
     @Test
     fun `bet recommendation uses running count for unbalanced systems`() {
-        val viewModel = CounterViewModel()
+        val viewModel = CounterViewModel.createForTests()
         viewModel.setCountingSystem("ko")
         repeat(5) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -241,7 +242,56 @@ class CounterViewModelTest {
 
         val updated = viewModel.uiState.value
         assertEquals("RC", updated.betSizingCountLabel)
-        assertEquals(5.0, updated.betSizingCountValue, 0.0001)
-        assertEquals(4, updated.recommendedBetUnits)
+        assertEquals(-15.0, updated.betSizingCountValue, 0.0001)
+        assertEquals(1, updated.recommendedBetUnits)
+    }
+
+    @Test
+    fun `resetCount restores deck aware initial running count for ko`() {
+        val viewModel = CounterViewModel.createForTests()
+        viewModel.setCountingSystem("ko")
+        repeat(10) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+
+        viewModel.resetCount()
+
+        val updated = viewModel.uiState.value
+        assertEquals(-20.0, updated.runningCount, 0.0001)
+        assertEquals(updated.totalDecks.toDouble(), updated.decksRemaining, 0.0001)
+    }
+
+    @Test
+    fun `changing total decks recalculates ko initial running count`() {
+        val viewModel = CounterViewModel.createForTests()
+        viewModel.setCountingSystem("ko")
+        viewModel.setTotalDecks(2)
+
+        val updated = viewModel.uiState.value
+        assertEquals(2, updated.totalDecks)
+        assertEquals(-4.0, updated.runningCount, 0.0001)
+    }
+
+    @Test
+    fun `deviation trigger uses integerized true count thresholds`() {
+        val viewModel = CounterViewModel.createForTests()
+        repeat(2) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(0.51)
+        var state = viewModel.uiState.value
+        var chart = viewModel.buildStrategyChartModel(state)
+        var hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        var dealerTenCell = hardTenRow.cells[8]
+        assertEquals("H", dealerTenCell.action)
+        assertFalse(dealerTenCell.isDeviation)
+
+        viewModel.setDecksRemaining(0.49)
+        state = viewModel.uiState.value
+        chart = viewModel.buildStrategyChartModel(state)
+        hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        dealerTenCell = hardTenRow.cells[8]
+        assertTrue(dealerTenCell.action.startsWith("D"))
+        assertTrue(dealerTenCell.isDeviation)
     }
 }

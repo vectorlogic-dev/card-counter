@@ -14,7 +14,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 1. Open `Menu` -> `Table Rules` and set the table first.
    Rule choices affect strategy actions and the estimated edge model.
 2. Open `Menu` -> `Select Counting System` and choose your system.
-   Some systems recommend Ace side count (`Hi-Opt II`, `Omega II`), which enables extra Ace tracking in deck controls.
+   Free tier includes `Hi-Lo`, `KO`, and `ReKO`.
 3. In `Deck Controls`, set:
    - `Total Decks` (`1..8`)
    - `Decks Remaining` (slider, minimum `0.25`)
@@ -28,9 +28,14 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 6. Use `Bet Recommendation` as a training ramp (units), then map units to your own base bet.
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
+   - `Menu` -> `Upgrade to Pro` (shown on Free tier)
+   - `Menu` -> `Upgrade to Full` (unlocks Wong Halves)
+   - Free tier shows a light bottom banner ad
    - `Menu` -> `Show/Hide Cheat Sheet`
    - `Strategy Chart` button for full-screen basic strategy + deviations
-   - `Reset Count` to reset running count, shoe depth, and Ace side count
+   - `Last 15 Cards` panel + `Undo` for correcting missed taps
+   - `Reset Count` to reset shoe depth and count state
+   - For `KO` / `ReKO`, reset returns to the deck-specific initial running count (IRC)
 
 ## Bet Units Explained
 The app recommends a unit size from the ramp `1-2-4-8-12`.
@@ -43,23 +48,42 @@ The app recommends a unit size from the ramp `1-2-4-8-12`.
   - `2.0 to <3.0` -> `4` units
   - `3.0 to <4.0` -> `8` units
   - `>= 4.0` -> `12` units
-- For running-count-only systems (unbalanced systems), thresholds are:
-  - `< 2.0` -> `1` unit
-  - `2.0 to <4.0` -> `2` units
-  - `4.0 to <6.0` -> `4` units
-  - `6.0 to <8.0` -> `8` units
-  - `>= 8.0` -> `12` units
+For balanced systems, decision thresholds use **truncated true count** by default.
+
+For `KO` / `ReKO`, ramps are deck-aware and keyed from the system's `Key Count` and `Pivot`:
+- `< Key Count` -> `1` unit
+- `>= Key Count` -> `2` units
+- `>= Pivot` -> `4` units
+- `>= Pivot + 4` -> `8` units
+- `>= Pivot + 8` -> `12` units
 
 This is a training aid, not bankroll or gambling advice.
 
 ## Counting Systems
+Free tier:
 - Hi-Lo
 - KO
 - ReKO
+
+Pro unlock:
+- Hi-Opt II (Ace side count recommended)
+- Omega II (Ace side count recommended)
+- Zen Count
+
+Full unlock:
 - Hi-Opt II (Ace side count recommended)
 - Omega II (Ace side count recommended)
 - Zen Count
 - Wong Halves
+
+Monetization defaults:
+- `pro_unlock`: `$2.99` (all paid systems except Wong Halves)
+- `full_unlock`: `$4.99` (everything, including Wong Halves)
+- Free tier: light banner ad (bottom placement)
+
+AdMob defaults in this repo use Google test IDs in `strings.xml`.
+Replace `admob_app_id` and `admob_banner_ad_unit_id` before publishing.
+Use your own production app/ad unit IDs in Google Play releases.
 
 All systems implement a shared `CountingSystem` interface.
 
@@ -70,6 +94,8 @@ All systems implement a shared `CountingSystem` interface.
     - Select Counting System
     - Table Rules
     - Reset Count
+    - Upgrade to Pro (Free tier)
+    - Upgrade to Full
     - Show/Hide Cheat Sheet
 - Main stats:
   - Running Count
@@ -86,8 +112,10 @@ All systems implement a shared `CountingSystem` interface.
   - `A`, `2`, `3`, `4`, `5`
   - `6`, `7`, `8`, `9`, `T/J/Q/K`
 - Bottom actions:
+  - Last 15 Cards panel with Undo
   - Reset Count
   - Strategy Chart (full-screen table with back button)
+  - Free-tier banner ad
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`
@@ -118,6 +146,9 @@ All systems implement a shared `CountingSystem` interface.
 Estimated Edge % is computed from:
 - current true count (if supported by the selected system)
 - selected table rules
+- total decks in shoe
+
+Rule and deck adjustments are calibrated from Wizard of Odds rule-variation deltas (8-deck baseline model, then adjusted by selected deck count).
 
 It is a simplified training estimate.
 
@@ -126,6 +157,7 @@ It is a simplified training estimate.
 - Jetpack Compose
 - Material 3
 - MVVM (`ViewModel` + `StateFlow`)
+- Google Mobile Ads SDK (free-tier banner)
 - Local state only (no backend, no database)
 
 ## Requirements
@@ -165,4 +197,5 @@ Optional verification script:
 ## Notes
 - Deck safety floor is enforced to avoid divide-by-zero behavior.
 - True count is rounded to one decimal place for display.
+- `CounterViewModel` is created via factory in UI; tests use `createForTests()`.
 - Educational/training use only.
