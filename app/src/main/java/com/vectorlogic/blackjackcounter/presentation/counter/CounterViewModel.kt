@@ -2,6 +2,7 @@ package com.vectorlogic.blackjackcounter.presentation.counter
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
@@ -1123,13 +1124,20 @@ class CounterViewModel private constructor(
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    val monetizationRepository = runCatching {
+                        PlayBillingMonetizationRepository(appContext)
+                    }.getOrElse { error ->
+                        Log.e(LOG_TAG, "Billing initialization failed, using fallback repository", error)
+                        BillingFallbackMonetizationRepository
+                    }
                     return CounterViewModel(
-                        monetizationRepository = PlayBillingMonetizationRepository(appContext)
+                        monetizationRepository = monetizationRepository
                     ) as T
                 }
             }
         }
 
+        private const val LOG_TAG = "CounterViewModel"
         private val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
         private const val MIN_TOTAL_DECKS = 1
         private const val MAX_TOTAL_DECKS = 8
@@ -1167,6 +1175,43 @@ private object NoOpMonetizationRepository : MonetizationRepository {
     override fun launchFullPurchase(activity: Activity) = Unit
 
     override fun clearMessage() = Unit
+
+    override fun release() = Unit
+}
+
+private object BillingFallbackMonetizationRepository : MonetizationRepository {
+    private val mutableStatus = MutableStateFlow(
+        MonetizationStatus(
+            tier = EntitlementTier.FREE,
+            hasFullUnlock = false,
+            isBillingReady = false,
+            message = "Billing unavailable on this device."
+        )
+    )
+
+    override val status: StateFlow<MonetizationStatus> = mutableStatus
+
+    override fun refresh() {
+        mutableStatus.update {
+            it.copy(message = "Billing unavailable on this device.")
+        }
+    }
+
+    override fun launchProPurchase(activity: Activity) {
+        mutableStatus.update {
+            it.copy(message = "Billing unavailable on this device.")
+        }
+    }
+
+    override fun launchFullPurchase(activity: Activity) {
+        mutableStatus.update {
+            it.copy(message = "Billing unavailable on this device.")
+        }
+    }
+
+    override fun clearMessage() {
+        mutableStatus.update { it.copy(message = null) }
+    }
 
     override fun release() = Unit
 }
