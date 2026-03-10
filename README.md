@@ -57,6 +57,11 @@ For `KO` / `ReKO`, ramps are deck-aware and keyed from the system's `Key Count` 
 - `>= Pivot + 4` -> `8` units
 - `>= Pivot + 8` -> `12` units
 
+Unbalanced-system reset references are deck-specific:
+- `KO` IRC formula: `4 - (4 * decks)` (special case for `1` deck = `0`)
+- `ReKO` IRC formula: `1 - (3 * decks)`
+- Example on `6` decks: `KO = -20`, `ReKO = -17`
+
 This is a training aid, not bankroll or gambling advice.
 
 ## Counting Systems
@@ -79,10 +84,11 @@ Monetization defaults:
 - `full_unlock`: `$3.99` (ad removal + all advanced systems)
 - Free tier: light banner ad (bottom placement)
 
-AdMob defaults in this repo use Google test IDs in `strings.xml`.
-Replace `admob_app_id` and `admob_banner_ad_unit_id` before publishing.
-Use your own production app/ad unit IDs in Google Play releases.
-Debug builds (`app/src/debug/res/values/strings.xml`) force Google sample test IDs so ads reliably render during local testing.
+AdMob/consent behavior in this repo:
+- `app/src/main/res/values/strings.xml` holds your release ad IDs (`admob_app_id`, `admob_banner_ad_unit_id`).
+- `app/src/debug/res/values/strings.xml` overrides them with Google sample test IDs for debug builds.
+- Ads are shown only when UMP consent allows ad requests (`canRequestAds = true`).
+- `Menu` shows `Privacy Choices` when privacy options are required by UMP.
 
 All systems implement a shared `CountingSystem` interface.
 
@@ -92,6 +98,7 @@ All systems implement a shared `CountingSystem` interface.
   - `Menu` actions:
     - Select Counting System
     - Table Rules
+    - Privacy Choices (only when required)
     - Reset Count
     - Upgrade to Pro (Free tier)
     - Upgrade to Full
@@ -164,6 +171,7 @@ It is a simplified training estimate.
 - JDK 11+
 - `compileSdk` 36
 - `minSdk` 24
+- Package/application ID: `com.vectorlogic.blackjackcounter`
 
 ## Run (Android Studio)
 1. Open this folder in Android Studio.
