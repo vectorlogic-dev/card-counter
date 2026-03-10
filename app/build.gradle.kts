@@ -15,8 +15,8 @@ android {
         applicationId = "com.vectorlogic.blackjackcounter"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -63,7 +63,6 @@ dependencies {
     implementation(libs.google.play.billing.ktx)
     implementation(libs.google.play.services.ads)
     implementation(libs.google.user.messaging.platform)
-    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
