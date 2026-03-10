@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yourname.blackjackcounter"
+    namespace = "com.vectorlogic.blackjackcounter"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.yourname.blackjackcounter"
+        applicationId = "com.vectorlogic.blackjackcounter"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

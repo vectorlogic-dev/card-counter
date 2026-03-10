@@ -29,7 +29,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
    - `Menu` -> `Upgrade to Pro` (shown on Free tier)
-   - `Menu` -> `Upgrade to Full` (unlocks Wong Halves)
+   - `Menu` -> `Upgrade to Full` (unlocks all advanced systems)
    - Free tier shows a light bottom banner ad
    - `Menu` -> `Show/Hide Cheat Sheet`
    - `Strategy Chart` button for full-screen basic strategy + deviations
@@ -66,9 +66,7 @@ Free tier:
 - ReKO
 
 Pro unlock:
-- Hi-Opt II (Ace side count recommended)
-- Omega II (Ace side count recommended)
-- Zen Count
+- Removes banner ads
 
 Full unlock:
 - Hi-Opt II (Ace side count recommended)
@@ -77,8 +75,8 @@ Full unlock:
 - Wong Halves
 
 Monetization defaults:
-- `pro_unlock`: `$2.99` (all paid systems except Wong Halves)
-- `full_unlock`: `$4.99` (everything, including Wong Halves)
+- `pro_unlock`: `$1.99` (ad removal only)
+- `full_unlock`: `$3.99` (ad removal + all advanced systems)
 - Free tier: light banner ad (bottom placement)
 
 AdMob defaults in this repo use Google test IDs in `strings.xml`.
@@ -185,13 +183,13 @@ Optional verification script:
 - `powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1`
 
 ## Project Structure
-- `app/src/main/java/com/yourname/blackjackcounter/data/counting`
+- `app/src/main/java/com/vectorlogic/blackjackcounter/data/counting`
   - Counting system interface + implementations
-- `app/src/main/java/com/yourname/blackjackcounter/domain/model`
+- `app/src/main/java/com/vectorlogic/blackjackcounter/domain/model`
   - App state, card/rule models, and core calculations
-- `app/src/main/java/com/yourname/blackjackcounter/presentation/counter`
+- `app/src/main/java/com/vectorlogic/blackjackcounter/presentation/counter`
   - `CounterViewModel`, screen, and reusable UI components
-- `app/src/main/java/com/yourname/blackjackcounter/ui/theme`
+- `app/src/main/java/com/vectorlogic/blackjackcounter/ui/theme`
   - Theme, typography, and colors
 
 ## Notes
