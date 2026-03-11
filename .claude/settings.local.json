@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\Users\\\\Argie\\\\Projects\\\\card-counter\" && ./gradlew assembleDebug 2>&1)",
+      "Read(//c/Program Files/Android/Android Studio/jbr/bin/**)",
+      "Read(//c/Users/Argie/AppData/Local/Android/Sdk/**)",
+      "Bash(cd \"C:\\\\Users\\\\Argie\\\\Projects\\\\card-counter\" && JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug 2>&1)"
+    ]
+  }
+}

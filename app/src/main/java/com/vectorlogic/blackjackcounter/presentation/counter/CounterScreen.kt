@@ -4,18 +4,24 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,10 +33,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -128,122 +135,139 @@ fun CounterScreen() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "BLACKJACK COUNTER",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoldAccent.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = state.selectedCountingSystemName,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = GoldAccent
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val (tierText, tierColor) = when {
+                                state.hasFullUnlock -> "Full" to MaterialTheme.colorScheme.tertiary
+                                state.entitlementTier == EntitlementTier.PRO -> "Pro" to MaterialTheme.colorScheme.primary
+                                else -> "Free" to MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                             Text(
-                                text = "Blackjack Counter",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "System: ${state.selectedCountingSystemName}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = if (state.hasFullUnlock) {
-                                    "Full active (ads removed + all systems)"
-                                } else if (state.entitlementTier == EntitlementTier.PRO) {
-                                    "Pro active (ads removed)"
-                                } else {
-                                    "Free tier (banner ads)"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = tierText,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = tierColor
                             )
                             if (state.selectedSystemRecommendsAceSideCount) {
                                 Text(
-                                    text = "Ace side count recommended",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    text = "· Ace side count",
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         }
+                    }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                            TextButton(onClick = { showHelpDialog = true }) {
-                                Text("Help")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { showHelpDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Help",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Menu",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
                             }
-                            Box {
-                                TextButton(onClick = { menuExpanded = true }) {
-                                    Text("Menu")
-                                }
-                                DropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Select Counting System") },
-                                        onClick = {
-                                            showSystemSelector = true
-                                            menuExpanded = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Table Rules") },
-                                        onClick = {
-                                            showRulesDialog = true
-                                            menuExpanded = false
-                                        }
-                                    )
-                                    if (canShowPrivacyOptions) {
-                                        DropdownMenuItem(
-                                            text = { Text("Privacy Choices") },
-                                            onClick = {
-                                                context.findActivity()?.let { activity ->
-                                                    AdsConsentManager.showPrivacyOptionsForm(activity)
-                                                }
-                                                menuExpanded = false
-                                            }
-                                        )
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Select Counting System") },
+                                    onClick = {
+                                        showSystemSelector = true
+                                        menuExpanded = false
                                     }
-                                    DropdownMenuItem(
-                                        text = { Text("Reset Count") },
-                                        onClick = {
-                                            viewModel.resetCount()
-                                            menuExpanded = false
-                                        }
-                                    )
-                                    if (state.entitlementTier == EntitlementTier.FREE) {
-                                        DropdownMenuItem(
-                                            text = { Text("Upgrade to Pro") },
-                                            onClick = {
-                                                showProUpgradeDialog = true
-                                                menuExpanded = false
-                                            }
-                                        )
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Table Rules") },
+                                    onClick = {
+                                        showRulesDialog = true
+                                        menuExpanded = false
                                     }
-                                    if (!state.hasFullUnlock) {
-                                        DropdownMenuItem(
-                                            text = { Text("Upgrade to Full") },
-                                            onClick = {
-                                                showFullUpgradeDialog = true
-                                                menuExpanded = false
-                                            }
-                                        )
-                                    }
+                                )
+                                if (canShowPrivacyOptions) {
                                     DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                if (state.showCheatSheet) "Hide Cheat Sheet"
-                                                else "Show Cheat Sheet"
-                                            )
-                                        },
+                                        text = { Text("Privacy Choices") },
                                         onClick = {
-                                            viewModel.toggleCheatSheet()
+                                            context.findActivity()?.let { activity ->
+                                                AdsConsentManager.showPrivacyOptionsForm(activity)
+                                            }
                                             menuExpanded = false
                                         }
                                     )
                                 }
+                                DropdownMenuItem(
+                                    text = { Text("Reset Count") },
+                                    onClick = {
+                                        viewModel.resetCount()
+                                        menuExpanded = false
+                                    }
+                                )
+                                if (state.entitlementTier == EntitlementTier.FREE) {
+                                    DropdownMenuItem(
+                                        text = { Text("Upgrade to Pro") },
+                                        onClick = {
+                                            showProUpgradeDialog = true
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                                if (!state.hasFullUnlock) {
+                                    DropdownMenuItem(
+                                        text = { Text("Upgrade to Full") },
+                                        onClick = {
+                                            showFullUpgradeDialog = true
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (state.showCheatSheet) "Hide Cheat Sheet"
+                                            else "Show Cheat Sheet"
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.toggleCheatSheet()
+                                        menuExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -257,7 +281,6 @@ fun CounterScreen() {
                         title = "Running",
                         value = formatSignedCount(state.runningCount),
                         valueColor = countColor(state.runningCount),
-                        compact = true,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -278,7 +301,6 @@ fun CounterScreen() {
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        compact = true,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -299,7 +321,6 @@ fun CounterScreen() {
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        compact = true,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -325,11 +346,6 @@ fun CounterScreen() {
                     onDecksRemainingChanged = viewModel::setDecksRemaining
                 )
 
-                Text(
-                    text = "Tap each card rank as it appears",
-                    style = MaterialTheme.typography.bodySmall
-                )
-
                 CountButtonsRow(
                     buttonTagValues = state.buttonTagValues,
                     onCardSelected = viewModel::onCardSeen,
@@ -344,9 +360,16 @@ fun CounterScreen() {
                     canUndo = state.seenCards.isNotEmpty()
                 )
 
-                ResetButton(onReset = viewModel::resetCount)
-
-                StrategyChartButton(onClick = { showStrategyChartDialog = true })
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ResetButton(onReset = viewModel::resetCount, modifier = Modifier.weight(1f))
+                    StrategyChartButton(
+                        onClick = { showStrategyChartDialog = true },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 FreeTierBannerAd(
                     isVisible = state.showAds,
@@ -577,7 +600,6 @@ fun CounterScreen() {
                     }
                 )
             }
-
         }
     }
 }

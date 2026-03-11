@@ -16,11 +16,11 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 2. Open `Menu` -> `Select Counting System` and choose your system.
    Free tier includes `Hi-Lo`, `KO`, and `ReKO`.
 3. In `Deck Controls`, set:
-   - `Total Decks` (`1..8`)
+   - `Total Decks` (segmented button: `1 / 2 / 4 / 6 / 8`)
    - `Decks Remaining` (slider, minimum `0.25`)
 4. Tap card buttons as cards are dealt:
    - Row 1: `A`, `2`, `3`, `4`, `5`
-   - Row 2: `6`, `7`, `8`, `9`, `T/J/Q/K`
+   - Row 2: `6`, `7`, `8`, `9`, `10-K`
 5. Read the live metrics:
    - `Running` count
    - `True` count (`N/A` for running-count-only systems)
@@ -93,34 +93,35 @@ AdMob/consent behavior in this repo:
 All systems implement a shared `CountingSystem` interface.
 
 ## Current UI (Quick Overview)
-- Top bar:
-  - `Help` button (always visible, beside `Menu`)
-  - `Menu` actions:
+- Header (floating, no card):
+  - Current system name in gold; tier badge (Free/Pro/Full)
+  - ℹ icon → Help dialog
+  - ⋮ icon → Menu:
     - Select Counting System
     - Table Rules
-    - Privacy Choices (only when required)
+    - Privacy Choices (only when required by UMP)
     - Reset Count
-    - Upgrade to Pro (Free tier)
+    - Upgrade to Pro (Free tier only)
     - Upgrade to Full
     - Show/Hide Cheat Sheet
-- Main stats:
+- Main stats row (3 cards with colored top accent strip):
   - Running Count
-  - True Count (or `N/A`)
+  - True Count (or `N/A` for unbalanced systems)
   - Estimated Edge %
-  - Bet Recommendation (units)
+- Bet Recommendation card:
+  - Large unit number on the right; five pip dots on the left indicating position on the 1→2→4→8→12 ramp
 - Deck controls:
-  - Total Decks (`1..8`)
+  - Segmented button: `1 / 2 / 4 / 6 / 8` decks
   - Decks Remaining slider (`0.25` minimum)
   - Penetration %
   - Cards Drawn / Cards Left / Total Cards
   - Ace side count panel when selected system recommends it
-- Card input (2 rows):
+- Card input (2 rows, each button shows rank + tag value):
   - `A`, `2`, `3`, `4`, `5`
-  - `6`, `7`, `8`, `9`, `T/J/Q/K`
-- Bottom actions:
-  - Last 15 Cards panel with Undo
-  - Reset Count
-  - Strategy Chart (full-screen table with back button)
+  - `6`, `7`, `8`, `9`, `10-K`
+- Bottom actions (side by side):
+  - Recent Cards panel with badge chips + Undo
+  - Reset Count | Strategy Chart (full-screen table with back button)
   - Free-tier banner ad
 
 ## Table Rules Supported

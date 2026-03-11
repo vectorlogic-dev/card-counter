@@ -12,6 +12,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -33,78 +34,35 @@ fun CountButtonsRow(
             .padding(top = 2.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        val aceTone = buttonTagValues.toTone(CardRank.ACE)
-        val twoTone = buttonTagValues.toTone(CardRank.TWO)
-        val threeTone = buttonTagValues.toTone(CardRank.THREE)
-        val fourTone = buttonTagValues.toTone(CardRank.FOUR)
-        val fiveTone = buttonTagValues.toTone(CardRank.FIVE)
-        val sixTone = buttonTagValues.toTone(CardRank.SIX)
-        val sevenTone = buttonTagValues.toTone(CardRank.SEVEN)
-        val eightTone = buttonTagValues.toTone(CardRank.EIGHT)
-        val nineTone = buttonTagValues.toTone(CardRank.NINE)
-        val faceTone = buttonTagValues.toTone(CardRank.JACK)
-
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            CardInputButton(
-                label = "A",
-                tone = aceTone,
-                onClick = { onCardSelected(CardRank.ACE) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "2",
-                tone = twoTone,
-                onClick = { onCardSelected(CardRank.TWO) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "3",
-                tone = threeTone,
-                onClick = { onCardSelected(CardRank.THREE) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "4",
-                tone = fourTone,
-                onClick = { onCardSelected(CardRank.FOUR) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "5",
-                tone = fiveTone,
-                onClick = { onCardSelected(CardRank.FIVE) },
-                modifier = Modifier.weight(1f)
-            )
+            listOf(CardRank.ACE, CardRank.TWO, CardRank.THREE, CardRank.FOUR, CardRank.FIVE).forEach { rank ->
+                val tagValue = buttonTagValues[rank] ?: 0.0
+                CardInputButton(
+                    label = rank.toButtonLabel(),
+                    tone = tagValueToTone(tagValue),
+                    tagValue = tagValue,
+                    onClick = { onCardSelected(rank) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf(CardRank.SIX, CardRank.SEVEN, CardRank.EIGHT, CardRank.NINE).forEach { rank ->
+                val tagValue = buttonTagValues[rank] ?: 0.0
+                CardInputButton(
+                    label = rank.toButtonLabel(),
+                    tone = tagValueToTone(tagValue),
+                    tagValue = tagValue,
+                    onClick = { onCardSelected(rank) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            val faceTagValue = buttonTagValues[CardRank.JACK] ?: 0.0
             CardInputButton(
-                label = "6",
-                tone = sixTone,
-                onClick = { onCardSelected(CardRank.SIX) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "7",
-                tone = sevenTone,
-                onClick = { onCardSelected(CardRank.SEVEN) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "8",
-                tone = eightTone,
-                onClick = { onCardSelected(CardRank.EIGHT) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "9",
-                tone = nineTone,
-                onClick = { onCardSelected(CardRank.NINE) },
-                modifier = Modifier.weight(1f)
-            )
-            CardInputButton(
-                label = "T/J/Q/K",
-                tone = faceTone,
+                label = "10-K",
+                tone = tagValueToTone(faceTagValue),
+                tagValue = faceTagValue,
                 onClick = onFaceCardsSelected,
                 modifier = Modifier.weight(1f)
             )
@@ -112,10 +70,25 @@ fun CountButtonsRow(
     }
 }
 
+private fun CardRank.toButtonLabel(): String = when (this) {
+    CardRank.ACE -> "A"
+    CardRank.TWO -> "2"
+    CardRank.THREE -> "3"
+    CardRank.FOUR -> "4"
+    CardRank.FIVE -> "5"
+    CardRank.SIX -> "6"
+    CardRank.SEVEN -> "7"
+    CardRank.EIGHT -> "8"
+    CardRank.NINE -> "9"
+    CardRank.TEN -> "10"
+    CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "10-K"
+}
+
 @Composable
 private fun CardInputButton(
     label: String,
     tone: CardButtonTone,
+    tagValue: Double,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -142,20 +115,41 @@ private fun CardInputButton(
         )
     }
 
+    val tagStr = when {
+        tagValue > 0 -> "+${formatTagValue(tagValue)}"
+        tagValue < 0 -> formatTagValue(tagValue)
+        else -> "0"
+    }
+
     Button(
         onClick = onClick,
-        modifier = modifier.height(46.dp),
+        modifier = modifier.height(58.dp),
         colors = colors,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
     ) {
-        Text(
-            text = label,
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Clip
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = label,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Clip
+            )
+            Text(
+                text = tagStr,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Clip
+            )
+        }
     }
+}
+
+private fun formatTagValue(value: Double): String {
+    return if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 }
 
 private enum class CardButtonTone {
@@ -164,11 +158,6 @@ private enum class CardButtonTone {
     Neutral,
     Negative,
     NegativeStrong
-}
-
-private fun Map<CardRank, Double>.toTone(rank: CardRank): CardButtonTone {
-    val tagValue = this[rank] ?: 0.0
-    return tagValueToTone(tagValue)
 }
 
 private fun tagValueToTone(tagValue: Double): CardButtonTone {

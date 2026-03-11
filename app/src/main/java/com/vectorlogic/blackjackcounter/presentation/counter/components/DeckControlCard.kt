@@ -6,26 +6,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.util.Locale
 import kotlin.math.roundToInt
+
+private val DECK_OPTIONS = listOf(1, 2, 4, 6, 8)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +39,6 @@ fun DeckControlCard(
     onDecksRemainingChanged: (Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
     val minDecksRemaining = 0.25f
     val sliderMax = totalDecks.toFloat().coerceAtLeast(minDecksRemaining)
     val sliderSteps = (((sliderMax - minDecksRemaining) / 0.25f).roundToInt() - 1).coerceAtLeast(0)
@@ -124,36 +119,24 @@ fun DeckControlCard(
                 )
             }
 
-            ExposedDropdownMenuBox(
-                expanded = menuExpanded,
-                onExpandedChange = { menuExpanded = !menuExpanded }
-            ) {
-                TextField(
-                    value = totalDecks.toString(),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Total Decks in Shoe") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuExpanded) },
-                    modifier = Modifier
-                        .menuAnchor(
-                            type = MenuAnchorType.PrimaryNotEditable,
-                            enabled = true
-                        )
-                        .fillMaxWidth()
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Decks in Shoe",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                ExposedDropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false }
-                ) {
-                    (1..8).forEach { deckOption ->
-                        DropdownMenuItem(
-                            text = { Text(deckOption.toString()) },
-                            onClick = {
-                                onTotalDecksChanged(deckOption)
-                                menuExpanded = false
-                            }
-                        )
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    DECK_OPTIONS.forEachIndexed { index, option ->
+                        SegmentedButton(
+                            selected = totalDecks == option,
+                            onClick = { onTotalDecksChanged(option) },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = DECK_OPTIONS.size
+                            )
+                        ) {
+                            Text(option.toString())
+                        }
                     }
                 }
             }
