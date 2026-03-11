@@ -1,8 +1,5 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import android.app.Activity
-import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
@@ -14,9 +11,6 @@ import com.vectorlogic.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.ReKOCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
-import com.vectorlogic.blackjackcounter.data.monetization.MonetizationRepository
-import com.vectorlogic.blackjackcounter.data.monetization.MonetizationStatus
-import com.vectorlogic.blackjackcounter.data.monetization.PlayBillingMonetizationRepository
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CheatSheetRow
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
@@ -25,37 +19,24 @@ import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
-import com.vectorlogic.blackjackcounter.domain.model.EntitlementTier
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.StrategyDeviationRow
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
 import java.util.Locale
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 data class CountingSystemOption(
     val id: String,
     val displayName: String,
-    val recommendsAceSideCount: Boolean,
-    val requiresPro: Boolean,
-    val requiresFullUnlock: Boolean
+    val level: Int,
+    val recommendsAceSideCount: Boolean
 )
-
-enum class SystemLockType {
-    PRO,
-    FULL
-}
 
 private data class RunningCountTotals(
     val runningCount: Double,
@@ -104,9 +85,7 @@ data class StrategyChartModel(
     val sections: List<StrategyTableSection>
 )
 
-class CounterViewModel private constructor(
-    private val monetizationRepository: MonetizationRepository
-) : ViewModel() {
+class CounterViewModel private constructor() : ViewModel() {
 
     private val allSystems: List<CountingSystem> = listOf(
         HiLoCountingSystem,
@@ -118,33 +97,16 @@ class CounterViewModel private constructor(
         WongHalvesSystem
     )
 
-    private val proSystemIds: Set<String> = emptySet()
-    private val fullOnlySystemIds: Set<String> = setOf(
-        HiOptIICountingSystem.id,
-        OmegaIICountingSystem.id,
-        ZenCountSystem.id,
-        WongHalvesSystem.id
-    )
     private val systemsById: Map<String, CountingSystem> = allSystems.associateBy { it.id }
     private val profilesBySystemId = allSystems.associate { system ->
         system.id to CountingSystemProfiles.profileFor(system.id)
     }
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val initialMonetizationStatus = monetizationRepository.status.value
     private val _uiState = MutableStateFlow(withDerivedValues(
         CounterState(
             selectedCountingSystemId = HiLoCountingSystem.id,
             selectedCountingSystemName = HiLoCountingSystem.displayName,
             selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
-            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount(),
-            entitlementTier = initialMonetizationStatus.tier,
-            hasFullUnlock = initialMonetizationStatus.hasFullUnlock,
-            showAds = initialMonetizationStatus.tier == EntitlementTier.FREE,
-            billingReady = initialMonetizationStatus.isBillingReady,
-            purchaseInFlight = initialMonetizationStatus.isPurchaseInFlight,
-            proPriceLabel = initialMonetizationStatus.proDisplayPrice,
-            fullPriceLabel = initialMonetizationStatus.fullDisplayPrice,
-            monetizationMessage = initialMonetizationStatus.message
+            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount()
         )
     ))
     val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
@@ -153,9 +115,8 @@ class CounterViewModel private constructor(
         CountingSystemOption(
             id = system.id,
             displayName = system.displayName,
-            recommendsAceSideCount = system.recommendsAceSideCount(),
-            requiresPro = requiresPro(system.id),
-            requiresFullUnlock = requiresFullUnlock(system.id)
+            level = system.level,
+            recommendsAceSideCount = system.recommendsAceSideCount()
         )
     }
 
@@ -210,42 +171,6 @@ class CounterViewModel private constructor(
             )
         )
     )
-
-    init {
-        scope.launch {
-            monetizationRepository.status.collectLatest { status ->
-                _uiState.update { current ->
-                    var nextState = current.copy(
-                        entitlementTier = status.tier,
-                        hasFullUnlock = status.hasFullUnlock,
-                        showAds = status.tier == EntitlementTier.FREE,
-                        billingReady = status.isBillingReady,
-                        purchaseInFlight = status.isPurchaseInFlight,
-                        proPriceLabel = status.proDisplayPrice,
-                        fullPriceLabel = status.fullDisplayPrice,
-                        monetizationMessage = status.message
-                    )
-
-                    if (getSystemLockType(nextState.selectedCountingSystemId, nextState) != null) {
-                        nextState = nextState.copy(
-                            selectedCountingSystemId = HiLoCountingSystem.id,
-                            selectedCountingSystemName = HiLoCountingSystem.displayName,
-                            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
-                            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount(),
-                            runningCount = initialRunningCount(
-                                systemId = HiLoCountingSystem.id,
-                                totalDecks = nextState.totalDecks
-                            ),
-                            acesSeen = 0,
-                            seenCards = emptyList()
-                        )
-                    }
-
-                    withDerivedValues(nextState)
-                }
-            }
-        }
-    }
 
     fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
         val noPeekOnTen = tableRules.dealerPeekRule == DealerPeekRule.ACE_ONLY ||
@@ -419,8 +344,6 @@ class CounterViewModel private constructor(
     }
 
     fun setCountingSystem(systemId: String): Boolean {
-        if (getSystemLockType(systemId) != null) return false
-
         val selectedSystem = systemsById[systemId] ?: return false
 
         _uiState.update { current ->
@@ -449,26 +372,6 @@ class CounterViewModel private constructor(
         }
 
         return true
-    }
-
-    fun getSystemLockType(systemId: String): SystemLockType? {
-        return getSystemLockType(systemId, _uiState.value)
-    }
-
-    fun launchProPurchase(activity: Activity) {
-        monetizationRepository.launchProPurchase(activity)
-    }
-
-    fun launchFullPurchase(activity: Activity) {
-        monetizationRepository.launchFullPurchase(activity)
-    }
-
-    fun refreshMonetization() {
-        monetizationRepository.refresh()
-    }
-
-    fun dismissMonetizationMessage() {
-        monetizationRepository.clearMessage()
     }
 
     fun undoLastCard() {
@@ -573,27 +476,6 @@ class CounterViewModel private constructor(
 
     private fun getSelectedSystem(systemId: String): CountingSystem {
         return systemsById[systemId] ?: HiLoCountingSystem
-    }
-
-    private fun requiresPro(systemId: String): Boolean {
-        return systemId in proSystemIds
-    }
-
-    private fun requiresFullUnlock(systemId: String): Boolean {
-        return systemId in fullOnlySystemIds
-    }
-
-    private fun getSystemLockType(
-        systemId: String,
-        state: CounterState
-    ): SystemLockType? {
-        if (requiresFullUnlock(systemId) && !state.hasFullUnlock) {
-            return SystemLockType.FULL
-        }
-        if (requiresPro(systemId) && state.entitlementTier != EntitlementTier.PRO) {
-            return SystemLockType.PRO
-        }
-        return null
     }
 
     private fun calculateRawTrueCount(
@@ -1112,44 +994,21 @@ class CounterViewModel private constructor(
     }
 
     companion object {
-        internal fun createForTests(
-            monetizationRepository: MonetizationRepository = NoOpMonetizationRepository
-        ): CounterViewModel {
-            return CounterViewModel(monetizationRepository)
-        }
-
-        fun provideFactory(
-            appContext: Context
-        ): ViewModelProvider.Factory {
+        fun provideFactory(): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    val monetizationRepository = runCatching {
-                        PlayBillingMonetizationRepository(appContext)
-                    }.getOrElse { error ->
-                        Log.e(LOG_TAG, "Billing initialization failed, using fallback repository", error)
-                        BillingFallbackMonetizationRepository
-                    }
-                    return CounterViewModel(
-                        monetizationRepository = monetizationRepository
-                    ) as T
+                    return CounterViewModel() as T
                 }
             }
         }
 
-        private const val LOG_TAG = "CounterViewModel"
         private val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
         private const val MIN_TOTAL_DECKS = 1
         private const val MAX_TOTAL_DECKS = 8
         private const val MIN_DECKS_REMAINING = 0.25
         private const val DECKS_PER_CARD = 1.0 / 52.0
         private const val CARDS_PER_DECK = 52
-    }
-
-    override fun onCleared() {
-        scope.cancel()
-        monetizationRepository.release()
-        super.onCleared()
     }
 
     private enum class ChartHandType {
@@ -1159,59 +1018,3 @@ class CounterViewModel private constructor(
     }
 }
 
-private object NoOpMonetizationRepository : MonetizationRepository {
-    override val status: StateFlow<MonetizationStatus> = MutableStateFlow(
-        MonetizationStatus(
-            tier = EntitlementTier.PRO,
-            hasFullUnlock = true,
-            isBillingReady = true
-        )
-    )
-
-    override fun refresh() = Unit
-
-    override fun launchProPurchase(activity: Activity) = Unit
-
-    override fun launchFullPurchase(activity: Activity) = Unit
-
-    override fun clearMessage() = Unit
-
-    override fun release() = Unit
-}
-
-private object BillingFallbackMonetizationRepository : MonetizationRepository {
-    private val mutableStatus = MutableStateFlow(
-        MonetizationStatus(
-            tier = EntitlementTier.FREE,
-            hasFullUnlock = false,
-            isBillingReady = false,
-            message = "Billing unavailable on this device."
-        )
-    )
-
-    override val status: StateFlow<MonetizationStatus> = mutableStatus
-
-    override fun refresh() {
-        mutableStatus.update {
-            it.copy(message = "Billing unavailable on this device.")
-        }
-    }
-
-    override fun launchProPurchase(activity: Activity) {
-        mutableStatus.update {
-            it.copy(message = "Billing unavailable on this device.")
-        }
-    }
-
-    override fun launchFullPurchase(activity: Activity) {
-        mutableStatus.update {
-            it.copy(message = "Billing unavailable on this device.")
-        }
-    }
-
-    override fun clearMessage() {
-        mutableStatus.update { it.copy(message = null) }
-    }
-
-    override fun release() = Unit
-}

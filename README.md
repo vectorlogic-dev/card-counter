@@ -14,7 +14,6 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 1. Open `Menu` -> `Table Rules` and set the table first.
    Rule choices affect strategy actions and the estimated edge model.
 2. Open `Menu` -> `Select Counting System` and choose your system.
-   Free tier includes `Hi-Lo`, `KO`, and `ReKO`.
 3. In `Deck Controls`, set:
    - `Total Decks` (segmented button: `1 / 2 / 4 / 6 / 8`)
    - `Decks Remaining` (slider, minimum `0.25`)
@@ -28,9 +27,6 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 6. Use `Bet Recommendation` as a training ramp (units), then map units to your own base bet.
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
-   - `Menu` -> `Upgrade to Pro` (shown on Free tier)
-   - `Menu` -> `Upgrade to Full` (unlocks all advanced systems)
-   - Free tier shows a light bottom banner ad
    - `Menu` -> `Show/Hide Cheat Sheet`
    - `Strategy Chart` button for full-screen basic strategy + deviations
    - `Last 15 Cards` panel + `Undo` for correcting missed taps
@@ -65,51 +61,27 @@ Unbalanced-system reset references are deck-specific:
 This is a training aid, not bankroll or gambling advice.
 
 ## Counting Systems
-Free tier:
 - Hi-Lo
 - KO
 - ReKO
-
-Pro unlock:
-- Removes banner ads
-
-Full unlock:
 - Hi-Opt II (Ace side count recommended)
 - Omega II (Ace side count recommended)
 - Zen Count
 - Wong Halves
 
-Monetization defaults:
-- `pro_unlock`: `$1.99` (ad removal only)
-- `full_unlock`: `$3.99` (ad removal + all advanced systems)
-- Free tier: light banner ad (bottom placement)
-
-AdMob/consent behavior in this repo:
-- `app/src/main/res/values/strings.xml` holds your release ad IDs (`admob_app_id`, `admob_banner_ad_unit_id`).
-- `app/src/debug/res/values/strings.xml` overrides them with Google sample test IDs for debug builds.
-- Ads are shown only when UMP consent allows ad requests (`canRequestAds = true`).
-- `Menu` shows `Privacy Choices` when privacy options are required by UMP.
-
 All systems implement a shared `CountingSystem` interface.
 
 ## Current UI (Quick Overview)
 - Header (floating, no card):
-  - Current system name in gold; tier badge (Free/Pro/Full)
-  - ℹ icon → Help dialog
-  - ⋮ icon → Menu:
-    - Select Counting System
-    - Table Rules
-    - Privacy Choices (only when required by UMP)
-    - Reset Count
-    - Upgrade to Pro (Free tier only)
-    - Upgrade to Full
-    - Show/Hide Cheat Sheet
+  - Current system name in gold
+  - Info icon -> Help dialog
+  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
   - Estimated Edge %
 - Bet Recommendation card:
-  - Large unit number on the right; five pip dots on the left indicating position on the 1→2→4→8→12 ramp
+  - Large unit number on the right; five pip dots on the left indicating position on the `1 -> 2 -> 4 -> 8 -> 12` ramp
 - Deck controls:
   - Segmented button: `1 / 2 / 4 / 6 / 8` decks
   - Decks Remaining slider (`0.25` minimum)
@@ -119,22 +91,15 @@ All systems implement a shared `CountingSystem` interface.
 - Card input (2 rows, each button shows rank + tag value):
   - `A`, `2`, `3`, `4`, `5`
   - `6`, `7`, `8`, `9`, `10-K`
-- Bottom actions (side by side):
+- Bottom actions:
   - Recent Cards panel with badge chips + Undo
-  - Reset Count | Strategy Chart (full-screen table with back button)
-  - Free-tier banner ad
+  - Reset Count and Strategy Chart (full-screen table)
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`
-- Dealer peek:
-  - `ACE_AND_TEN`
-  - `ACE_ONLY` (no peek on 10)
-  - `NO_PEEK`
+- Dealer peek: `ACE_AND_TEN`, `ACE_ONLY`, `NO_PEEK`
 - Blackjack payout: `3:2` / `6:5`
-- Double down:
-  - Any two cards
-  - 9 to 11 only
-  - 10 to 11 only
+- Double down: any two cards, 9 to 11 only, or 10 to 11 only
 - Double after split (DAS)
 - Surrender: none / late / early
 - Resplit aces
@@ -164,7 +129,6 @@ It is a simplified training estimate.
 - Jetpack Compose
 - Material 3
 - MVVM (`ViewModel` + `StateFlow`)
-- Google Mobile Ads SDK (free-tier banner)
 - Local state only (no backend, no database)
 
 ## Requirements
@@ -182,8 +146,8 @@ It is a simplified training estimate.
 
 ## Build / Test (CLI)
 Windows:
-- `.\gradlew.bat assembleDebug`
-- `.\gradlew.bat testDebugUnitTest`
+- `./gradlew.bat assembleDebug`
+- `./gradlew.bat testDebugUnitTest`
 
 macOS/Linux:
 - `./gradlew assembleDebug`
@@ -193,19 +157,8 @@ Optional verification script:
 - `powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1`
 
 ## Release Checklist
-- Use real production values in `app/src/main/res/values/strings.xml`:
-  - `admob_app_id`
-  - `admob_banner_ad_unit_id`
-- Keep debug ad testing IDs in `app/src/debug/res/values/strings.xml`.
-- Verify Google Play Billing products exist and are active:
-  - `pro_unlock`
-  - `full_unlock`
-- Verify UMP consent flow is configured in AdMob:
-  - EEA/UK and US state privacy messaging setup completed in AdMob console
 - Build and lint release before upload:
-  - `.\gradlew.bat assembleRelease lintRelease`
-- Test purchase/restore flows in Play internal testing.
-- Confirm free tier shows banner ads and Pro/Full remove ads.
+  - `./gradlew.bat assembleRelease lintRelease`
 
 ## Privacy Policy (Play Console)
 - Privacy policy file in this repo: `docs/privacy-policy.md`
@@ -224,5 +177,5 @@ Optional verification script:
 ## Notes
 - Deck safety floor is enforced to avoid divide-by-zero behavior.
 - True count is rounded to one decimal place for display.
-- `CounterViewModel` is created via factory in UI; tests use `createForTests()`.
+- `CounterViewModel` is created via a factory in UI and tests.
 - Educational/training use only.

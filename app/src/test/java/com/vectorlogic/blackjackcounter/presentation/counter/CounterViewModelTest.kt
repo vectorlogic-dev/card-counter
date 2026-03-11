@@ -1,25 +1,18 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import android.app.Activity
-import com.vectorlogic.blackjackcounter.data.monetization.MonetizationRepository
-import com.vectorlogic.blackjackcounter.data.monetization.MonetizationStatus
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
-import com.vectorlogic.blackjackcounter.domain.model.EntitlementTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 class CounterViewModelTest {
 
     @Test
     fun `onCardSeen updates running count true count and penetration`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         val initialDecksRemaining = viewModel.uiState.value.decksRemaining
 
         viewModel.onCardSeen(CardRank.TWO)
@@ -33,7 +26,7 @@ class CounterViewModelTest {
 
     @Test
     fun `onCardSeen ace does not change ace side count on systems that do not need it`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         viewModel.onCardSeen(CardRank.ACE)
 
@@ -44,7 +37,7 @@ class CounterViewModelTest {
 
     @Test
     fun `onCardSeen ace increments ace side count for omega ii`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setCountingSystem("omega_ii")
 
         viewModel.onCardSeen(CardRank.ACE)
@@ -56,7 +49,7 @@ class CounterViewModelTest {
 
     @Test
     fun `setDecksRemaining clamps to minimum and true count uses clamped value`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         repeat(2) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -70,7 +63,7 @@ class CounterViewModelTest {
 
     @Test
     fun `resetCount clears running and shoe state`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         repeat(5) {
             viewModel.onCardSeen(CardRank.FIVE)
@@ -90,7 +83,7 @@ class CounterViewModelTest {
 
     @Test
     fun `available systems includes reko and hi opt ii`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         val ids = viewModel.availableSystems.map { it.id }
 
         assertTrue(ids.contains("reko"))
@@ -99,7 +92,7 @@ class CounterViewModelTest {
 
     @Test
     fun `hi opt ii enables ace side count guidance`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         viewModel.setCountingSystem("hi_opt_ii")
 
@@ -110,7 +103,7 @@ class CounterViewModelTest {
 
     @Test
     fun `ko exposes running count key and pivot guidance`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         viewModel.setCountingSystem("ko")
 
@@ -123,7 +116,7 @@ class CounterViewModelTest {
 
     @Test
     fun `hi lo exposes common 16 vs 10 deviation`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         viewModel.setCountingSystem("hi_lo")
 
@@ -133,7 +126,7 @@ class CounterViewModelTest {
 
     @Test
     fun `table rules can be updated from menu settings`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
 
         viewModel.setDealerSoft17Rule(DealerSoft17Rule.HIT)
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
@@ -147,7 +140,7 @@ class CounterViewModelTest {
 
     @Test
     fun `enabling six card charlie improves estimated edge`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         val edgeBefore = viewModel.uiState.value.estimatedPlayerEdgePercent
 
         viewModel.setSixCardCharlieAutoWin(true)
@@ -159,7 +152,7 @@ class CounterViewModelTest {
 
     @Test
     fun `split deviations include no-peek adjustments and ace split notes`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
         viewModel.setResplitAces(false)
         viewModel.setHitSplitAces(false)
@@ -175,7 +168,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart applies count-based 10 vs 10 double deviation`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         repeat(4) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -192,7 +185,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart avoids 10 vs 10 double and adjusts ace split on no-peek`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
         repeat(4) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -213,7 +206,7 @@ class CounterViewModelTest {
 
     @Test
     fun `strategy chart hits split aces vs ace on no-peek for ace and ten`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setDealerPeekRule(DealerPeekRule.NO_PEEK)
 
         val state = viewModel.uiState.value
@@ -227,7 +220,7 @@ class CounterViewModelTest {
 
     @Test
     fun `bet recommendation uses true count for balanced systems`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         repeat(3) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -241,7 +234,7 @@ class CounterViewModelTest {
 
     @Test
     fun `bet recommendation uses running count for unbalanced systems`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setCountingSystem("ko")
         repeat(5) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -255,7 +248,7 @@ class CounterViewModelTest {
 
     @Test
     fun `resetCount restores deck aware initial running count for ko`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setCountingSystem("ko")
         repeat(10) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -270,7 +263,7 @@ class CounterViewModelTest {
 
     @Test
     fun `changing total decks recalculates ko initial running count`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         viewModel.setCountingSystem("ko")
         viewModel.setTotalDecks(2)
 
@@ -281,7 +274,7 @@ class CounterViewModelTest {
 
     @Test
     fun `deviation trigger uses integerized true count thresholds`() {
-        val viewModel = CounterViewModel.createForTests()
+        val viewModel = createViewModel()
         repeat(2) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -302,72 +295,7 @@ class CounterViewModelTest {
         assertTrue(dealerTenCell.isDeviation)
     }
 
-    @Test
-    fun `free tier keeps advanced systems locked and ads enabled`() {
-        val viewModel = CounterViewModel.createForTests(
-            monetizationRepository = FakeMonetizationRepository(
-                MonetizationStatus(
-                    tier = EntitlementTier.FREE,
-                    hasFullUnlock = false,
-                    isBillingReady = true
-                )
-            )
-        )
-
-        assertEquals(SystemLockType.FULL, viewModel.getSystemLockType("hi_opt_ii"))
-        assertFalse(viewModel.setCountingSystem("hi_opt_ii"))
-        assertEquals("hi_lo", viewModel.uiState.value.selectedCountingSystemId)
-        assertTrue(viewModel.uiState.value.showAds)
+    private fun createViewModel(): CounterViewModel {
+        return CounterViewModel.provideFactory().create(CounterViewModel::class.java)
     }
-
-    @Test
-    fun `pro tier is ad free but still requires full for advanced systems`() {
-        val viewModel = CounterViewModel.createForTests(
-            monetizationRepository = FakeMonetizationRepository(
-                MonetizationStatus(
-                    tier = EntitlementTier.PRO,
-                    hasFullUnlock = false,
-                    isBillingReady = true
-                )
-            )
-        )
-
-        assertEquals(SystemLockType.FULL, viewModel.getSystemLockType("zen_count"))
-        assertFalse(viewModel.setCountingSystem("zen_count"))
-        assertFalse(viewModel.uiState.value.showAds)
-    }
-
-    @Test
-    fun `full unlock enables wong halves and advanced systems`() {
-        val viewModel = CounterViewModel.createForTests(
-            monetizationRepository = FakeMonetizationRepository(
-                MonetizationStatus(
-                    tier = EntitlementTier.PRO,
-                    hasFullUnlock = true,
-                    isBillingReady = true
-                )
-            )
-        )
-
-        assertNull(viewModel.getSystemLockType("wong_halves"))
-        assertTrue(viewModel.setCountingSystem("wong_halves"))
-        assertEquals("wong_halves", viewModel.uiState.value.selectedCountingSystemId)
-    }
-}
-
-private class FakeMonetizationRepository(
-    initialStatus: MonetizationStatus
-) : MonetizationRepository {
-    private val mutableStatus = MutableStateFlow(initialStatus)
-    override val status: StateFlow<MonetizationStatus> = mutableStatus
-
-    override fun refresh() = Unit
-
-    override fun launchProPurchase(activity: Activity) = Unit
-
-    override fun launchFullPurchase(activity: Activity) = Unit
-
-    override fun clearMessage() = Unit
-
-    override fun release() = Unit
 }

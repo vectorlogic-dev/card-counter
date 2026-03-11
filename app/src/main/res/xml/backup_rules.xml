@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- Keep billing entitlements Play-verified; do not restore local cache. -->
-    <exclude domain="file" path="datastore/monetization.preferences_pb" />
+    <!-- Keep default backup behavior. -->
 </full-backup-content>

@@ -20,8 +20,6 @@ import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemOptio
 fun SystemSelector(
     selectedSystemId: String,
     availableSystems: List<CountingSystemOption>,
-    hasPro: Boolean,
-    hasFullUnlock: Boolean,
     onSystemSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -31,9 +29,6 @@ fun SystemSelector(
     ) {
         availableSystems.forEach { system ->
             val isSelected = system.id == selectedSystemId
-            val isProLocked = system.requiresPro && !hasPro
-            val isFullLocked = system.requiresFullUnlock && !hasFullUnlock
-            val isLocked = isProLocked || isFullLocked
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -45,32 +40,13 @@ fun SystemSelector(
                     .padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                RadioButton(
-                    selected = isSelected,
-                    onClick = null,
-                    enabled = !isLocked
-                )
+                RadioButton(selected = isSelected, onClick = null)
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = when {
-                            isFullLocked -> "${system.displayName} (Full)"
-                            isProLocked -> "${system.displayName} (Pro)"
-                            else -> system.displayName
-                        },
+                        text = system.displayName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    if (isLocked) {
-                        Text(
-                            text = if (isFullLocked) {
-                                "Requires Full unlock"
-                            } else {
-                                "Locked in Free tier"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     if (system.recommendsAceSideCount) {
                         Text(
                             text = "Uses Ace side count",

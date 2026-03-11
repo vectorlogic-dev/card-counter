@@ -7,58 +7,44 @@ Blackjack Counter ("the app") is provided by the developer of this app ("we", "u
 ## Summary
 
 - The app does not require account creation.
-- The app does not run its own backend server for user accounts.
-- The app uses third-party Google services for ads, consent messaging, and in-app purchases.
+- The app does not run its own backend server.
+- Core app usage is local to your device.
 
 ## Data We Handle
 
 ### Data you provide
 
-- In-app purchase actions through Google Play Billing (for example, buying Pro or Full unlocks).
-- Consent and privacy choices shown through Google's User Messaging Platform (UMP).
+- In-app gameplay inputs (for example, selected cards, table rules, and counting system choices).
 
-### Data collected by third-party SDKs
+### Data stored on device
 
-The app uses:
+The app stores state locally so features work as expected, such as:
 
-- Google Mobile Ads SDK (AdMob)
-- Google User Messaging Platform (UMP)
-- Google Play Billing
+- Running count and shoe state
+- Selected table rules
+- Selected counting system and UI preferences
 
-These services may collect and process data such as:
-
-- Device and app identifiers
-- Approximate location or IP-based region
-- Ad interaction and diagnostics data
-- Purchase and transaction status data
-- Crash and performance diagnostics
-
-Collection and processing are performed by Google under Google's own policies.
+We do not operate a remote database for this data.
 
 ## How Data Is Used
 
 Data is used to:
 
-- show ads in the free tier
-- request and respect consent/privacy choices where required
-- process and restore in-app purchases
+- provide card-counting training functionality
+- preserve your local app state between sessions
 - improve app stability and performance
-
-## Legal Bases and Consent
-
-Where required by law, the app requests consent through UMP before requesting ads. You can update privacy choices from the app menu when available.
 
 ## Data Sharing
 
-We do not sell your personal information. Data needed for ads, consent, and purchases is shared with the Google services listed above to provide app functionality.
+We do not sell your personal information. We do not run a backend service that stores personal account data.
 
 ## Data Retention
 
-App state is primarily local to your device. Purchase-related records are handled by Google Play. Retention periods for third-party data are governed by Google.
+App state is primarily local to your device. You can clear app data or uninstall the app to remove locally stored data.
 
 ## Security
 
-We use standard platform and SDK security mechanisms provided by Android and Google services. No method of transmission or storage is 100% secure.
+We use standard platform security mechanisms provided by Android. No method of transmission or storage is 100% secure.
 
 ## Children's Privacy
 
@@ -66,13 +52,11 @@ The app is not directed to children under 13. If you believe a child provided da
 
 ## Your Rights
 
-Depending on your location, you may have rights regarding access, deletion, correction, and consent withdrawal. You can also manage ad/privacy choices in-app when available and through your device/Google settings.
+Depending on your location, you may have rights regarding access, deletion, correction, and consent withdrawal.
 
 ## Third-Party Policies
 
 - Google Privacy Policy: https://policies.google.com/privacy
-- Google Play Billing Terms/Policies: https://play.google.com/about/play-terms/
-- AdMob and UMP documentation: https://support.google.com/admob/
 
 ## Changes to This Policy
 
