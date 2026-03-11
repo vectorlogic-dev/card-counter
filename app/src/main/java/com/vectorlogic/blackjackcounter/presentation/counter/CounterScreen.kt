@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.presentation.counter.components.BannerAd
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountButtonsRow
@@ -250,6 +252,8 @@ fun CounterScreen() {
                     )
                 }
             }
+
+            BannerAd(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
 
             if (showSystemSelector) {
                 CounterAlertDialog(
