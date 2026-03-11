@@ -1,6 +1,6 @@
-# Blackjack Counter (Android)
+# Counting Edge: Card Counter (Android)
 
-Blackjack Counter is a Jetpack Compose training app for live card-count practice.
+Counting Edge: Card Counter is a Jetpack Compose training app for live card-count practice.
 It supports multiple counting systems, rule-aware strategy guidance, and a compact one-screen workflow.
 
 ## 30-Second Setup Checklist
@@ -70,6 +70,20 @@ This is a training aid, not bankroll or gambling advice.
 - Wong Halves
 
 All systems implement a shared `CountingSystem` interface.
+
+## Monetization Model
+- `Level 1` systems are free:
+  - `Hi-Lo`, `KO`, `ReKO`
+- `Level 2` systems are one-time unlocks at `\$0.99` each:
+  - `Hi-Opt II`, `Omega II`, `Zen Count`
+- `Level 3` systems are one-time unlocks at `\$1.99` each:
+  - `Wong Halves`
+
+Current Play Billing product IDs in code:
+- `unlock_hi_opt_ii`
+- `unlock_omega_ii`
+- `unlock_zen_count`
+- `unlock_wong_halves`
 
 ## Current UI (Quick Overview)
 - Header (floating, no card):

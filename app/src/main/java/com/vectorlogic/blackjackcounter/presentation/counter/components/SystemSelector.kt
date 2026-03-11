@@ -20,7 +20,10 @@ import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemOptio
 fun SystemSelector(
     selectedSystemId: String,
     availableSystems: List<CountingSystemOption>,
+    ownedSystemIds: Set<String>,
+    priceLabelsBySystemId: Map<String, String>,
     onSystemSelected: (String) -> Unit,
+    onUnlockRequested: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -28,24 +31,51 @@ fun SystemSelector(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         availableSystems.forEach { system ->
-            val isSelected = system.id == selectedSystemId
+            val isUnlocked = system.isFree || ownedSystemIds.contains(system.id)
+            val isSelected = isUnlocked && system.id == selectedSystemId
+            val priceLabel = priceLabelsBySystemId[system.id] ?: system.defaultPriceLabel
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .selectable(
                         selected = isSelected,
                         role = Role.RadioButton,
-                        onClick = { onSystemSelected(system.id) }
+                        onClick = {
+                            if (isUnlocked) {
+                                onSystemSelected(system.id)
+                            } else {
+                                onUnlockRequested(system.id)
+                            }
+                        }
                     )
                     .padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                RadioButton(selected = isSelected, onClick = null)
+                RadioButton(
+                    selected = isSelected,
+                    onClick = null,
+                    enabled = isUnlocked
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = system.displayName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
+                    )
+                    val levelSummary = when {
+                        system.isFree -> "Level ${system.level} • Free"
+                        isUnlocked -> "Level ${system.level} • Unlocked"
+                        priceLabel != null -> "Level ${system.level} • Locked • $priceLabel"
+                        else -> "Level ${system.level} • Locked"
+                    }
+                    Text(
+                        text = levelSummary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isUnlocked) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
                     )
                     if (system.recommendsAceSideCount) {
                         Text(

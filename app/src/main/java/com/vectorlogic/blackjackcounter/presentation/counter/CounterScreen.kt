@@ -1,5 +1,9 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +28,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vectorlogic.blackjackcounter.R
+import com.vectorlogic.blackjackcounter.data.monetization.BillingUnlockManager
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
-import com.vectorlogic.blackjackcounter.presentation.counter.components.BannerAd
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountButtonsRow
@@ -59,15 +67,52 @@ import kotlin.math.round
 
 @Composable
 fun CounterScreen() {
+    val context = LocalContext.current
     val viewModel: CounterViewModel = viewModel(
         factory = remember { CounterViewModel.provideFactory() }
     )
     val state by viewModel.uiState.collectAsState()
+    val billingUnlockManager = remember(context.applicationContext) {
+        BillingUnlockManager(context.applicationContext)
+    }
+    val ownedPaidSystemIds by billingUnlockManager.ownedSystemIds.collectAsState()
+    val priceLabelsBySystemId by billingUnlockManager.priceBySystemId.collectAsState()
+    val billingStatusMessage by billingUnlockManager.statusMessage.collectAsState()
+    var pendingUnlockSystemId by remember { mutableStateOf<String?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showStrategyChartDialog by remember { mutableStateOf(false) }
+
+    DisposableEffect(billingUnlockManager) {
+        billingUnlockManager.start()
+        onDispose {
+            billingUnlockManager.shutdown()
+        }
+    }
+
+    LaunchedEffect(ownedPaidSystemIds) {
+        viewModel.setPurchasedSystemIds(ownedPaidSystemIds)
+    }
+
+    LaunchedEffect(pendingUnlockSystemId, ownedPaidSystemIds) {
+        val pending = pendingUnlockSystemId ?: return@LaunchedEffect
+        val isNowUnlocked = viewModel.availableSystems.any { option ->
+            option.id == pending && (option.isFree || ownedPaidSystemIds.contains(option.id))
+        }
+        if (isNowUnlocked) {
+            viewModel.setCountingSystem(pending)
+            showSystemSelector = false
+            pendingUnlockSystemId = null
+        }
+    }
+
+    LaunchedEffect(billingStatusMessage) {
+        val message = billingStatusMessage ?: return@LaunchedEffect
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        billingUnlockManager.clearStatusMessage()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -113,7 +158,7 @@ fun CounterScreen() {
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "BLACKJACK COUNTER",
+                            text = stringResource(id = R.string.app_name_short).uppercase(Locale.US),
                             style = MaterialTheme.typography.labelSmall,
                             color = GoldAccent.copy(alpha = 0.6f)
                         )
@@ -253,8 +298,6 @@ fun CounterScreen() {
                 }
             }
 
-            BannerAd(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
-
             if (showSystemSelector) {
                 CounterAlertDialog(
                     title = "Counting System",
@@ -263,9 +306,27 @@ fun CounterScreen() {
                     SystemSelector(
                         selectedSystemId = state.selectedCountingSystemId,
                         availableSystems = viewModel.availableSystems,
+                        ownedSystemIds = ownedPaidSystemIds,
+                        priceLabelsBySystemId = priceLabelsBySystemId,
                         onSystemSelected = { systemId ->
-                            viewModel.setCountingSystem(systemId)
-                            showSystemSelector = false
+                            if (viewModel.setCountingSystem(systemId)) {
+                                showSystemSelector = false
+                            }
+                        },
+                        onUnlockRequested = { systemId ->
+                            val activity = context.findActivity()
+                            if (activity == null) {
+                                Toast.makeText(
+                                    context,
+                                    "Purchases unavailable right now.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                val launched = billingUnlockManager.launchPurchase(activity, systemId)
+                                if (launched) {
+                                    pendingUnlockSystemId = systemId
+                                }
+                            }
                         }
                     )
                 }
@@ -371,6 +432,14 @@ private fun formatSignedPercent(value: Double): String {
     val rounded = round(value * 10.0) / 10.0
     val prefix = if (rounded > 0.0) "+" else ""
     return "$prefix${String.format(Locale.US, "%.1f", rounded)}"
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 }
 
 @Composable

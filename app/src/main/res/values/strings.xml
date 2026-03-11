@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Blackjack Counter</string>
-    <string name="admob_app_id" translatable="false">ca-app-pub-3709597187682861~2618961144</string>
-    <string name="admob_banner_ad_unit_id" translatable="false">ca-app-pub-3709597187682861/8476812549</string>
+    <string name="app_name">Counting Edge: Card Counter</string>
+    <string name="app_name_short">Counting Edge</string>
 </resources>
