@@ -119,8 +119,8 @@ class CounterViewModelTest {
 
         assertTrue(hiLo.isFree)
         assertFalse(zen.isFree)
-        assertEquals("\$0.99", zen.defaultPriceLabel)
-        assertEquals("\$1.99", wong.defaultPriceLabel)
+        assertEquals("\$1.99", zen.defaultPriceLabel)
+        assertEquals("\$2.99", wong.defaultPriceLabel)
     }
 
     @Test

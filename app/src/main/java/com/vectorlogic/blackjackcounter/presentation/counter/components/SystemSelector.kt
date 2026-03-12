@@ -22,14 +22,47 @@ fun SystemSelector(
     availableSystems: List<CountingSystemOption>,
     ownedSystemIds: Set<String>,
     priceLabelsBySystemId: Map<String, String>,
+    unlockAllPriceLabel: String,
     onSystemSelected: (String) -> Unit,
     onUnlockRequested: (String) -> Unit,
+    onUnlockAllRequested: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val hasLockedPaidSystems = availableSystems.any { system ->
+        !system.isFree && !ownedSystemIds.contains(system.id)
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        if (hasLockedPaidSystems) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = false,
+                        role = Role.Button,
+                        onClick = onUnlockAllRequested
+                    )
+                    .padding(vertical = 6.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "Unlock All Paid Systems",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    Text(
+                        text = "One-time unlock - $unlockAllPriceLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         availableSystems.forEach { system ->
             val isUnlocked = system.isFree || ownedSystemIds.contains(system.id)
             val isSelected = isUnlocked && system.id == selectedSystemId
@@ -63,10 +96,10 @@ fun SystemSelector(
                         fontWeight = FontWeight.SemiBold
                     )
                     val levelSummary = when {
-                        system.isFree -> "Level ${system.level} • Free"
-                        isUnlocked -> "Level ${system.level} • Unlocked"
-                        priceLabel != null -> "Level ${system.level} • Locked • $priceLabel"
-                        else -> "Level ${system.level} • Locked"
+                        system.isFree -> "Level ${system.level} - Free"
+                        isUnlocked -> "Level ${system.level} - Unlocked"
+                        priceLabel != null -> "Level ${system.level} - Locked - $priceLabel"
+                        else -> "Level ${system.level} - Locked"
                     }
                     Text(
                         text = levelSummary,

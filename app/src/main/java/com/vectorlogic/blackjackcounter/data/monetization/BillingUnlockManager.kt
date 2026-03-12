@@ -30,6 +30,8 @@ class BillingUnlockManager(
 
     private val _priceBySystemId = MutableStateFlow<Map<String, String>>(emptyMap())
     val priceBySystemId: StateFlow<Map<String, String>> = _priceBySystemId.asStateFlow()
+    private val _unlockAllPriceLabel = MutableStateFlow<String?>(null)
+    val unlockAllPriceLabel: StateFlow<String?> = _unlockAllPriceLabel.asStateFlow()
 
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
@@ -65,7 +67,14 @@ class BillingUnlockManager(
             setStatus("This system is already free.")
             return false
         }
+        return launchPurchaseForProduct(activity, productId)
+    }
 
+    fun launchUnlockAllPurchase(activity: Activity): Boolean {
+        return launchPurchaseForProduct(activity, CountingSystemMonetization.unlockAllProductId())
+    }
+
+    private fun launchPurchaseForProduct(activity: Activity, productId: String): Boolean {
         if (!billingClient.isReady) {
             connect()
             setStatus("Store is connecting. Try again in a moment.")
@@ -140,15 +149,16 @@ class BillingUnlockManager(
     }
 
     private fun queryProductDetails() {
-        val products = CountingSystemMonetization.paidSystemProducts.map { unlock ->
+        val products = CountingSystemMonetization.catalogProductIds().map { productId ->
             QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(unlock.productId)
+                .setProductId(productId)
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build()
         }
 
         if (products.isEmpty()) {
             _priceBySystemId.value = emptyMap()
+            _unlockAllPriceLabel.value = null
             return
         }
 
@@ -163,13 +173,20 @@ class BillingUnlockManager(
             }
 
             productDetailsByProductId = productDetailsList.associateBy { it.productId }
-            _priceBySystemId.value = productDetailsList.mapNotNull { details ->
-                val systemId = CountingSystemMonetization.systemIdForProduct(details.productId)
-                    ?: return@mapNotNull null
-                val priceLabel = details.oneTimePurchaseOfferDetails?.formattedPrice
-                    ?: return@mapNotNull null
-                systemId to priceLabel
-            }.toMap()
+            val priceBySystem = mutableMapOf<String, String>()
+            var unlockAllPrice: String? = null
+            productDetailsList.forEach { details ->
+                val priceLabel = details.oneTimePurchaseOfferDetails?.formattedPrice ?: return@forEach
+                if (CountingSystemMonetization.isUnlockAllProduct(details.productId)) {
+                    unlockAllPrice = priceLabel
+                } else {
+                    val systemId = CountingSystemMonetization.systemIdForProduct(details.productId)
+                        ?: return@forEach
+                    priceBySystem[systemId] = priceLabel
+                }
+            }
+            _priceBySystemId.value = priceBySystem
+            _unlockAllPriceLabel.value = unlockAllPrice
         }
     }
 
@@ -188,16 +205,16 @@ class BillingUnlockManager(
     }
 
     private fun applyPurchases(purchases: List<Purchase>) {
-        val ownedSystems = purchases
+        val ownedProductIds = purchases
             .asSequence()
             .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
             .flatMap { purchase ->
                 acknowledgeIfNeeded(purchase)
                 purchase.products.asSequence()
             }
-            .mapNotNull { productId -> CountingSystemMonetization.systemIdForProduct(productId) }
             .toSet()
-        _ownedSystemIds.value = ownedSystems
+        _ownedSystemIds.value =
+            CountingSystemMonetization.purchasedSystemIdsForProducts(ownedProductIds)
     }
 
     private fun acknowledgeIfNeeded(purchase: Purchase) {

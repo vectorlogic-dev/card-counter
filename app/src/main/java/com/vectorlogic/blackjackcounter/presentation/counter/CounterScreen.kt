@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.monetization.BillingUnlockManager
+import com.vectorlogic.blackjackcounter.data.monetization.CountingSystemMonetization
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -77,6 +78,7 @@ fun CounterScreen() {
     }
     val ownedPaidSystemIds by billingUnlockManager.ownedSystemIds.collectAsState()
     val priceLabelsBySystemId by billingUnlockManager.priceBySystemId.collectAsState()
+    val unlockAllPriceLabel by billingUnlockManager.unlockAllPriceLabel.collectAsState()
     val billingStatusMessage by billingUnlockManager.statusMessage.collectAsState()
     var pendingUnlockSystemId by remember { mutableStateOf<String?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
@@ -308,6 +310,8 @@ fun CounterScreen() {
                         availableSystems = viewModel.availableSystems,
                         ownedSystemIds = ownedPaidSystemIds,
                         priceLabelsBySystemId = priceLabelsBySystemId,
+                        unlockAllPriceLabel =
+                            unlockAllPriceLabel ?: CountingSystemMonetization.fallbackUnlockAllPrice(),
                         onSystemSelected = { systemId ->
                             if (viewModel.setCountingSystem(systemId)) {
                                 showSystemSelector = false
@@ -326,6 +330,18 @@ fun CounterScreen() {
                                 if (launched) {
                                     pendingUnlockSystemId = systemId
                                 }
+                            }
+                        },
+                        onUnlockAllRequested = {
+                            val activity = context.findActivity()
+                            if (activity == null) {
+                                Toast.makeText(
+                                    context,
+                                    "Purchases unavailable right now.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                billingUnlockManager.launchUnlockAllPurchase(activity)
                             }
                         }
                     )
