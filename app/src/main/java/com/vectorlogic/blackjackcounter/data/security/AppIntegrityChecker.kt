@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Debug
+import com.vectorlogic.blackjackcounter.BuildConfig
 import java.io.File
 import java.security.MessageDigest
 
@@ -41,6 +42,8 @@ object AppIntegrityChecker {
     }
 
     private fun runChecks(context: Context): Boolean {
+        // Skip all integrity checks in debug builds to allow normal development.
+        if (BuildConfig.DEBUG) return true
         if (isDebuggerAttached()) return false
         if (!isPackageNameValid(context)) return false
         if (!isInstallerAllowed(context)) return false
