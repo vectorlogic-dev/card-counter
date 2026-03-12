@@ -21,11 +21,8 @@ fun SystemSelector(
     selectedSystemId: String,
     availableSystems: List<CountingSystemOption>,
     ownedSystemIds: Set<String>,
-    priceLabelsBySystemId: Map<String, String>,
-    unlockAllPriceLabel: String,
     onSystemSelected: (String) -> Unit,
-    onUnlockRequested: (String) -> Unit,
-    onUnlockAllRequested: () -> Unit,
+    onUnlockRequested: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hasLockedPaidSystems = availableSystems.any { system ->
@@ -43,19 +40,19 @@ fun SystemSelector(
                     .selectable(
                         selected = false,
                         role = Role.Button,
-                        onClick = onUnlockAllRequested
+                        onClick = onUnlockRequested
                     )
                     .padding(vertical = 6.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "Unlock All Paid Systems",
+                        text = "Enter License Key",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
-                        text = "One-time unlock - $unlockAllPriceLabel",
+                        text = "Unlock paid counting systems with a license key",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -66,7 +63,6 @@ fun SystemSelector(
         availableSystems.forEach { system ->
             val isUnlocked = system.isFree || ownedSystemIds.contains(system.id)
             val isSelected = isUnlocked && system.id == selectedSystemId
-            val priceLabel = priceLabelsBySystemId[system.id] ?: system.defaultPriceLabel
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,7 +73,7 @@ fun SystemSelector(
                             if (isUnlocked) {
                                 onSystemSelected(system.id)
                             } else {
-                                onUnlockRequested(system.id)
+                                onUnlockRequested()
                             }
                         }
                     )
@@ -98,7 +94,6 @@ fun SystemSelector(
                     val levelSummary = when {
                         system.isFree -> "Level ${system.level} - Free"
                         isUnlocked -> "Level ${system.level} - Unlocked"
-                        priceLabel != null -> "Level ${system.level} - Locked - $priceLabel"
                         else -> "Level ${system.level} - Locked"
                     }
                     Text(

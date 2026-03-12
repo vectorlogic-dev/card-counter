@@ -1,8 +1,5 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,8 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.R
-import com.vectorlogic.blackjackcounter.data.monetization.BillingUnlockManager
-import com.vectorlogic.blackjackcounter.data.monetization.CountingSystemMonetization
+import com.vectorlogic.blackjackcounter.data.monetization.LicenseKeyManager
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -55,6 +51,7 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.CountBut
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountDisplayCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.DeckControlCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.HelpDialogContent
+import com.vectorlogic.blackjackcounter.presentation.counter.components.LicenseKeyDialog
 import com.vectorlogic.blackjackcounter.presentation.counter.components.RecentCardsCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.ResetButton
 import com.vectorlogic.blackjackcounter.presentation.counter.components.StrategyChartButton
@@ -74,66 +71,35 @@ fun CounterScreen() {
         factory = remember { CounterViewModel.provideFactory() }
     )
     val state by viewModel.uiState.collectAsState()
-    val billingUnlockManager = remember(context.applicationContext) {
-        BillingUnlockManager(context.applicationContext)
+    val licenseKeyManager = remember(context.applicationContext) {
+        LicenseKeyManager(context.applicationContext)
     }
-    val ownedPaidSystemIds by billingUnlockManager.ownedSystemIds.collectAsState()
-    val priceLabelsBySystemId by billingUnlockManager.priceBySystemId.collectAsState()
-    val unlockAllPriceLabel by billingUnlockManager.unlockAllPriceLabel.collectAsState()
-    val billingStatusMessage by billingUnlockManager.statusMessage.collectAsState()
+    val ownedPaidSystemIds by licenseKeyManager.ownedSystemIds.collectAsState()
+    val licenseStatusMessage by licenseKeyManager.statusMessage.collectAsState()
+    val isValidatingKey by licenseKeyManager.isValidating.collectAsState()
     val hasUnlockedAllPaidSystems = viewModel.availableSystems
         .filterNot { it.isFree }
         .all { option -> ownedPaidSystemIds.contains(option.id) }
-    var pendingUnlockSystemId by remember { mutableStateOf<String?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showStrategyChartDialog by remember { mutableStateOf(false) }
+    var showLicenseKeyDialog by remember { mutableStateOf(false) }
 
-    DisposableEffect(billingUnlockManager) {
-        billingUnlockManager.start()
-        onDispose {
-            billingUnlockManager.shutdown()
-        }
+    DisposableEffect(licenseKeyManager) {
+        licenseKeyManager.start()
+        onDispose { }
     }
 
     LaunchedEffect(ownedPaidSystemIds) {
         viewModel.setPurchasedSystemIds(ownedPaidSystemIds)
     }
 
-    LaunchedEffect(pendingUnlockSystemId, ownedPaidSystemIds) {
-        val pending = pendingUnlockSystemId ?: return@LaunchedEffect
-        val isNowUnlocked = viewModel.availableSystems.any { option ->
-            option.id == pending && (option.isFree || ownedPaidSystemIds.contains(option.id))
-        }
-        if (isNowUnlocked) {
-            viewModel.setCountingSystem(pending)
-            showSystemSelector = false
-            pendingUnlockSystemId = null
-        }
-    }
-
-    LaunchedEffect(billingStatusMessage) {
-        val message = billingStatusMessage ?: return@LaunchedEffect
+    LaunchedEffect(licenseStatusMessage) {
+        val message = licenseStatusMessage ?: return@LaunchedEffect
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        billingUnlockManager.clearStatusMessage()
-    }
-
-    val showPurchasesUnavailableToast = {
-        Toast.makeText(
-            context,
-            "Purchases unavailable right now.",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-    val launchUnlockAllPurchase = {
-        val activity = context.findActivity()
-        if (activity == null) {
-            showPurchasesUnavailableToast()
-        } else {
-            billingUnlockManager.launchUnlockAllPurchase(activity)
-        }
+        licenseKeyManager.clearStatusMessage()
     }
 
     Surface(
@@ -238,20 +204,16 @@ fun CounterScreen() {
                                     text = {
                                         Text(
                                             if (hasUnlockedAllPaidSystems) {
-                                                "Unlock All (Owned)"
+                                                "All Systems Unlocked"
                                             } else {
-                                                "Unlock All (${
-                                                    unlockAllPriceLabel
-                                                        ?: CountingSystemMonetization
-                                                            .fallbackUnlockAllPrice()
-                                                })"
+                                                "Enter License Key"
                                             }
                                         )
                                     },
                                     enabled = !hasUnlockedAllPaidSystems,
                                     onClick = {
                                         menuExpanded = false
-                                        launchUnlockAllPurchase()
+                                        showLicenseKeyDialog = true
                                     }
                                 )
                                 DropdownMenuItem(
@@ -370,27 +332,13 @@ fun CounterScreen() {
                         selectedSystemId = state.selectedCountingSystemId,
                         availableSystems = viewModel.availableSystems,
                         ownedSystemIds = ownedPaidSystemIds,
-                        priceLabelsBySystemId = priceLabelsBySystemId,
-                        unlockAllPriceLabel =
-                            unlockAllPriceLabel ?: CountingSystemMonetization.fallbackUnlockAllPrice(),
                         onSystemSelected = { systemId ->
                             if (viewModel.setCountingSystem(systemId)) {
                                 showSystemSelector = false
                             }
                         },
-                        onUnlockRequested = { systemId ->
-                            val activity = context.findActivity()
-                            if (activity == null) {
-                                showPurchasesUnavailableToast()
-                            } else {
-                                val launched = billingUnlockManager.launchPurchase(activity, systemId)
-                                if (launched) {
-                                    pendingUnlockSystemId = systemId
-                                }
-                            }
-                        },
-                        onUnlockAllRequested = {
-                            launchUnlockAllPurchase()
+                        onUnlockRequested = {
+                            showLicenseKeyDialog = true
                         }
                     )
                 }
@@ -448,6 +396,14 @@ fun CounterScreen() {
                     }
                 )
             }
+
+            if (showLicenseKeyDialog) {
+                LicenseKeyDialog(
+                    isValidating = isValidatingKey,
+                    onActivate = { key -> licenseKeyManager.activateLicenseKey(key) },
+                    onDismiss = { showLicenseKeyDialog = false }
+                )
+            }
         }
     }
 }
@@ -498,13 +454,6 @@ private fun formatSignedPercent(value: Double): String {
     return "$prefix${String.format(Locale.US, "%.1f", rounded)}"
 }
 
-private tailrec fun Context.findActivity(): Activity? {
-    return when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
-}
 
 @Composable
 private fun countColor(value: Double): Color = when {
