@@ -3,6 +3,11 @@
 Counting Edge: Card Counter is a Jetpack Compose training app for live card-count practice.
 It supports multiple counting systems, rule-aware strategy guidance, and a compact one-screen workflow.
 
+## Current Release Target
+- Channel: `Closed testing` (Google Play)
+- Version name: `1.0.0-closed-testing.1`
+- Version code: `8`
+
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
 - Open `Menu` -> `Select Counting System`.
@@ -175,6 +180,8 @@ Optional verification script:
 ## Release Checklist
 - Build and lint release before upload:
   - `./gradlew.bat assembleRelease lintRelease`
+- Build the upload bundle (`.aab`) for Play Console:
+  - `./gradlew.bat bundleRelease`
 
 ## Privacy Policy (Play Console)
 - Privacy policy file in this repo: `docs/privacy-policy.md`

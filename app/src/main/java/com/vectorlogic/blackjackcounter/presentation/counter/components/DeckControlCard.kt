@@ -37,6 +37,7 @@ fun DeckControlCard(
     acesExpected: Double,
     onTotalDecksChanged: (Int) -> Unit,
     onDecksRemainingChanged: (Double) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val minDecksRemaining = 0.25f
@@ -48,14 +49,18 @@ fun DeckControlCard(
         aceDiff < -1.0 -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    val aceOutlook = calculateAceOutlook(acesSeen = acesSeen, acesExpected = acesExpected)
+    val aceOutlook = calculateAceOutlook(
+        acesSeen = acesSeen,
+        acesExpected = acesExpected,
+        compact = compact
+    )
 
     Card(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(if (compact) 8.dp else 10.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,7 +68,7 @@ fun DeckControlCard(
             ) {
                 Text(
                     text = "Deck Controls",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
                 )
                 Text(
                     text = "Penetration ${formatPenetration(deckPenetrationPercent)}",
@@ -74,21 +79,24 @@ fun DeckControlCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
             ) {
                 CardsMetricChip(
                     label = "Drawn",
                     value = cardsDrawn.toString(),
+                    compact = compact,
                     modifier = Modifier.weight(1f)
                 )
                 CardsMetricChip(
                     label = "Left",
                     value = cardsLeft.toString(),
+                    compact = compact,
                     modifier = Modifier.weight(1f)
                 )
                 CardsMetricChip(
                     label = "Total",
                     value = totalCards.toString(),
+                    compact = compact,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -96,18 +104,20 @@ fun DeckControlCard(
             if (showAceSideCount) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
                 ) {
                     CardsMetricChip(
                         label = "Aces Seen",
                         value = acesSeen.toString(),
                         valueColor = aceStatusColor,
+                        compact = compact,
                         modifier = Modifier.weight(1f)
                     )
                     CardsMetricChip(
                         label = "Aces Expected",
                         value = formatAcesExpected(acesExpected),
                         valueColor = aceStatusColor,
+                        compact = compact,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -119,7 +129,7 @@ fun DeckControlCard(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)) {
                 Text(
                     text = "Decks in Shoe",
                     style = MaterialTheme.typography.bodySmall,
@@ -141,7 +151,7 @@ fun DeckControlCard(
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -176,6 +186,7 @@ private fun CardsMetricChip(
     label: String,
     value: String,
     valueColor: Color = Color.Unspecified,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val resolvedValueColor = if (valueColor == Color.Unspecified) {
@@ -190,7 +201,10 @@ private fun CardsMetricChip(
         color = MaterialTheme.colorScheme.secondaryContainer
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            modifier = Modifier.padding(
+                horizontal = if (compact) 6.dp else 8.dp,
+                vertical = if (compact) 4.dp else 6.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
@@ -200,7 +214,7 @@ private fun CardsMetricChip(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                 color = resolvedValueColor
             )
         }
@@ -221,13 +235,14 @@ private fun formatAcesExpected(value: Double): String {
 
 private fun calculateAceOutlook(
     acesSeen: Int,
-    acesExpected: Double
+    acesExpected: Double,
+    compact: Boolean
 ): String {
     val diff = acesSeen - acesExpected
 
     return when {
-        diff > 1.0 -> "Ace outlook: Fewer aces likely ahead (seen above expected)."
-        diff < -1.0 -> "Ace outlook: More aces likely ahead (seen below expected)."
-        else -> "Ace outlook: About average Ace frequency."
+        diff > 1.0 -> if (compact) "Ace outlook: fewer ahead." else "Ace outlook: Fewer aces likely ahead (seen above expected)."
+        diff < -1.0 -> if (compact) "Ace outlook: more ahead." else "Ace outlook: More aces likely ahead (seen below expected)."
+        else -> if (compact) "Ace outlook: neutral." else "Ace outlook: About average Ace frequency."
     }
 }

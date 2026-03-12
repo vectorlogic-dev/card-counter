@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -80,6 +81,9 @@ fun CounterScreen() {
     val priceLabelsBySystemId by billingUnlockManager.priceBySystemId.collectAsState()
     val unlockAllPriceLabel by billingUnlockManager.unlockAllPriceLabel.collectAsState()
     val billingStatusMessage by billingUnlockManager.statusMessage.collectAsState()
+    val hasUnlockedAllPaidSystems = viewModel.availableSystems
+        .filterNot { it.isFree }
+        .all { option -> ownedPaidSystemIds.contains(option.id) }
     var pendingUnlockSystemId by remember { mutableStateOf<String?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
@@ -116,6 +120,22 @@ fun CounterScreen() {
         billingUnlockManager.clearStatusMessage()
     }
 
+    val showPurchasesUnavailableToast = {
+        Toast.makeText(
+            context,
+            "Purchases unavailable right now.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+    val launchUnlockAllPurchase = {
+        val activity = context.findActivity()
+        if (activity == null) {
+            showPurchasesUnavailableToast()
+        } else {
+            billingUnlockManager.launchUnlockAllPurchase(activity)
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
         color = MaterialTheme.colorScheme.background
@@ -129,7 +149,7 @@ fun CounterScreen() {
             return@Surface
         }
 
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -143,15 +163,22 @@ fun CounterScreen() {
                     )
                 )
         ) {
+            val compactLayout = maxHeight < 780.dp
+            val sectionSpacing = if (compactLayout) 4.dp else 6.dp
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(
+                        horizontal = if (compactLayout) 10.dp else 12.dp,
+                        vertical = if (compactLayout) 4.dp else 6.dp
+                    ),
+                verticalArrangement = Arrangement.spacedBy(sectionSpacing)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = if (compactLayout) 2.dp else 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -208,6 +235,26 @@ fun CounterScreen() {
                                     onClick = { showRulesDialog = true; menuExpanded = false }
                                 )
                                 DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (hasUnlockedAllPaidSystems) {
+                                                "Unlock All (Owned)"
+                                            } else {
+                                                "Unlock All (${
+                                                    unlockAllPriceLabel
+                                                        ?: CountingSystemMonetization
+                                                            .fallbackUnlockAllPrice()
+                                                })"
+                                            }
+                                        )
+                                    },
+                                    enabled = !hasUnlockedAllPaidSystems,
+                                    onClick = {
+                                        menuExpanded = false
+                                        launchUnlockAllPurchase()
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Reset Count") },
                                     onClick = { viewModel.resetCount(); menuExpanded = false }
                                 )
@@ -224,12 +271,13 @@ fun CounterScreen() {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 6.dp else 8.dp)
                 ) {
                     CountDisplayCard(
                         title = "Running",
                         value = formatSignedCount(state.runningCount),
                         valueColor = countColor(state.runningCount),
+                        compact = compactLayout,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -241,6 +289,7 @@ fun CounterScreen() {
                         } else "N/A",
                         valueColor = if (state.selectedSystemUsesTrueCount) countColor(trueCountValue)
                         else MaterialTheme.colorScheme.onSurface,
+                        compact = compactLayout,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -251,6 +300,7 @@ fun CounterScreen() {
                         else "N/A",
                         valueColor = if (state.canEstimateEdge) countColor(edgeValue)
                         else MaterialTheme.colorScheme.onSurface,
+                        compact = compactLayout,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -259,6 +309,7 @@ fun CounterScreen() {
                     units = state.recommendedBetUnits,
                     countLabel = state.betSizingCountLabel,
                     countValue = state.betSizingCountValue,
+                    compact = compactLayout,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -273,28 +324,38 @@ fun CounterScreen() {
                     acesSeen = state.acesSeen,
                     acesExpected = state.acesExpected,
                     onTotalDecksChanged = viewModel::setTotalDecks,
-                    onDecksRemainingChanged = viewModel::setDecksRemaining
+                    onDecksRemainingChanged = viewModel::setDecksRemaining,
+                    compact = compactLayout
                 )
 
                 CountButtonsRow(
                     buttonTagValues = state.buttonTagValues,
                     onCardSelected = viewModel::onCardSeen,
-                    onFaceCardsSelected = viewModel::onFaceCardsSeen
+                    onFaceCardsSelected = viewModel::onFaceCardsSeen,
+                    compact = compactLayout
                 )
 
                 RecentCardsCard(
-                    recentCardLabels = state.seenCards.takeLast(15).map { it.rank.toHistoryLabel() },
+                    recentCardLabels = state.seenCards
+                        .takeLast(if (compactLayout) 12 else 15)
+                        .map { it.rank.toHistoryLabel() },
                     onUndo = viewModel::undoLastCard,
-                    canUndo = state.seenCards.isNotEmpty()
+                    canUndo = state.seenCards.isNotEmpty(),
+                    compact = compactLayout
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 6.dp else 8.dp)
                 ) {
-                    ResetButton(onReset = viewModel::resetCount, modifier = Modifier.weight(1f))
+                    ResetButton(
+                        onReset = viewModel::resetCount,
+                        compact = compactLayout,
+                        modifier = Modifier.weight(1f)
+                    )
                     StrategyChartButton(
                         onClick = { showStrategyChartDialog = true },
+                        compact = compactLayout,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -320,11 +381,7 @@ fun CounterScreen() {
                         onUnlockRequested = { systemId ->
                             val activity = context.findActivity()
                             if (activity == null) {
-                                Toast.makeText(
-                                    context,
-                                    "Purchases unavailable right now.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                showPurchasesUnavailableToast()
                             } else {
                                 val launched = billingUnlockManager.launchPurchase(activity, systemId)
                                 if (launched) {
@@ -333,16 +390,7 @@ fun CounterScreen() {
                             }
                         },
                         onUnlockAllRequested = {
-                            val activity = context.findActivity()
-                            if (activity == null) {
-                                Toast.makeText(
-                                    context,
-                                    "Purchases unavailable right now.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                billingUnlockManager.launchUnlockAllPurchase(activity)
-                            }
+                            launchUnlockAllPurchase()
                         }
                     )
                 }

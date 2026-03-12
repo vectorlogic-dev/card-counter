@@ -23,12 +23,16 @@ fun RecentCardsCard(
     recentCardLabels: List<String>,
     onUndo: () -> Unit,
     canUndo: Boolean,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 10.dp,
+                vertical = if (compact) 6.dp else 8.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -66,8 +70,15 @@ fun RecentCardsCard(
                         ) {
                             Text(
                                 text = label,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(
+                                    horizontal = if (compact) 6.dp else 7.dp,
+                                    vertical = if (compact) 2.dp else 3.dp
+                                ),
+                                style = if (compact) {
+                                    MaterialTheme.typography.bodySmall
+                                } else {
+                                    MaterialTheme.typography.bodyMedium
+                                },
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
