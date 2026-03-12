@@ -88,7 +88,9 @@ object AppIntegrityChecker {
             val signingInfo = context.packageManager
                 .getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
                 .signingInfo
-            if (signingInfo.hasMultipleSigners()) {
+            if (signingInfo == null) {
+                null
+            } else if (signingInfo.hasMultipleSigners()) {
                 signingInfo.apkContentsSigners
             } else {
                 signingInfo.signingCertificateHistory
