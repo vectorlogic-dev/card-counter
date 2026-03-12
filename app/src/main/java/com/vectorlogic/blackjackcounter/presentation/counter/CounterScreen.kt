@@ -206,7 +206,7 @@ fun CounterScreen() {
                                             if (hasUnlockedAllPaidSystems) {
                                                 "All Systems Unlocked"
                                             } else {
-                                                "Enter License Key"
+                                                "Unlock All"
                                             }
                                         )
                                     },
