@@ -387,7 +387,13 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     fun isSystemUnlocked(systemId: String): Boolean {
-        return systemId in freeSystemIds || systemId in purchasedSystemIds
+        // Multi-path validation: makes single-point bytecode patches insufficient.
+        val isFree = freeSystemIds.contains(systemId)
+        val isPurchased = purchasedSystemIds.contains(systemId)
+        val accessGranted = isFree || isPurchased
+        // Cross-check: if not free, the purchased set must actually contain it.
+        if (!isFree && accessGranted && systemId !in purchasedSystemIds) return false
+        return accessGranted
     }
 
     fun undoLastCard() {
