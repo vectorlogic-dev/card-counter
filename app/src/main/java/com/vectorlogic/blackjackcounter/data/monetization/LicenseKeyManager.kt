@@ -21,16 +21,20 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /**
- * Manages license key validation against LemonSqueezy's API and stores
+ * Manages payment verification against PayMongo's API and stores
  * activation state in encrypted SharedPreferences backed by Android Keystore.
  *
- * Setup instructions:
- * 1. Create products on LemonSqueezy (one per paid system + unlock-all).
- * 2. Enable "License keys" on each product in LemonSqueezy dashboard.
- * 3. Map each LemonSqueezy product variant to the corresponding system ID
- *    in [CountingSystemMonetization].
+ * Flow:
+ * 1. User taps "Buy" → opens PayMongo payment link in browser.
+ * 2. User pays via GCash, Maya, or card.
+ * 3. User enters the PayMongo reference number shown after payment.
+ * 4. App verifies the payment via PayMongo API → unlocks systems.
  *
- * API reference: https://docs.lemonsqueezy.com/api/license-keys
+ * Setup:
+ * 1. Create a PayMongo account at https://paymongo.com
+ * 2. Create Payment Links in the PayMongo dashboard for each product.
+ * 3. Set PAYMONGO_SECRET_KEY to your secret key (sk_live_... or sk_test_...).
+ * 4. Set the payment link URLs below.
  */
 class LicenseKeyManager(context: Context) {
 
@@ -57,35 +61,38 @@ class LicenseKeyManager(context: Context) {
     }
 
     /**
-     * Validate and activate a license key.
-     * Calls LemonSqueezy's /v1/licenses/activate endpoint.
+     * Returns the PayMongo payment link URL for the unlock-all product.
      */
-    fun activateLicenseKey(licenseKey: String) {
+    fun getPaymentLinkUrl(): String = PAYMENT_LINK_UNLOCK_ALL
+
+    /**
+     * Verify a PayMongo payment reference number and unlock systems.
+     *
+     * Calls PayMongo's API to check if the payment link reference
+     * corresponds to a successful payment.
+     */
+    fun verifyPayment(referenceNumber: String) {
         if (_isValidating.value) return
-        val trimmedKey = licenseKey.trim()
-        if (trimmedKey.isEmpty()) {
-            _statusMessage.value = "Please enter a license key."
+        val trimmed = referenceNumber.trim()
+        if (trimmed.isEmpty()) {
+            _statusMessage.value = "Please enter your payment reference number."
             return
         }
 
         _isValidating.value = true
         scope.launch {
             try {
-                val result = callActivateApi(trimmedKey)
+                val result = verifyPaymentViaApi(trimmed)
                 if (result.success) {
-                    val systemIds = resolveSystemIds(result.productId, result.variantId)
-                    if (systemIds.isEmpty()) {
-                        _statusMessage.value = "License key is valid but not linked to any system."
-                    } else {
-                        storeActivation(trimmedKey, systemIds)
-                        loadStoredActivations()
-                        _statusMessage.value = "License activated successfully!"
-                    }
+                    storeActivation(trimmed, result.unlockedSystemIds)
+                    loadStoredActivations()
+                    _statusMessage.value = "Payment verified! Systems unlocked."
                 } else {
-                    _statusMessage.value = result.errorMessage ?: "Invalid license key."
+                    _statusMessage.value = result.errorMessage
+                        ?: "Could not verify payment. Check your reference number."
                 }
             } catch (e: Exception) {
-                _statusMessage.value = "Could not validate key. Check your connection."
+                _statusMessage.value = "Could not verify payment. Check your connection."
             } finally {
                 _isValidating.value = false
             }
@@ -100,25 +107,83 @@ class LicenseKeyManager(context: Context) {
         _ownedSystemIds.value = emptySet()
     }
 
-    // ---- LemonSqueezy API ---------------------------------------------------
+    // ---- PayMongo API -------------------------------------------------------
 
-    private fun callActivateApi(licenseKey: String): ActivationResult {
-        val url = URL("$LEMONSQUEEZY_API_BASE/v1/licenses/activate")
+    /**
+     * Verify a payment by looking up the payment link reference.
+     *
+     * PayMongo flow:
+     * 1. Retrieve the link by reference_number to get its payments.
+     * 2. Check if any payment has status "paid".
+     */
+    private fun verifyPaymentViaApi(referenceNumber: String): VerificationResult {
+        // First, search for the payment link by reference number.
+        val linksUrl = URL("$PAYMONGO_API_BASE/v1/links?reference_number=$referenceNumber")
+        val linksResponse = makeAuthenticatedRequest(linksUrl)
+
+        if (!linksResponse.success) {
+            return VerificationResult(
+                success = false,
+                errorMessage = "Could not look up reference. Please check and try again."
+            )
+        }
+
+        val linksJson = JSONObject(linksResponse.body)
+        val dataArray = linksJson.optJSONArray("data")
+        if (dataArray == null || dataArray.length() == 0) {
+            return VerificationResult(
+                success = false,
+                errorMessage = "Reference number not found. Please check and try again."
+            )
+        }
+
+        // Check the first matching link.
+        val link = dataArray.getJSONObject(0)
+        val attributes = link.optJSONObject("attributes") ?: return VerificationResult(
+            success = false,
+            errorMessage = "Invalid payment data."
+        )
+
+        val status = attributes.optString("status", "")
+        if (status != "paid") {
+            return VerificationResult(
+                success = false,
+                errorMessage = when (status) {
+                    "unpaid" -> "This payment has not been completed yet."
+                    "expired" -> "This payment link has expired."
+                    else -> "Payment status: $status. Please complete payment first."
+                }
+            )
+        }
+
+        // Payment is verified — determine which systems to unlock.
+        val amount = attributes.optInt("amount", 0)
+        val systemIds = resolveSystemIdsFromAmount(amount)
+
+        return if (systemIds.isNotEmpty()) {
+            VerificationResult(success = true, unlockedSystemIds = systemIds)
+        } else {
+            // Default to unlock-all if amount doesn't match specific tiers.
+            VerificationResult(
+                success = true,
+                unlockedSystemIds = CountingSystemMonetization.paidSystemIds
+            )
+        }
+    }
+
+    private fun makeAuthenticatedRequest(url: URL): ApiResponse {
         val connection = url.openConnection() as HttpURLConnection
         return try {
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
+            connection.requestMethod = "GET"
             connection.setRequestProperty("Accept", "application/json")
-            connection.doOutput = true
+            // PayMongo uses Basic auth with secret key as username, empty password.
+            val credentials = Base64.encodeToString(
+                "$PAYMONGO_SECRET_KEY:".toByteArray(Charsets.UTF_8),
+                Base64.NO_WRAP
+            )
+            connection.setRequestProperty("Authorization", "Basic $credentials")
             connection.connectTimeout = 15_000
             connection.readTimeout = 15_000
-
-            val instanceName = getInstanceName()
-            val body = JSONObject().apply {
-                put("license_key", licenseKey)
-                put("instance_name", instanceName)
-            }
-            connection.outputStream.bufferedWriter().use { it.write(body.toString()) }
 
             val responseCode = connection.responseCode
             val responseBody = if (responseCode in 200..299) {
@@ -127,59 +192,33 @@ class LicenseKeyManager(context: Context) {
                 connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
             }
 
-            parseActivationResponse(responseCode, responseBody)
+            ApiResponse(success = responseCode in 200..299, body = responseBody)
         } finally {
             connection.disconnect()
         }
     }
 
-    private fun parseActivationResponse(code: Int, body: String): ActivationResult {
-        return try {
-            val json = JSONObject(body)
-
-            if (code == 200 && json.optBoolean("activated", false)) {
-                val meta = json.optJSONObject("meta") ?: JSONObject()
-                ActivationResult(
-                    success = true,
-                    productId = meta.optLong("product_id", -1),
-                    variantId = meta.optLong("variant_id", -1)
-                )
-            } else {
-                val error = json.optString("error", "Activation failed.")
-                ActivationResult(success = false, errorMessage = error)
-            }
-        } catch (e: Exception) {
-            ActivationResult(success = false, errorMessage = "Unexpected response from server.")
-        }
-    }
-
     /**
-     * Map a LemonSqueezy product/variant to system IDs.
-     *
-     * TODO: Replace these placeholder IDs with your actual LemonSqueezy
-     *       product and variant IDs once you create the products.
+     * Map payment amount (in centavos) to system IDs.
+     * Adjust these amounts to match your PayMongo payment link prices.
      */
-    private fun resolveSystemIds(productId: Long, variantId: Long): Set<String> {
-        // Check if this is the "unlock all" product first.
-        if (productId == PRODUCT_ID_UNLOCK_ALL || variantId == VARIANT_ID_UNLOCK_ALL) {
-            return CountingSystemMonetization.paidSystemIds
-        }
-
-        // Map individual product/variant IDs to system IDs.
-        val systemId = VARIANT_TO_SYSTEM_ID[variantId]
-            ?: PRODUCT_TO_SYSTEM_ID[productId]
-        return if (systemId != null) setOf(systemId) else emptySet()
+    private fun resolveSystemIdsFromAmount(amountCentavos: Int): Set<String> {
+        // Default: any payment unlocks all systems (unlock-all product).
+        // If you create separate payment links for individual systems,
+        // map amounts here, e.g.:
+        // 19900 (₱199.00) -> setOf(CountingSystemId.HI_OPT_II)
+        return CountingSystemMonetization.paidSystemIds
     }
 
     // ---- Encrypted local storage --------------------------------------------
 
-    private fun storeActivation(licenseKey: String, systemIds: Set<String>) {
+    private fun storeActivation(reference: String, systemIds: Set<String>) {
         val existing = getStoredSystemIds()
         val updated = existing + systemIds
         val encrypted = encrypt(updated.joinToString(","))
         prefs.edit()
             .putString(KEY_ACTIVATED_SYSTEMS, encrypted)
-            .putString(KEY_LICENSE_HASH, hashKey(licenseKey))
+            .putString(KEY_PAYMENT_HASH, hashValue(reference))
             .apply()
     }
 
@@ -228,7 +267,6 @@ class LicenseKeyManager(context: Context) {
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
         val iv = cipher.iv
         val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-        // Store IV + ciphertext together, base64 encoded.
         val combined = iv + encrypted
         return Base64.encodeToString(combined, Base64.NO_WRAP)
     }
@@ -243,51 +281,41 @@ class LicenseKeyManager(context: Context) {
         return String(cipher.doFinal(cipherText), Charsets.UTF_8)
     }
 
-    private fun hashKey(licenseKey: String): String {
+    private fun hashValue(value: String): String {
         val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(licenseKey.toByteArray(Charsets.UTF_8))
+        val hash = digest.digest(value.toByteArray(Charsets.UTF_8))
         return hash.joinToString("") { "%02x".format(it) }
-    }
-
-    private fun getInstanceName(): String {
-        // Use a stable device identifier (Android ID).
-        val androidId = android.provider.Settings.Secure.getString(
-            appContext.contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
-        )
-        return androidId ?: "unknown-device"
     }
 
     // ---- Constants ----------------------------------------------------------
 
-    private data class ActivationResult(
+    private data class ApiResponse(
         val success: Boolean,
-        val productId: Long = -1,
-        val variantId: Long = -1,
+        val body: String
+    )
+
+    private data class VerificationResult(
+        val success: Boolean,
+        val unlockedSystemIds: Set<String> = emptySet(),
         val errorMessage: String? = null
     )
 
     companion object {
-        private const val LEMONSQUEEZY_API_BASE = "https://api.lemonsqueezy.com"
+        private const val PAYMONGO_API_BASE = "https://api.paymongo.com"
         private const val PREFS_NAME = "license_activations"
         private const val KEY_ACTIVATED_SYSTEMS = "activated_systems"
-        private const val KEY_LICENSE_HASH = "license_hash"
+        private const val KEY_PAYMENT_HASH = "payment_hash"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val KEYSTORE_ALIAS = "cardcounter_license_key"
         private const val AES_GCM_TRANSFORMATION = "AES/GCM/NoPadding"
         private const val GCM_IV_LENGTH = 12
         private const val GCM_TAG_LENGTH = 128
 
-        // TODO: Replace these with your actual LemonSqueezy product/variant IDs.
-        // You get these from the LemonSqueezy dashboard after creating products.
-        private const val PRODUCT_ID_UNLOCK_ALL = -1L
-        private const val VARIANT_ID_UNLOCK_ALL = -1L
+        // TODO: Replace with your PayMongo secret key (sk_test_... or sk_live_...).
+        private const val PAYMONGO_SECRET_KEY = "sk_test_REPLACE_WITH_YOUR_KEY"
 
-        private val PRODUCT_TO_SYSTEM_ID: Map<Long, String> = mapOf(
-            // e.g., 123456L to CountingSystemId.HI_OPT_II,
-        )
-        private val VARIANT_TO_SYSTEM_ID: Map<Long, String> = mapOf(
-            // e.g., 789012L to CountingSystemId.HI_OPT_II,
-        )
+        // TODO: Replace with your PayMongo payment link URL.
+        // Create this in PayMongo Dashboard > Payment Links.
+        private const val PAYMENT_LINK_UNLOCK_ALL = "https://pm.link/REPLACE_WITH_YOUR_LINK"
     }
 }

@@ -400,7 +400,14 @@ fun CounterScreen() {
             if (showLicenseKeyDialog) {
                 LicenseKeyDialog(
                     isValidating = isValidatingKey,
-                    onActivate = { key -> licenseKeyManager.activateLicenseKey(key) },
+                    onBuyClicked = {
+                        val intent = android.content.Intent(
+                            android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse(licenseKeyManager.getPaymentLinkUrl())
+                        )
+                        context.startActivity(intent)
+                    },
+                    onVerifyPayment = { ref -> licenseKeyManager.verifyPayment(ref) },
                     onDismiss = { showLicenseKeyDialog = false }
                 )
             }
