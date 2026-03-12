@@ -1,7 +1,12 @@
-# Blackjack Counter (Android)
+# Counting Edge: Card Counter (Android)
 
-Blackjack Counter is a Jetpack Compose training app for live card-count practice.
+Counting Edge: Card Counter is a Jetpack Compose training app for live card-count practice.
 It supports multiple counting systems, rule-aware strategy guidance, and a compact one-screen workflow.
+
+## Current Release Target
+- Channel: `Closed testing` (Google Play)
+- Version name: `1.0.0-closed-testing.1`
+- Version code: `8`
 
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
@@ -70,6 +75,22 @@ This is a training aid, not bankroll or gambling advice.
 - Wong Halves
 
 All systems implement a shared `CountingSystem` interface.
+
+## Monetization Model
+- `Level 1` systems are free:
+  - `Hi-Lo`, `KO`, `ReKO`
+- `Level 2` systems are one-time unlocks at `\$1.99` each:
+  - `Hi-Opt II`, `Omega II`, `Zen Count`
+- `Level 3` systems are one-time unlocks at `\$2.99` each:
+  - `Wong Halves`
+- `Unlock All` one-time purchase at `\$5.99` unlocks all paid systems.
+
+Current Play Billing product IDs in code:
+- `unlock_hi_opt_ii`
+- `unlock_omega_ii`
+- `unlock_zen_count`
+- `unlock_wong_halves`
+- `unlock_all`
 
 ## Current UI (Quick Overview)
 - Header (floating, no card):
@@ -159,6 +180,8 @@ Optional verification script:
 ## Release Checklist
 - Build and lint release before upload:
   - `./gradlew.bat assembleRelease lintRelease`
+- Build the upload bundle (`.aab`) for Play Console:
+  - `./gradlew.bat bundleRelease`
 
 ## Privacy Policy (Play Console)
 - Privacy policy file in this repo: `docs/privacy-policy.md`

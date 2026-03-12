@@ -13,13 +13,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StrategyChartButton(
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(if (compact) 40.dp else 44.dp)
     ) {
         Text(
             text = "Open Strategy Chart",
@@ -28,3 +29,4 @@ fun StrategyChartButton(
         )
     }
 }
+

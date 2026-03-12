@@ -26,34 +26,44 @@ fun CountButtonsRow(
     buttonTagValues: Map<CardRank, Double>,
     onCardSelected: (CardRank) -> Unit,
     onFaceCardsSelected: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val sectionSpacing = if (compact) 4.dp else 6.dp
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(sectionSpacing)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             listOf(CardRank.ACE, CardRank.TWO, CardRank.THREE, CardRank.FOUR, CardRank.FIVE).forEach { rank ->
                 val tagValue = buttonTagValues[rank] ?: 0.0
                 CardInputButton(
                     label = rank.toButtonLabel(),
                     tone = tagValueToTone(tagValue),
                     tagValue = tagValue,
+                    compact = compact,
                     onClick = { onCardSelected(rank) },
                     modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             listOf(CardRank.SIX, CardRank.SEVEN, CardRank.EIGHT, CardRank.NINE).forEach { rank ->
                 val tagValue = buttonTagValues[rank] ?: 0.0
                 CardInputButton(
                     label = rank.toButtonLabel(),
                     tone = tagValueToTone(tagValue),
                     tagValue = tagValue,
+                    compact = compact,
                     onClick = { onCardSelected(rank) },
                     modifier = Modifier.weight(1f)
                 )
@@ -63,6 +73,7 @@ fun CountButtonsRow(
                 label = "10-K",
                 tone = tagValueToTone(faceTagValue),
                 tagValue = faceTagValue,
+                compact = compact,
                 onClick = onFaceCardsSelected,
                 modifier = Modifier.weight(1f)
             )
@@ -89,6 +100,7 @@ private fun CardInputButton(
     label: String,
     tone: CardButtonTone,
     tagValue: Double,
+    compact: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -123,9 +135,9 @@ private fun CardInputButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(58.dp),
+        modifier = modifier.height(if (compact) 52.dp else 58.dp),
         colors = colors,
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = if (compact) 2.dp else 0.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -134,7 +146,7 @@ private fun CardInputButton(
             Text(
                 text = label,
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium,
+                style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )

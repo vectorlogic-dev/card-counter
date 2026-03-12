@@ -13,13 +13,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ResetButton(
     onReset: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
         onClick = onReset,
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(if (compact) 40.dp else 44.dp)
     ) {
         Text(
             text = "Reset Count",
@@ -28,3 +29,4 @@ fun ResetButton(
         )
     }
 }
+

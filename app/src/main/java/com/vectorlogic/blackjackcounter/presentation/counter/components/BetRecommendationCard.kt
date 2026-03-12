@@ -27,6 +27,7 @@ fun BetRecommendationCard(
     units: Int,
     countLabel: String,
     countValue: Double,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val unitColor = unitsColor(units)
@@ -34,11 +35,14 @@ fun BetRecommendationCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(
+                    horizontal = if (compact) 10.dp else 12.dp,
+                    vertical = if (compact) 8.dp else 10.dp
+                ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)) {
                 Text(
                     text = "BET RECOMMENDATION",
                     style = MaterialTheme.typography.labelSmall,
@@ -57,7 +61,13 @@ fun BetRecommendationCard(
                         val active = units >= threshold
                         Box(
                             modifier = Modifier
-                                .size(if (active) 10.dp else 8.dp)
+                                .size(
+                                    if (active) {
+                                        if (compact) 8.dp else 10.dp
+                                    } else {
+                                        if (compact) 6.dp else 8.dp
+                                    }
+                                )
                                 .background(
                                     color = if (active) unitColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                                     shape = CircleShape
@@ -65,7 +75,7 @@ fun BetRecommendationCard(
                         )
                     }
                     Text(
-                        text = "1·2·4·8·12",
+                        text = "1-2-4-8-12",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
@@ -78,7 +88,7 @@ fun BetRecommendationCard(
             ) {
                 Text(
                     text = "$units",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = unitColor
                 )
@@ -105,3 +115,4 @@ private fun formatSignedCount(value: Double): String {
     val rounded = String.format(Locale.US, "%.1f", value)
     return if (value > 0.0) "+$rounded" else rounded
 }
+

@@ -1,9 +1,10 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 
 object ZenCountSystem : CountingSystem {
-    override val id: String = "zen_count"
+    override val id: String = CountingSystemId.ZEN_COUNT
     override val displayName: String = "Zen Count"
     override val level: Int = 2
     override val isBalanced: Boolean = true

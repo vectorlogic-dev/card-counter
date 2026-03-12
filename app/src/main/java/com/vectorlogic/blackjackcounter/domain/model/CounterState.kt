@@ -32,7 +32,7 @@ data class CounterState(
     val acesExpected: Double = 0.0,
     val estimatedPlayerEdgePercent: Double = 0.0,
     val canEstimateEdge: Boolean = true,
-    val selectedCountingSystemId: String = "hi_lo",
+    val selectedCountingSystemId: String = CountingSystemId.HI_LO,
     val selectedCountingSystemName: String = "Hi-Lo",
     val selectedSystemUsesTrueCount: Boolean = true,
     val selectedSystemRecommendsAceSideCount: Boolean = false,

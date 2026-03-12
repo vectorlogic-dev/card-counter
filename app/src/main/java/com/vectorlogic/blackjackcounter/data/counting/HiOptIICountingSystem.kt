@@ -1,9 +1,10 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 
 object HiOptIICountingSystem : CountingSystem {
-    override val id: String = "hi_opt_ii"
+    override val id: String = CountingSystemId.HI_OPT_II
     override val displayName: String = "Hi-Opt II"
     override val level: Int = 2
     override val isBalanced: Boolean = true

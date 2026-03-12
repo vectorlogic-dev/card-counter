@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Blackjack Counter</string>
+    <string name="app_name">Counting Edge: Card Counter</string>
+    <string name="app_name_short">Counting Edge</string>
 </resources>

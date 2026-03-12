@@ -1,8 +1,8 @@
-# Privacy Policy for Blackjack Counter
+# Privacy Policy for Counting Edge: Card Counter
 
 Effective date: March 11, 2026
 
-Blackjack Counter ("the app") is provided by the developer of this app ("we", "us", "our"). This Privacy Policy explains how data is handled when you use the app.
+Counting Edge: Card Counter ("the app") is provided by the developer of this app ("we", "us", "our"). This Privacy Policy explains how data is handled when you use the app.
 
 ## Summary
 
@@ -38,6 +38,8 @@ Data is used to:
 
 We do not sell your personal information. We do not run a backend service that stores personal account data.
 
+If you choose to buy an in-app unlock, purchase processing is handled by Google Play Billing under your Google account.
+
 ## Data Retention
 
 App state is primarily local to your device. You can clear app data or uninstall the app to remove locally stored data.
@@ -57,6 +59,7 @@ Depending on your location, you may have rights regarding access, deletion, corr
 ## Third-Party Policies
 
 - Google Privacy Policy: https://policies.google.com/privacy
+- Google Play Billing Terms: https://play.google.com/about/play-terms/
 
 ## Changes to This Policy
 

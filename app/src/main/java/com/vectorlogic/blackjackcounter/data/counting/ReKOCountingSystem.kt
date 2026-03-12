@@ -1,9 +1,10 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 
 object ReKOCountingSystem : CountingSystem {
-    override val id: String = "reko"
+    override val id: String = CountingSystemId.REKO
     override val displayName: String = "ReKO"
     override val level: Int = 1
     override val isBalanced: Boolean = false

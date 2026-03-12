@@ -1,6 +1,13 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.data.counting.HiLoCountingSystem
+import com.vectorlogic.blackjackcounter.data.counting.HiOptIICountingSystem
+import com.vectorlogic.blackjackcounter.data.counting.KOCountingSystem
+import com.vectorlogic.blackjackcounter.data.counting.OmegaIICountingSystem
+import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
+import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import org.junit.Assert.assertEquals
@@ -38,7 +45,8 @@ class CounterViewModelTest {
     @Test
     fun `onCardSeen ace increments ace side count for omega ii`() {
         val viewModel = createViewModel()
-        viewModel.setCountingSystem("omega_ii")
+        viewModel.setPurchasedSystemIds(setOf(OmegaIICountingSystem.id))
+        viewModel.setCountingSystem(OmegaIICountingSystem.id)
 
         viewModel.onCardSeen(CardRank.ACE)
 
@@ -86,15 +94,16 @@ class CounterViewModelTest {
         val viewModel = createViewModel()
         val ids = viewModel.availableSystems.map { it.id }
 
-        assertTrue(ids.contains("reko"))
-        assertTrue(ids.contains("hi_opt_ii"))
+        assertTrue(ids.contains(CountingSystemId.REKO))
+        assertTrue(ids.contains(CountingSystemId.HI_OPT_II))
     }
 
     @Test
     fun `hi opt ii enables ace side count guidance`() {
         val viewModel = createViewModel()
+        viewModel.setPurchasedSystemIds(setOf(HiOptIICountingSystem.id))
 
-        viewModel.setCountingSystem("hi_opt_ii")
+        viewModel.setCountingSystem(HiOptIICountingSystem.id)
 
         val updated = viewModel.uiState.value
         assertTrue(updated.selectedSystemRecommendsAceSideCount)
@@ -102,10 +111,35 @@ class CounterViewModelTest {
     }
 
     @Test
+    fun `level pricing metadata matches monetization tiers`() {
+        val viewModel = createViewModel()
+        val hiLo = viewModel.availableSystems.first { it.id == HiLoCountingSystem.id }
+        val zen = viewModel.availableSystems.first { it.id == ZenCountSystem.id }
+        val wong = viewModel.availableSystems.first { it.id == WongHalvesSystem.id }
+
+        assertTrue(hiLo.isFree)
+        assertFalse(zen.isFree)
+        assertEquals("\$1.99", zen.defaultPriceLabel)
+        assertEquals("\$2.99", wong.defaultPriceLabel)
+    }
+
+    @Test
+    fun `locked paid systems require purchase before selection`() {
+        val viewModel = createViewModel()
+
+        assertFalse(viewModel.setCountingSystem(ZenCountSystem.id))
+
+        viewModel.setPurchasedSystemIds(setOf(ZenCountSystem.id))
+
+        assertTrue(viewModel.setCountingSystem(ZenCountSystem.id))
+        assertEquals(ZenCountSystem.id, viewModel.uiState.value.selectedCountingSystemId)
+    }
+
+    @Test
     fun `ko exposes running count key and pivot guidance`() {
         val viewModel = createViewModel()
 
-        viewModel.setCountingSystem("ko")
+        viewModel.setCountingSystem(KOCountingSystem.id)
 
         val updated = viewModel.uiState.value
         assertFalse(updated.selectedSystemUsesTrueCount)
@@ -118,7 +152,7 @@ class CounterViewModelTest {
     fun `hi lo exposes common 16 vs 10 deviation`() {
         val viewModel = createViewModel()
 
-        viewModel.setCountingSystem("hi_lo")
+        viewModel.setCountingSystem(HiLoCountingSystem.id)
 
         val updated = viewModel.uiState.value
         assertTrue(updated.strategyDeviationRows.any { it.playLabel == "16 vs 10" && it.indexLabel.contains("TC 0+") })
@@ -235,7 +269,7 @@ class CounterViewModelTest {
     @Test
     fun `bet recommendation uses running count for unbalanced systems`() {
         val viewModel = createViewModel()
-        viewModel.setCountingSystem("ko")
+        viewModel.setCountingSystem(KOCountingSystem.id)
         repeat(5) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -249,7 +283,7 @@ class CounterViewModelTest {
     @Test
     fun `resetCount restores deck aware initial running count for ko`() {
         val viewModel = createViewModel()
-        viewModel.setCountingSystem("ko")
+        viewModel.setCountingSystem(KOCountingSystem.id)
         repeat(10) {
             viewModel.onCardSeen(CardRank.TWO)
         }
@@ -264,7 +298,7 @@ class CounterViewModelTest {
     @Test
     fun `changing total decks recalculates ko initial running count`() {
         val viewModel = createViewModel()
-        viewModel.setCountingSystem("ko")
+        viewModel.setCountingSystem(KOCountingSystem.id)
         viewModel.setTotalDecks(2)
 
         val updated = viewModel.uiState.value

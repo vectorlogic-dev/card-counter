@@ -2,6 +2,7 @@ package com.vectorlogic.blackjackcounter.presentation.counter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.vectorlogic.blackjackcounter.data.counting.CountingSystemsCatalog
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.HiLoCountingSystem
@@ -11,6 +12,7 @@ import com.vectorlogic.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.ReKOCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
+import com.vectorlogic.blackjackcounter.data.monetization.CountingSystemMonetization
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CheatSheetRow
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
@@ -35,7 +37,9 @@ data class CountingSystemOption(
     val id: String,
     val displayName: String,
     val level: Int,
-    val recommendsAceSideCount: Boolean
+    val recommendsAceSideCount: Boolean,
+    val isFree: Boolean,
+    val defaultPriceLabel: String?
 )
 
 private data class RunningCountTotals(
@@ -87,26 +91,23 @@ data class StrategyChartModel(
 
 class CounterViewModel private constructor() : ViewModel() {
 
-    private val allSystems: List<CountingSystem> = listOf(
-        HiLoCountingSystem,
-        KOCountingSystem,
-        ReKOCountingSystem,
-        HiOptIICountingSystem,
-        OmegaIICountingSystem,
-        ZenCountSystem,
-        WongHalvesSystem
-    )
-
-    private val systemsById: Map<String, CountingSystem> = allSystems.associateBy { it.id }
+    private val allSystems: List<CountingSystem> = CountingSystemsCatalog.allSystems
+    private val systemsById: Map<String, CountingSystem> = CountingSystemsCatalog.systemsById
+    private val defaultSystem: CountingSystem = CountingSystemsCatalog.defaultSystem
+    private val freeSystemIds: Set<String> = allSystems
+        .filter { system -> CountingSystemMonetization.isFreeLevel(system.level) }
+        .map { system -> system.id }
+        .toSet()
+    private var purchasedSystemIds: Set<String> = emptySet()
     private val profilesBySystemId = allSystems.associate { system ->
         system.id to CountingSystemProfiles.profileFor(system.id)
     }
     private val _uiState = MutableStateFlow(withDerivedValues(
         CounterState(
-            selectedCountingSystemId = HiLoCountingSystem.id,
-            selectedCountingSystemName = HiLoCountingSystem.displayName,
-            selectedSystemUsesTrueCount = HiLoCountingSystem.usesTrueCount(),
-            selectedSystemRecommendsAceSideCount = HiLoCountingSystem.recommendsAceSideCount()
+            selectedCountingSystemId = defaultSystem.id,
+            selectedCountingSystemName = defaultSystem.displayName,
+            selectedSystemUsesTrueCount = defaultSystem.usesTrueCount(),
+            selectedSystemRecommendsAceSideCount = defaultSystem.recommendsAceSideCount()
         )
     ))
     val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
@@ -116,7 +117,9 @@ class CounterViewModel private constructor() : ViewModel() {
             id = system.id,
             displayName = system.displayName,
             level = system.level,
-            recommendsAceSideCount = system.recommendsAceSideCount()
+            recommendsAceSideCount = system.recommendsAceSideCount(),
+            isFree = CountingSystemMonetization.isFreeLevel(system.level),
+            defaultPriceLabel = CountingSystemMonetization.fallbackPriceForLevel(system.level)
         )
     }
 
@@ -345,6 +348,7 @@ class CounterViewModel private constructor() : ViewModel() {
 
     fun setCountingSystem(systemId: String): Boolean {
         val selectedSystem = systemsById[systemId] ?: return false
+        if (!isSystemUnlocked(systemId)) return false
 
         _uiState.update { current ->
             val shouldTrackAces = selectedSystem.recommendsAceSideCount()
@@ -372,6 +376,18 @@ class CounterViewModel private constructor() : ViewModel() {
         }
 
         return true
+    }
+
+    fun setPurchasedSystemIds(systemIds: Set<String>) {
+        purchasedSystemIds = systemIds
+        val selectedSystemId = _uiState.value.selectedCountingSystemId
+        if (!isSystemUnlocked(selectedSystemId)) {
+            setCountingSystem(defaultSystem.id)
+        }
+    }
+
+    fun isSystemUnlocked(systemId: String): Boolean {
+        return systemId in freeSystemIds || systemId in purchasedSystemIds
     }
 
     fun undoLastCard() {
@@ -475,7 +491,7 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     private fun getSelectedSystem(systemId: String): CountingSystem {
-        return systemsById[systemId] ?: HiLoCountingSystem
+        return systemsById[systemId] ?: defaultSystem
     }
 
     private fun calculateRawTrueCount(
