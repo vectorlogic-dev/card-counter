@@ -11,6 +11,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
 - Open `Menu` -> `Select Counting System`.
+- (Optional) Use `Menu` -> `Unlock All` to unlock paid systems.
 - Set `Total Decks` and `Decks Remaining`.
 - Start tapping card ranks as they are dealt.
 - Use `Bet Recommendation` units with your chosen base bet.
@@ -33,8 +34,9 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
    - `Menu` -> `Show/Hide Cheat Sheet`
+   - `Menu` -> `Unlock All` for one-tap purchase of all paid systems
    - `Strategy Chart` button for full-screen basic strategy + deviations
-   - `Last 15 Cards` panel + `Undo` for correcting missed taps
+   - `Recent Cards` panel + `Undo` for correcting missed taps
    - `Reset Count` to reset shoe depth and count state
    - For `KO` / `ReKO`, reset returns to the deck-specific initial running count (IRC)
 
@@ -96,7 +98,7 @@ Current Play Billing product IDs in code:
 - Header (floating, no card):
   - Current system name in gold
   - Info icon -> Help dialog
-  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet
+  - Menu icon -> Select Counting System, Table Rules, Unlock All, Reset Count, Show/Hide Cheat Sheet
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
@@ -113,7 +115,7 @@ Current Play Billing product IDs in code:
   - `A`, `2`, `3`, `4`, `5`
   - `6`, `7`, `8`, `9`, `10-K`
 - Bottom actions:
-  - Recent Cards panel with badge chips + Undo
+  - Recent Cards panel with badge chips + Undo (item count adapts for compact layouts)
   - Reset Count and Strategy Chart (full-screen table)
 
 ## Table Rules Supported
