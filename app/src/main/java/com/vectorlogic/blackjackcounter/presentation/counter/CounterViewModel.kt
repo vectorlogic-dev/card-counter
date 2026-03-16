@@ -3,23 +3,22 @@ package com.vectorlogic.blackjackcounter.presentation.counter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
-import com.vectorlogic.blackjackcounter.data.counting.CountingSystemsCatalog
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
+import com.vectorlogic.blackjackcounter.data.counting.CountingSystemsCatalog
 import com.vectorlogic.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
-import com.vectorlogic.blackjackcounter.domain.model.CounterState
+import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
-import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.SeenCard
+import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlin.math.roundToInt
 
 private data class RunningCountTotals(
@@ -35,15 +34,11 @@ class CounterViewModel private constructor() : ViewModel() {
     private val profilesBySystemId = allSystems.associate { system ->
         system.id to CountingSystemProfiles.profileFor(system.id)
     }
-    private val _uiState = MutableStateFlow(withDerivedValues(
-        CounterState(
-            selectedCountingSystemId = defaultSystem.id,
-            selectedCountingSystemName = defaultSystem.displayName,
-            selectedSystemUsesTrueCount = defaultSystem.usesTrueCount(),
-            selectedSystemRecommendsAceSideCount = defaultSystem.recommendsAceSideCount()
-        )
-    ))
-    val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
+
+    private val _sessionState = MutableStateFlow(initialSessionState())
+    private val _showCheatSheet = MutableStateFlow(false)
+    private val _uiState = MutableStateFlow(buildUiState(_sessionState.value, _showCheatSheet.value))
+    val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
 
     val availableSystems: List<CountingSystemOption> = allSystems.map { system ->
         CountingSystemOption(
@@ -64,15 +59,21 @@ class CounterViewModel private constructor() : ViewModel() {
         return CounterHelpContentFactory.buildSplitDeviationSections(tableRules)
     }
 
-    fun buildStrategyChartModel(state: CounterState): StrategyChartModel {
+    fun buildStrategyChartModel(): StrategyChartModel {
+        val state = _sessionState.value
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
         return CounterStrategyEngine.buildStrategyChartModel(
             state = state,
+            trueCount = CounterCalculations.roundToOneDecimal(
+                calculateRawTrueCount(state, selectedSystem.usesTrueCount())
+            ),
+            supportsTrueCount = selectedSystem.usesTrueCount(),
             decisionTrueCount = decisionTrueCount(state)
         )
     }
 
     fun onCardSeen(cardRank: CardRank) {
-        val selectedSystem = getSelectedSystem(_uiState.value.selectedCountingSystemId)
+        val selectedSystem = getSelectedSystem(_sessionState.value.selectedCountingSystemId)
         val delta = selectedSystem.getTagValue(cardRank)
         val countedAce = cardRank == CardRank.ACE && selectedSystem.recommendsAceSideCount()
         updateRunningCount(
@@ -89,55 +90,52 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     fun resetCount() {
-        _uiState.update { current ->
+        updateSessionState { current ->
             val selectedSystem = getSelectedSystem(current.selectedCountingSystemId)
-            withDerivedValues(
-                current.copy(
-                    runningCount = initialRunningCount(
-                        systemId = selectedSystem.id,
-                        totalDecks = current.totalDecks
-                    ),
-                    decksRemaining = current.totalDecks.toDouble(),
-                    acesSeen = 0,
-                    seenCards = emptyList()
-                )
+            current.copy(
+                runningCount = initialRunningCount(
+                    systemId = selectedSystem.id,
+                    totalDecks = current.totalDecks
+                ),
+                decksRemaining = current.totalDecks.toDouble(),
+                acesSeen = 0,
+                seenCards = emptyList()
             )
         }
     }
 
     fun setTotalDecks(totalDecks: Int) {
         val normalizedTotalDecks = totalDecks.coerceIn(MIN_TOTAL_DECKS, MAX_TOTAL_DECKS)
-        _uiState.update { current ->
+        updateSessionState { current ->
             val totalCardsForNewShoe = normalizedTotalDecks * CARDS_PER_DECK
-            val preservedCardsDrawn = current.cardsDrawn.coerceIn(0, totalCardsForNewShoe)
+            val preservedCardsDrawn = cardsDrawn(current).coerceIn(0, totalCardsForNewShoe)
             val normalizedDecksRemaining = ((totalCardsForNewShoe - preservedCardsDrawn).toDouble() / CARDS_PER_DECK)
                 .coerceIn(MIN_DECKS_REMAINING, normalizedTotalDecks.toDouble())
 
-            val nextState = current.copy(
-                totalDecks = normalizedTotalDecks,
-                decksRemaining = normalizedDecksRemaining
-            )
-            withDerivedValues(
-                recalculateSystemState(nextState)
+            recalculateSystemState(
+                current.copy(
+                    totalDecks = normalizedTotalDecks,
+                    decksRemaining = normalizedDecksRemaining
+                )
             )
         }
     }
 
     fun setDecksRemaining(decksRemaining: Double) {
-        _uiState.update { current ->
-            val normalizedDecksRemaining = decksRemaining.coerceIn(
-                MIN_DECKS_REMAINING,
-                current.totalDecks.toDouble()
+        updateSessionState { current ->
+            current.copy(
+                decksRemaining = decksRemaining.coerceIn(
+                    MIN_DECKS_REMAINING,
+                    current.totalDecks.toDouble()
+                )
             )
-            val nextState = current.copy(decksRemaining = normalizedDecksRemaining)
-            withDerivedValues(nextState)
         }
     }
 
     fun setCountingSystem(systemId: String): Boolean {
         val selectedSystem = systemsById[systemId] ?: return false
 
-        _uiState.update { current ->
+        updateSessionState { current ->
             val shouldTrackAces = selectedSystem.recommendsAceSideCount()
             val remappedSeenCards = current.seenCards.map { seen ->
                 seen.copy(
@@ -150,25 +148,21 @@ class CounterViewModel private constructor() : ViewModel() {
                 totalDecks = current.totalDecks,
                 seenCards = remappedSeenCards
             )
-            val nextState = current.copy(
+            current.copy(
                 selectedCountingSystemId = selectedSystem.id,
-                selectedCountingSystemName = selectedSystem.displayName,
-                selectedSystemUsesTrueCount = selectedSystem.usesTrueCount(),
-                selectedSystemRecommendsAceSideCount = shouldTrackAces,
                 runningCount = countTotals.runningCount,
                 acesSeen = countTotals.acesSeen,
                 seenCards = remappedSeenCards
             )
-            withDerivedValues(nextState)
         }
 
         return true
     }
 
     fun undoLastCard() {
-        _uiState.update { current ->
-            val lastSeen = current.seenCards.lastOrNull() ?: return@update current
-            val nextState = current.copy(
+        updateSessionState { current ->
+            val lastSeen = current.seenCards.lastOrNull() ?: return@updateSessionState current
+            current.copy(
                 runningCount = current.runningCount - lastSeen.deltaApplied,
                 decksRemaining = (current.decksRemaining + DECKS_PER_CARD)
                     .coerceAtMost(current.totalDecks.toDouble()),
@@ -179,7 +173,6 @@ class CounterViewModel private constructor() : ViewModel() {
                 },
                 seenCards = current.seenCards.dropLast(1)
             )
-            withDerivedValues(nextState)
         }
     }
 
@@ -225,13 +218,12 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     fun toggleCheatSheet() {
-        setCheatSheetVisible(!_uiState.value.showCheatSheet)
+        setCheatSheetVisible(!_showCheatSheet.value)
     }
 
     fun setCheatSheetVisible(visible: Boolean) {
-        _uiState.update { current ->
-            current.copy(showCheatSheet = visible)
-        }
+        _showCheatSheet.value = visible
+        syncUiState()
     }
 
     private fun updateRunningCount(
@@ -240,14 +232,14 @@ class CounterViewModel private constructor() : ViewModel() {
         seenAce: Boolean = false,
         seenCardRank: CardRank? = null
     ) {
-        _uiState.update { current ->
+        updateSessionState { current ->
             val nextDecksRemaining = if (advancePenetration) {
                 (current.decksRemaining - DECKS_PER_CARD).coerceAtLeast(MIN_DECKS_REMAINING)
             } else {
                 current.decksRemaining
             }
 
-            val nextState = current.copy(
+            current.copy(
                 runningCount = current.runningCount + delta,
                 decksRemaining = nextDecksRemaining,
                 acesSeen = if (seenAce) current.acesSeen + 1 else current.acesSeen,
@@ -261,8 +253,105 @@ class CounterViewModel private constructor() : ViewModel() {
                     current.seenCards
                 }
             )
-            withDerivedValues(nextState)
         }
+    }
+
+    private fun initialSessionState(): CounterSessionState {
+        return CounterSessionState(
+            selectedCountingSystemId = defaultSystem.id,
+            runningCount = initialRunningCount(
+                systemId = defaultSystem.id,
+                totalDecks = DEFAULT_TOTAL_DECKS
+            )
+        )
+    }
+
+    private fun updateSessionState(transform: (CounterSessionState) -> CounterSessionState) {
+        _sessionState.value = transform(_sessionState.value)
+        syncUiState()
+    }
+
+    private fun syncUiState() {
+        _uiState.value = buildUiState(_sessionState.value, _showCheatSheet.value)
+    }
+
+    private fun buildUiState(state: CounterSessionState, showCheatSheet: Boolean): CounterUiState {
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val usesTrueCount = selectedSystem.usesTrueCount()
+        val profile = profileFor(selectedSystem.id)
+        val totalCards = state.totalDecks * CARDS_PER_DECK
+        val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
+        val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
+        val shouldTrackAces = selectedSystem.recommendsAceSideCount()
+        val rawTrueCount = calculateRawTrueCount(state, usesTrueCount)
+        val trueCount = CounterCalculations.roundToOneDecimal(rawTrueCount)
+        val estimatedPlayerEdgePercent = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = rawTrueCount,
+            usesTrueCount = usesTrueCount,
+            tableRules = state.tableRules,
+            totalDecks = state.totalDecks
+        )
+        val betSizingCountValue = decisionCountValue(
+            state = state,
+            selectedSystem = selectedSystem,
+            rawTrueCount = rawTrueCount
+        )
+        val betRamp = if (usesTrueCount) {
+            profile.balancedBetRamp
+        } else {
+            profile.runningCountBetRamp(state.totalDecks)
+        }
+        val recommendedBetUnits = CounterCalculations.calculateRecommendedBetUnits(
+            countValue = betSizingCountValue,
+            ramp = betRamp
+        )
+        val acesSeen = if (shouldTrackAces) state.acesSeen else 0
+        val buttonTagValues = CardRank.entries.associateWith { rank ->
+            selectedSystem.getTagValue(rank)
+        }
+
+        return CounterUiState(
+            runningCount = state.runningCount,
+            trueCount = trueCount,
+            recommendedBetUnits = recommendedBetUnits,
+            betSizingCountLabel = if (usesTrueCount) "TC" else "RC",
+            betSizingCountValue = betSizingCountValue,
+            deckPenetrationPercent = calculateDeckPenetrationPercent(state),
+            totalDecks = state.totalDecks,
+            decksRemaining = state.decksRemaining,
+            totalCards = totalCards,
+            cardsDrawn = cardsDrawn,
+            cardsLeft = cardsLeft,
+            acesSeen = acesSeen,
+            acesExpected = if (shouldTrackAces) {
+                CounterCalculations.calculateExpectedAces(cardsDrawn)
+            } else {
+                0.0
+            },
+            estimatedPlayerEdgePercent = estimatedPlayerEdgePercent,
+            canEstimateEdge = usesTrueCount,
+            selectedCountingSystemId = selectedSystem.id,
+            selectedCountingSystemName = selectedSystem.displayName,
+            selectedSystemUsesTrueCount = usesTrueCount,
+            selectedSystemRecommendsAceSideCount = shouldTrackAces,
+            seenCards = state.seenCards,
+            tableRules = state.tableRules,
+            buttonTagValues = buttonTagValues,
+            cheatSheetRows = CounterHelpContentFactory.buildCheatSheetRows(selectedSystem),
+            strategyDeviationRows = CounterStrategyEngine.buildStrategyDeviationRows(
+                state = state,
+                usesTrueCount = usesTrueCount,
+                keyCount = profile.keyCount(state.totalDecks),
+                pivot = profile.pivot(state.totalDecks)
+            ),
+            showCheatSheet = showCheatSheet
+        )
+    }
+
+    private fun cardsDrawn(state: CounterSessionState): Int {
+        val totalCards = state.totalDecks * CARDS_PER_DECK
+        val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
+        return (totalCards - cardsLeft).coerceAtLeast(0)
     }
 
     private fun getSelectedSystem(systemId: String): CountingSystem {
@@ -270,7 +359,7 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     private fun calculateRawTrueCount(
-        state: CounterState,
+        state: CounterSessionState,
         usesTrueCount: Boolean
     ): Double {
         return CounterCalculations.calculateRawTrueCount(
@@ -288,7 +377,7 @@ class CounterViewModel private constructor() : ViewModel() {
         return profileFor(systemId).initialRunningCount(totalDecks).toDouble()
     }
 
-    private fun recalculateSystemState(state: CounterState): CounterState {
+    private fun recalculateSystemState(state: CounterSessionState): CounterSessionState {
         val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
         val shouldTrackAces = selectedSystem.recommendsAceSideCount()
         val remappedSeenCards = state.seenCards.map { seen ->
@@ -329,7 +418,7 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     private fun decisionCountValue(
-        state: CounterState,
+        state: CounterSessionState,
         selectedSystem: CountingSystem,
         rawTrueCount: Double
     ): Double {
@@ -342,16 +431,17 @@ class CounterViewModel private constructor() : ViewModel() {
         }
     }
 
-    private fun calculateDeckPenetrationPercent(state: CounterState): Double {
+    private fun calculateDeckPenetrationPercent(state: CounterSessionState): Double {
         return CounterCalculations.calculateDeckPenetrationPercent(
             totalDecks = state.totalDecks,
             decksRemaining = state.decksRemaining
         )
     }
 
-    private fun decisionTrueCount(state: CounterState): Int {
-        if (!state.selectedSystemUsesTrueCount) return 0
+    private fun decisionTrueCount(state: CounterSessionState): Int {
         val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        if (!selectedSystem.usesTrueCount()) return 0
+
         val rawTrueCount = calculateRawTrueCount(state, usesTrueCount = true)
         return decisionCountValue(
             state = state,
@@ -360,79 +450,9 @@ class CounterViewModel private constructor() : ViewModel() {
         ).toInt()
     }
 
-    private fun withDerivedValues(state: CounterState): CounterState {
-        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
-        val usesTrueCount = selectedSystem.usesTrueCount()
-        val profile = profileFor(selectedSystem.id)
-        val totalCards = state.totalDecks * CARDS_PER_DECK
-        val cardsLeft = (state.decksRemaining * CARDS_PER_DECK).roundToInt().coerceIn(0, totalCards)
-        val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
-        val shouldTrackAces = selectedSystem.recommendsAceSideCount()
-        val rawTrueCount = calculateRawTrueCount(state, usesTrueCount)
-        val trueCount = CounterCalculations.roundToOneDecimal(rawTrueCount)
-        val estimatedPlayerEdgePercent = CounterCalculations.calculateEstimatedPlayerEdgePercent(
-            trueCount = rawTrueCount,
-            usesTrueCount = usesTrueCount,
-            tableRules = state.tableRules,
-            totalDecks = state.totalDecks
-        )
-        val betSizingCountValue = decisionCountValue(
-            state = state,
-            selectedSystem = selectedSystem,
-            rawTrueCount = rawTrueCount
-        )
-        val betRamp = if (usesTrueCount) {
-            profile.balancedBetRamp
-        } else {
-            profile.runningCountBetRamp(state.totalDecks)
-        }
-        val recommendedBetUnits = CounterCalculations.calculateRecommendedBetUnits(
-            countValue = betSizingCountValue,
-            ramp = betRamp
-        )
-        val acesExpected = if (shouldTrackAces) {
-            CounterCalculations.calculateExpectedAces(cardsDrawn)
-        } else {
-            0.0
-        }
-        val acesSeen = if (shouldTrackAces) state.acesSeen else 0
-        val buttonTagValues = CardRank.entries.associateWith { rank ->
-            selectedSystem.getTagValue(rank)
-        }
-
-        return state.copy(
-            trueCount = trueCount,
-            recommendedBetUnits = recommendedBetUnits,
-            betSizingCountLabel = if (usesTrueCount) "TC" else "RC",
-            betSizingCountValue = betSizingCountValue,
-            deckPenetrationPercent = calculateDeckPenetrationPercent(state),
-            totalCards = totalCards,
-            cardsLeft = cardsLeft,
-            cardsDrawn = cardsDrawn,
-            acesSeen = acesSeen,
-            acesExpected = acesExpected,
-            estimatedPlayerEdgePercent = estimatedPlayerEdgePercent,
-            canEstimateEdge = usesTrueCount,
-            selectedSystemUsesTrueCount = usesTrueCount,
-            selectedSystemRecommendsAceSideCount = shouldTrackAces,
-            buttonTagValues = buttonTagValues,
-            cheatSheetRows = CounterHelpContentFactory.buildCheatSheetRows(selectedSystem),
-            strategyDeviationRows = CounterStrategyEngine.buildStrategyDeviationRows(
-                state = state,
-                usesTrueCount = usesTrueCount,
-                keyCount = profile.keyCount(state.totalDecks),
-                pivot = profile.pivot(state.totalDecks)
-            )
-        )
-    }
-
     private fun updateTableRules(update: (TableRules) -> TableRules) {
-        _uiState.update { current ->
-            withDerivedValues(
-                current.copy(
-                    tableRules = update(current.tableRules)
-                )
-            )
+        updateSessionState { current ->
+            current.copy(tableRules = update(current.tableRules))
         }
     }
 
@@ -446,6 +466,7 @@ class CounterViewModel private constructor() : ViewModel() {
             }
         }
 
+        private const val DEFAULT_TOTAL_DECKS = 6
         private const val MIN_TOTAL_DECKS = 1
         private const val MAX_TOTAL_DECKS = 8
         private const val MIN_DECKS_REMAINING = 0.25
@@ -453,4 +474,3 @@ class CounterViewModel private constructor() : ViewModel() {
         private const val CARDS_PER_DECK = 52
     }
 }
-

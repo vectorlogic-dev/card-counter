@@ -1,6 +1,4 @@
 package com.vectorlogic.blackjackcounter.domain.model
-
-import com.vectorlogic.blackjackcounter.data.counting.CountRampStep
 import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt

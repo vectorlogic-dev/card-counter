@@ -9,10 +9,8 @@ import com.vectorlogic.blackjackcounter.data.counting.ReKOCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
-import com.vectorlogic.blackjackcounter.domain.model.CheatSheetRow
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
-import java.util.Locale
 
 object CounterHelpContentFactory {
 
@@ -153,18 +151,6 @@ object CounterHelpContentFactory {
             CardRank.QUEEN -> "Q"
             CardRank.KING -> "K"
             CardRank.ACE -> "A"
-        }
-    }
-
-    private fun formatTagValue(value: Double): String {
-        return if (value % 1.0 == 0.0) {
-            when {
-                value > 0 -> "+${value.toInt()}"
-                value < 0 -> value.toInt().toString()
-                else -> "0"
-            }
-        } else {
-            String.format(Locale.US, "%+.1f", value)
         }
     }
 }

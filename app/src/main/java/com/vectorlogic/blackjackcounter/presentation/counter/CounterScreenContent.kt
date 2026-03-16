@@ -29,7 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
-import com.vectorlogic.blackjackcounter.domain.model.CounterState
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountButtonsRow
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountDisplayCard
@@ -44,7 +43,7 @@ import java.util.Locale
 
 @Composable
 fun CounterScreenContent(
-    state: CounterState,
+    state: CounterUiState,
     menuExpanded: Boolean,
     onMenuExpandedChange: (Boolean) -> Unit,
     onHelpClick: () -> Unit,

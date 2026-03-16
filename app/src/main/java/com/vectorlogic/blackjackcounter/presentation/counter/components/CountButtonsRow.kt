@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.presentation.counter.formatTagValue
 import com.vectorlogic.blackjackcounter.ui.theme.ChipGreenDark
 import com.vectorlogic.blackjackcounter.ui.theme.ChipRedDark
 
@@ -127,11 +128,7 @@ private fun CardInputButton(
         )
     }
 
-    val tagStr = when {
-        tagValue > 0 -> "+${formatTagValue(tagValue)}"
-        tagValue < 0 -> formatTagValue(tagValue)
-        else -> "0"
-    }
+    val tagStr = formatTagValue(tagValue)
 
     Button(
         onClick = onClick,
@@ -158,10 +155,6 @@ private fun CardInputButton(
             )
         }
     }
-}
-
-private fun formatTagValue(value: Double): String {
-    return if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 }
 
 private enum class CardButtonTone {

@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import java.util.Locale
+import com.vectorlogic.blackjackcounter.presentation.counter.formatSignedCount
 
 private val BET_RAMP = listOf(1, 2, 4, 8, 12)
 
@@ -109,10 +109,5 @@ private fun unitsColor(units: Int): Color {
         units >= 4 -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurface
     }
-}
-
-private fun formatSignedCount(value: Double): String {
-    val rounded = String.format(Locale.US, "%.1f", value)
-    return if (value > 0.0) "+$rounded" else rounded
 }
 

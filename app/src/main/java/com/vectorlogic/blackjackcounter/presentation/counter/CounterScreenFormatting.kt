@@ -36,6 +36,18 @@ fun formatSignedPercent(value: Double): String {
     return "$prefix${String.format(Locale.US, "%.1f", rounded)}"
 }
 
+fun formatTagValue(value: Double): String {
+    return if (value % 1.0 == 0.0) {
+        when {
+            value > 0 -> "+${value.toInt()}"
+            value < 0 -> value.toInt().toString()
+            else -> "0"
+        }
+    } else {
+        String.format(Locale.US, "%+.1f", value)
+    }
+}
+
 @Composable
 fun countColor(value: Double): Color = when {
     value > 0 -> MaterialTheme.colorScheme.tertiary

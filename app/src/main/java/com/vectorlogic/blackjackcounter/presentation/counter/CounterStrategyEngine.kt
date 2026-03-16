@@ -1,10 +1,9 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import com.vectorlogic.blackjackcounter.domain.model.CounterState
+import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
-import com.vectorlogic.blackjackcounter.domain.model.StrategyDeviationRow
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import java.util.Locale
@@ -14,7 +13,9 @@ object CounterStrategyEngine {
     private val dealerUpcards = listOf(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
     fun buildStrategyChartModel(
-        state: CounterState,
+        state: CounterSessionState,
+        trueCount: Double,
+        supportsTrueCount: Boolean,
         decisionTrueCount: Int
     ): StrategyChartModel {
         val hardRows = listOf(17, 16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
@@ -26,6 +27,7 @@ object CounterStrategyEngine {
                         handValue = total,
                         dealerUpcard = dealer,
                         state = state,
+                        supportsTrueCount = supportsTrueCount,
                         decisionTrueCount = decisionTrueCount
                     )
                 }
@@ -41,6 +43,7 @@ object CounterStrategyEngine {
                         handValue = soft,
                         dealerUpcard = dealer,
                         state = state,
+                        supportsTrueCount = supportsTrueCount,
                         decisionTrueCount = decisionTrueCount
                     )
                 }
@@ -57,6 +60,7 @@ object CounterStrategyEngine {
                         handValue = pairRank,
                         dealerUpcard = dealer,
                         state = state,
+                        supportsTrueCount = supportsTrueCount,
                         decisionTrueCount = decisionTrueCount
                     )
                 }
@@ -64,12 +68,12 @@ object CounterStrategyEngine {
         }
 
         return StrategyChartModel(
-            trueCountLabel = if (state.selectedSystemUsesTrueCount) {
-                String.format(Locale.US, "TC %.1f", state.trueCount)
+            trueCountLabel = if (supportsTrueCount) {
+                String.format(Locale.US, "TC %.1f", trueCount)
             } else {
                 "TC N/A"
             },
-            supportsTrueCount = state.selectedSystemUsesTrueCount,
+            supportsTrueCount = supportsTrueCount,
             sections = listOf(
                 StrategyTableSection(title = "Hard Totals", rows = hardRows),
                 StrategyTableSection(title = "Soft Totals", rows = softRows),
@@ -79,7 +83,7 @@ object CounterStrategyEngine {
     }
 
     fun buildStrategyDeviationRows(
-        state: CounterState,
+        state: CounterSessionState,
         usesTrueCount: Boolean,
         keyCount: Int?,
         pivot: Int?
@@ -118,7 +122,8 @@ object CounterStrategyEngine {
         handType: ChartHandType,
         handValue: Int,
         dealerUpcard: Int,
-        state: CounterState,
+        state: CounterSessionState,
+        supportsTrueCount: Boolean,
         decisionTrueCount: Int
     ): StrategyTableCell {
         val baseAction = getBaseAction(
@@ -135,7 +140,7 @@ object CounterStrategyEngine {
             rules = state.tableRules
         )
 
-        if (!state.selectedSystemUsesTrueCount) {
+        if (!supportsTrueCount) {
             return StrategyTableCell(action = baseAdjusted, isDeviation = false)
         }
 

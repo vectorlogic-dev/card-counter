@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,11 +28,11 @@ fun CounterScreen() {
         factory = remember { CounterViewModel.provideFactory() }
     )
     val state by viewModel.uiState.collectAsState()
-    var menuExpanded by remember { mutableStateOf(false) }
-    var showSystemSelector by remember { mutableStateOf(false) }
-    var showRulesDialog by remember { mutableStateOf(false) }
-    var showHelpDialog by remember { mutableStateOf(false) }
-    var showStrategyChartDialog by remember { mutableStateOf(false) }
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    var showSystemSelector by rememberSaveable { mutableStateOf(false) }
+    var showRulesDialog by rememberSaveable { mutableStateOf(false) }
+    var showHelpDialog by rememberSaveable { mutableStateOf(false) }
+    var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier
@@ -41,7 +42,7 @@ fun CounterScreen() {
     ) {
         if (showStrategyChartDialog) {
             StrategyChartFullScreen(
-                model = viewModel.buildStrategyChartModel(state),
+                model = viewModel.buildStrategyChartModel(),
                 onBack = { showStrategyChartDialog = false },
                 modifier = Modifier.fillMaxSize()
             )

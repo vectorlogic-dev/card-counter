@@ -1,17 +1,8 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
+import com.vectorlogic.blackjackcounter.domain.model.CountRampStep
+import com.vectorlogic.blackjackcounter.domain.model.RunningCountReferences
 import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
-
-data class CountRampStep(
-    val minCountInclusive: Int,
-    val units: Int
-)
-
-data class RunningCountReferences(
-    val initialRunningCount: Int,
-    val keyCount: Int,
-    val pivot: Int
-)
 
 data class CountingSystemProfile(
     val trueCountIntegerization: TrueCountIntegerization? = null,

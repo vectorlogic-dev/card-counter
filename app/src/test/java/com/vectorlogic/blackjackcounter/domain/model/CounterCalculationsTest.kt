@@ -1,6 +1,4 @@
 package com.vectorlogic.blackjackcounter.domain.model
-
-import com.vectorlogic.blackjackcounter.data.counting.CountRampStep
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

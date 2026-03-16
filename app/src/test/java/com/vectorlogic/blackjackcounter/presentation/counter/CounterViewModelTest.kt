@@ -201,8 +201,7 @@ class CounterViewModelTest {
         }
         viewModel.setDecksRemaining(1.0)
 
-        val state = viewModel.uiState.value
-        val chart = viewModel.buildStrategyChartModel(state)
+        val chart = viewModel.buildStrategyChartModel()
         val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
         val dealerTenCell = hardTenRow.cells[8]
 
@@ -219,8 +218,7 @@ class CounterViewModelTest {
         }
         viewModel.setDecksRemaining(1.0)
 
-        val state = viewModel.uiState.value
-        val chart = viewModel.buildStrategyChartModel(state)
+        val chart = viewModel.buildStrategyChartModel()
         val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
         val dealerTenCell = hardTenRow.cells[8]
         val pairsSection = chart.sections.first { it.title == "Pairs" }
@@ -236,8 +234,7 @@ class CounterViewModelTest {
         val viewModel = createViewModel()
         viewModel.setDealerPeekRule(DealerPeekRule.NO_PEEK)
 
-        val state = viewModel.uiState.value
-        val chart = viewModel.buildStrategyChartModel(state)
+        val chart = viewModel.buildStrategyChartModel()
         val pairsSection = chart.sections.first { it.title == "Pairs" }
         val acePairRow = pairsSection.rows.first { it.handLabel == "A,A" }
         val dealerAceCell = acePairRow.cells[9]
@@ -323,16 +320,14 @@ class CounterViewModelTest {
             viewModel.onCardSeen(CardRank.TWO)
         }
         viewModel.setDecksRemaining(0.51)
-        var state = viewModel.uiState.value
-        var chart = viewModel.buildStrategyChartModel(state)
+        var chart = viewModel.buildStrategyChartModel()
         var hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
         var dealerTenCell = hardTenRow.cells[8]
         assertEquals("H", dealerTenCell.action)
         assertFalse(dealerTenCell.isDeviation)
 
         viewModel.setDecksRemaining(0.49)
-        state = viewModel.uiState.value
-        chart = viewModel.buildStrategyChartModel(state)
+        chart = viewModel.buildStrategyChartModel()
         hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
         dealerTenCell = hardTenRow.cells[8]
         assertTrue(dealerTenCell.action.startsWith("D"))
