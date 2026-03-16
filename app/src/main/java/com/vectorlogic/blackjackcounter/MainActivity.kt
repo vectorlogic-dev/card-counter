@@ -12,6 +12,7 @@ import com.vectorlogic.blackjackcounter.ui.theme.BlackjackCounterTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(scrim = AndroidColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(scrim = AndroidColor.TRANSPARENT)

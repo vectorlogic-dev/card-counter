@@ -1,9 +1,5 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,8 +25,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,14 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.R
-import com.vectorlogic.blackjackcounter.data.monetization.BillingUnlockManager
-import com.vectorlogic.blackjackcounter.data.monetization.CountingSystemMonetization
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -69,72 +60,15 @@ import kotlin.math.round
 
 @Composable
 fun CounterScreen() {
-    val context = LocalContext.current
     val viewModel: CounterViewModel = viewModel(
         factory = remember { CounterViewModel.provideFactory() }
     )
     val state by viewModel.uiState.collectAsState()
-    val billingUnlockManager = remember(context.applicationContext) {
-        BillingUnlockManager(context.applicationContext)
-    }
-    val ownedPaidSystemIds by billingUnlockManager.ownedSystemIds.collectAsState()
-    val priceLabelsBySystemId by billingUnlockManager.priceBySystemId.collectAsState()
-    val unlockAllPriceLabel by billingUnlockManager.unlockAllPriceLabel.collectAsState()
-    val billingStatusMessage by billingUnlockManager.statusMessage.collectAsState()
-    val hasUnlockedAllPaidSystems = viewModel.availableSystems
-        .filterNot { it.isFree }
-        .all { option -> ownedPaidSystemIds.contains(option.id) }
-    var pendingUnlockSystemId by remember { mutableStateOf<String?>(null) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showStrategyChartDialog by remember { mutableStateOf(false) }
-
-    DisposableEffect(billingUnlockManager) {
-        billingUnlockManager.start()
-        onDispose {
-            billingUnlockManager.shutdown()
-        }
-    }
-
-    LaunchedEffect(ownedPaidSystemIds) {
-        viewModel.setPurchasedSystemIds(ownedPaidSystemIds)
-    }
-
-    LaunchedEffect(pendingUnlockSystemId, ownedPaidSystemIds) {
-        val pending = pendingUnlockSystemId ?: return@LaunchedEffect
-        val isNowUnlocked = viewModel.availableSystems.any { option ->
-            option.id == pending && (option.isFree || ownedPaidSystemIds.contains(option.id))
-        }
-        if (isNowUnlocked) {
-            viewModel.setCountingSystem(pending)
-            showSystemSelector = false
-            pendingUnlockSystemId = null
-        }
-    }
-
-    LaunchedEffect(billingStatusMessage) {
-        val message = billingStatusMessage ?: return@LaunchedEffect
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        billingUnlockManager.clearStatusMessage()
-    }
-
-    val showPurchasesUnavailableToast = {
-        Toast.makeText(
-            context,
-            "Purchases unavailable right now.",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-    val launchUnlockAllPurchase = {
-        val activity = context.findActivity()
-        if (activity == null) {
-            showPurchasesUnavailableToast()
-        } else {
-            billingUnlockManager.launchUnlockAllPurchase(activity)
-        }
-    }
 
     Surface(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -233,26 +167,6 @@ fun CounterScreen() {
                                 DropdownMenuItem(
                                     text = { Text("Table Rules") },
                                     onClick = { showRulesDialog = true; menuExpanded = false }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            if (hasUnlockedAllPaidSystems) {
-                                                "Unlock All (Owned)"
-                                            } else {
-                                                "Unlock All (${
-                                                    unlockAllPriceLabel
-                                                        ?: CountingSystemMonetization
-                                                            .fallbackUnlockAllPrice()
-                                                })"
-                                            }
-                                        )
-                                    },
-                                    enabled = !hasUnlockedAllPaidSystems,
-                                    onClick = {
-                                        menuExpanded = false
-                                        launchUnlockAllPurchase()
-                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Reset Count") },
@@ -369,28 +283,10 @@ fun CounterScreen() {
                     SystemSelector(
                         selectedSystemId = state.selectedCountingSystemId,
                         availableSystems = viewModel.availableSystems,
-                        ownedSystemIds = ownedPaidSystemIds,
-                        priceLabelsBySystemId = priceLabelsBySystemId,
-                        unlockAllPriceLabel =
-                            unlockAllPriceLabel ?: CountingSystemMonetization.fallbackUnlockAllPrice(),
                         onSystemSelected = { systemId ->
                             if (viewModel.setCountingSystem(systemId)) {
                                 showSystemSelector = false
                             }
-                        },
-                        onUnlockRequested = { systemId ->
-                            val activity = context.findActivity()
-                            if (activity == null) {
-                                showPurchasesUnavailableToast()
-                            } else {
-                                val launched = billingUnlockManager.launchPurchase(activity, systemId)
-                                if (launched) {
-                                    pendingUnlockSystemId = systemId
-                                }
-                            }
-                        },
-                        onUnlockAllRequested = {
-                            launchUnlockAllPurchase()
                         }
                     )
                 }
@@ -448,6 +344,7 @@ fun CounterScreen() {
                     }
                 )
             }
+
         }
     }
 }
@@ -498,13 +395,6 @@ private fun formatSignedPercent(value: Double): String {
     return "$prefix${String.format(Locale.US, "%.1f", rounded)}"
 }
 
-private tailrec fun Context.findActivity(): Activity? {
-    return when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
-}
 
 @Composable
 private fun countColor(value: Double): Color = when {

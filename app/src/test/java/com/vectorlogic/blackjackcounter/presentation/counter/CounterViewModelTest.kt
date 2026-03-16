@@ -45,7 +45,6 @@ class CounterViewModelTest {
     @Test
     fun `onCardSeen ace increments ace side count for omega ii`() {
         val viewModel = createViewModel()
-        viewModel.setPurchasedSystemIds(setOf(OmegaIICountingSystem.id))
         viewModel.setCountingSystem(OmegaIICountingSystem.id)
 
         viewModel.onCardSeen(CardRank.ACE)
@@ -101,7 +100,6 @@ class CounterViewModelTest {
     @Test
     fun `hi opt ii enables ace side count guidance`() {
         val viewModel = createViewModel()
-        viewModel.setPurchasedSystemIds(setOf(HiOptIICountingSystem.id))
 
         viewModel.setCountingSystem(HiOptIICountingSystem.id)
 
@@ -111,25 +109,20 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `level pricing metadata matches monetization tiers`() {
+    fun `available systems expose advanced systems without pricing metadata`() {
         val viewModel = createViewModel()
         val hiLo = viewModel.availableSystems.first { it.id == HiLoCountingSystem.id }
         val zen = viewModel.availableSystems.first { it.id == ZenCountSystem.id }
         val wong = viewModel.availableSystems.first { it.id == WongHalvesSystem.id }
 
-        assertTrue(hiLo.isFree)
-        assertFalse(zen.isFree)
-        assertEquals("\$1.99", zen.defaultPriceLabel)
-        assertEquals("\$2.99", wong.defaultPriceLabel)
+        assertEquals(1, hiLo.level)
+        assertEquals(2, zen.level)
+        assertEquals(3, wong.level)
     }
 
     @Test
-    fun `locked paid systems require purchase before selection`() {
+    fun `all systems can be selected freely`() {
         val viewModel = createViewModel()
-
-        assertFalse(viewModel.setCountingSystem(ZenCountSystem.id))
-
-        viewModel.setPurchasedSystemIds(setOf(ZenCountSystem.id))
 
         assertTrue(viewModel.setCountingSystem(ZenCountSystem.id))
         assertEquals(ZenCountSystem.id, viewModel.uiState.value.selectedCountingSystemId)
