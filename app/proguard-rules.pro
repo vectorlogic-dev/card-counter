@@ -18,20 +18,6 @@
 -keep class * extends androidx.lifecycle.ViewModel
 -keep class * extends androidx.lifecycle.ViewModelProvider$Factory
 
-# ---- Anti-crack hardening --------------------------------------------------
-# Aggressively obfuscate everything not explicitly kept.
--repackageclasses ''
--allowaccessmodification
--flattenpackagehierarchy ''
-
-# Obfuscate the security / monetization packages as much as possible.
-# R8 will rename classes, methods, and fields; repackageclasses flattens
-# the package structure so reversing the APK yields a flat namespace.
--keepclassmembers class com.vectorlogic.blackjackcounter.data.security.** {
-    # Keep the public API method but obfuscate everything else.
-    public static boolean isIntegrityOk(android.content.Context);
-}
-
 # Remove Android logging in release to avoid leaking debug info.
 -assumenosideeffects class android.util.Log {
     public static int v(...);

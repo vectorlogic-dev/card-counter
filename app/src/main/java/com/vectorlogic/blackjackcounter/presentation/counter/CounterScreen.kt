@@ -1,6 +1,5 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,8 +25,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,13 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.R
-import com.vectorlogic.blackjackcounter.data.monetization.LicenseKeyManager
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -51,7 +46,6 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.CountBut
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountDisplayCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.DeckControlCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.HelpDialogContent
-import com.vectorlogic.blackjackcounter.presentation.counter.components.LicenseKeyDialog
 import com.vectorlogic.blackjackcounter.presentation.counter.components.RecentCardsCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.ResetButton
 import com.vectorlogic.blackjackcounter.presentation.counter.components.StrategyChartButton
@@ -66,41 +60,15 @@ import kotlin.math.round
 
 @Composable
 fun CounterScreen() {
-    val context = LocalContext.current
     val viewModel: CounterViewModel = viewModel(
         factory = remember { CounterViewModel.provideFactory() }
     )
     val state by viewModel.uiState.collectAsState()
-    val licenseKeyManager = remember(context.applicationContext) {
-        LicenseKeyManager(context.applicationContext)
-    }
-    val ownedPaidSystemIds by licenseKeyManager.ownedSystemIds.collectAsState()
-    val licenseStatusMessage by licenseKeyManager.statusMessage.collectAsState()
-    val isValidatingKey by licenseKeyManager.isValidating.collectAsState()
-    val hasUnlockedAllPaidSystems = viewModel.availableSystems
-        .filterNot { it.isFree }
-        .all { option -> ownedPaidSystemIds.contains(option.id) }
     var menuExpanded by remember { mutableStateOf(false) }
     var showSystemSelector by remember { mutableStateOf(false) }
     var showRulesDialog by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showStrategyChartDialog by remember { mutableStateOf(false) }
-    var showLicenseKeyDialog by remember { mutableStateOf(false) }
-
-    DisposableEffect(licenseKeyManager) {
-        licenseKeyManager.start()
-        onDispose { }
-    }
-
-    LaunchedEffect(ownedPaidSystemIds) {
-        viewModel.setPurchasedSystemIds(ownedPaidSystemIds)
-    }
-
-    LaunchedEffect(licenseStatusMessage) {
-        val message = licenseStatusMessage ?: return@LaunchedEffect
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        licenseKeyManager.clearStatusMessage()
-    }
 
     Surface(
         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -199,22 +167,6 @@ fun CounterScreen() {
                                 DropdownMenuItem(
                                     text = { Text("Table Rules") },
                                     onClick = { showRulesDialog = true; menuExpanded = false }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            if (hasUnlockedAllPaidSystems) {
-                                                "All Systems Unlocked"
-                                            } else {
-                                                "Unlock All"
-                                            }
-                                        )
-                                    },
-                                    enabled = !hasUnlockedAllPaidSystems,
-                                    onClick = {
-                                        menuExpanded = false
-                                        showLicenseKeyDialog = true
-                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Reset Count") },
@@ -331,14 +283,10 @@ fun CounterScreen() {
                     SystemSelector(
                         selectedSystemId = state.selectedCountingSystemId,
                         availableSystems = viewModel.availableSystems,
-                        ownedSystemIds = ownedPaidSystemIds,
                         onSystemSelected = { systemId ->
                             if (viewModel.setCountingSystem(systemId)) {
                                 showSystemSelector = false
                             }
-                        },
-                        onUnlockRequested = {
-                            showLicenseKeyDialog = true
                         }
                     )
                 }
@@ -397,20 +345,6 @@ fun CounterScreen() {
                 )
             }
 
-            if (showLicenseKeyDialog) {
-                LicenseKeyDialog(
-                    isValidating = isValidatingKey,
-                    onBuyClicked = {
-                        val intent = android.content.Intent(
-                            android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(licenseKeyManager.getPaymentLinkUrl())
-                        )
-                        context.startActivity(intent)
-                    },
-                    onVerifyPayment = { ref -> licenseKeyManager.verifyPayment(ref) },
-                    onDismiss = { showLicenseKeyDialog = false }
-                )
-            }
         }
     }
 }

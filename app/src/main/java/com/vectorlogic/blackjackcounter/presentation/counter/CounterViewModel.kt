@@ -12,7 +12,6 @@ import com.vectorlogic.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.ReKOCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
-import com.vectorlogic.blackjackcounter.data.monetization.CountingSystemMonetization
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CheatSheetRow
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
@@ -37,9 +36,7 @@ data class CountingSystemOption(
     val id: String,
     val displayName: String,
     val level: Int,
-    val recommendsAceSideCount: Boolean,
-    val isFree: Boolean,
-    val defaultPriceLabel: String?
+    val recommendsAceSideCount: Boolean
 )
 
 private data class RunningCountTotals(
@@ -94,11 +91,6 @@ class CounterViewModel private constructor() : ViewModel() {
     private val allSystems: List<CountingSystem> = CountingSystemsCatalog.allSystems
     private val systemsById: Map<String, CountingSystem> = CountingSystemsCatalog.systemsById
     private val defaultSystem: CountingSystem = CountingSystemsCatalog.defaultSystem
-    private val freeSystemIds: Set<String> = allSystems
-        .filter { system -> CountingSystemMonetization.isFreeLevel(system.level) }
-        .map { system -> system.id }
-        .toSet()
-    private var purchasedSystemIds: Set<String> = emptySet()
     private val profilesBySystemId = allSystems.associate { system ->
         system.id to CountingSystemProfiles.profileFor(system.id)
     }
@@ -117,9 +109,7 @@ class CounterViewModel private constructor() : ViewModel() {
             id = system.id,
             displayName = system.displayName,
             level = system.level,
-            recommendsAceSideCount = system.recommendsAceSideCount(),
-            isFree = CountingSystemMonetization.isFreeLevel(system.level),
-            defaultPriceLabel = CountingSystemMonetization.fallbackPriceForLevel(system.level)
+            recommendsAceSideCount = system.recommendsAceSideCount()
         )
     }
 
@@ -348,7 +338,6 @@ class CounterViewModel private constructor() : ViewModel() {
 
     fun setCountingSystem(systemId: String): Boolean {
         val selectedSystem = systemsById[systemId] ?: return false
-        if (!isSystemUnlocked(systemId)) return false
 
         _uiState.update { current ->
             val shouldTrackAces = selectedSystem.recommendsAceSideCount()
@@ -376,24 +365,6 @@ class CounterViewModel private constructor() : ViewModel() {
         }
 
         return true
-    }
-
-    fun setPurchasedSystemIds(systemIds: Set<String>) {
-        purchasedSystemIds = systemIds
-        val selectedSystemId = _uiState.value.selectedCountingSystemId
-        if (!isSystemUnlocked(selectedSystemId)) {
-            setCountingSystem(defaultSystem.id)
-        }
-    }
-
-    fun isSystemUnlocked(systemId: String): Boolean {
-        // Multi-path validation: makes single-point bytecode patches insufficient.
-        val isFree = freeSystemIds.contains(systemId)
-        val isPurchased = purchasedSystemIds.contains(systemId)
-        val accessGranted = isFree || isPurchased
-        // Cross-check: if not free, the purchased set must actually contain it.
-        if (!isFree && accessGranted && systemId !in purchasedSystemIds) return false
-        return accessGranted
     }
 
     fun undoLastCard() {

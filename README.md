@@ -11,7 +11,6 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
 - Open `Menu` -> `Select Counting System`.
-- (Optional) Use `Menu` -> `Unlock All` to unlock paid systems.
 - Set `Total Decks` and `Decks Remaining`.
 - Start tapping card ranks as they are dealt.
 - Use `Bet Recommendation` units with your chosen base bet.
@@ -34,7 +33,6 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
    - `Menu` -> `Show/Hide Cheat Sheet`
-   - `Menu` -> `Unlock All` for one-tap purchase of all paid systems
    - `Strategy Chart` button for full-screen basic strategy + deviations
    - `Recent Cards` panel + `Undo` for correcting missed taps
    - `Reset Count` to reset shoe depth and count state
@@ -78,27 +76,13 @@ This is a training aid, not bankroll or gambling advice.
 
 All systems implement a shared `CountingSystem` interface.
 
-## Monetization Model
-- `Level 1` systems are free:
-  - `Hi-Lo`, `KO`, `ReKO`
-- `Level 2` systems are one-time unlocks at `\$1.99` each:
-  - `Hi-Opt II`, `Omega II`, `Zen Count`
-- `Level 3` systems are one-time unlocks at `\$2.99` each:
-  - `Wong Halves`
-- `Unlock All` one-time purchase at `\$5.99` unlocks all paid systems.
-
-Current Play Billing product IDs in code:
-- `unlock_hi_opt_ii`
-- `unlock_omega_ii`
-- `unlock_zen_count`
-- `unlock_wong_halves`
-- `unlock_all`
+All counting systems are available in the app at no extra cost.
 
 ## Current UI (Quick Overview)
 - Header (floating, no card):
   - Current system name in gold
   - Info icon -> Help dialog
-  - Menu icon -> Select Counting System, Table Rules, Unlock All, Reset Count, Show/Hide Cheat Sheet
+  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
