@@ -135,24 +135,24 @@ private fun CardInputButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(if (compact) 52.dp else 58.dp),
+        modifier = modifier.height(if (compact) 54.dp else 60.dp),
         colors = colors,
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = if (compact) 2.dp else 0.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.CenterVertically)
         ) {
             Text(
                 text = label,
                 fontWeight = FontWeight.Bold,
-                style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+                style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )
             Text(
                 text = tagStr,
-                style = MaterialTheme.typography.labelSmall,
+                style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )

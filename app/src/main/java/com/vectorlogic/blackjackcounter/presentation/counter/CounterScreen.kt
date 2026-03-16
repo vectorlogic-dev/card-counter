@@ -97,15 +97,15 @@ fun CounterScreen() {
                     )
                 )
         ) {
-            val compactLayout = maxHeight < 780.dp
-            val sectionSpacing = if (compactLayout) 4.dp else 6.dp
+            val compactLayout = maxHeight < 840.dp
+            val sectionSpacing = if (compactLayout) 3.dp else 6.dp
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(
-                        horizontal = if (compactLayout) 10.dp else 12.dp,
-                        vertical = if (compactLayout) 4.dp else 6.dp
+                        horizontal = if (compactLayout) 8.dp else 12.dp,
+                        vertical = if (compactLayout) 3.dp else 6.dp
                     ),
                 verticalArrangement = Arrangement.spacedBy(sectionSpacing)
             ) {
@@ -185,7 +185,7 @@ fun CounterScreen() {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 6.dp else 8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 8.dp)
                 ) {
                     CountDisplayCard(
                         title = "Running",
@@ -260,7 +260,7 @@ fun CounterScreen() {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 6.dp else 8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 8.dp)
                 ) {
                     ResetButton(
                         onReset = viewModel::resetCount,

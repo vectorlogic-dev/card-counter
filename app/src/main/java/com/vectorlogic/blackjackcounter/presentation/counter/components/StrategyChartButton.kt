@@ -23,7 +23,7 @@ fun StrategyChartButton(
             .height(if (compact) 40.dp else 44.dp)
     ) {
         Text(
-            text = "Open Strategy Chart",
+            text = "Strategy",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )

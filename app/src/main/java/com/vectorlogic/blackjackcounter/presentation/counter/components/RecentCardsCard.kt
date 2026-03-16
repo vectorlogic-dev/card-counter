@@ -29,10 +29,10 @@ fun RecentCardsCard(
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(
-                horizontal = if (compact) 8.dp else 10.dp,
-                vertical = if (compact) 6.dp else 8.dp
+                horizontal = if (compact) 7.dp else 10.dp,
+                vertical = if (compact) 5.dp else 8.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -59,8 +59,8 @@ fun RecentCardsCard(
                 )
             } else {
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     recentCardLabels.forEach { label ->
                         Surface(
@@ -71,7 +71,7 @@ fun RecentCardsCard(
                             Text(
                                 text = label,
                                 modifier = Modifier.padding(
-                                    horizontal = if (compact) 6.dp else 7.dp,
+                                    horizontal = if (compact) 5.dp else 7.dp,
                                     vertical = if (compact) 2.dp else 3.dp
                                 ),
                                 style = if (compact) {

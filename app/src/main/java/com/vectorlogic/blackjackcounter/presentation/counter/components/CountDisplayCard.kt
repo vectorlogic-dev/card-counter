@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -37,8 +38,8 @@ fun CountDisplayCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        horizontal = if (compact) 8.dp else 16.dp,
-                        vertical = if (compact) 6.dp else 10.dp
+                        horizontal = if (compact) 6.dp else 14.dp,
+                        vertical = if (compact) 5.dp else 10.dp
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -49,9 +50,10 @@ fun CountDisplayCard(
                 )
                 Text(
                     text = value,
-                    style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.displaySmall,
+                    style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = valueColor,
+                    textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Clip
                 )

@@ -1,5 +1,7 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,7 +25,7 @@ import kotlin.math.roundToInt
 
 private val DECK_OPTIONS = listOf(1, 2, 4, 6, 8)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DeckControlCard(
     totalDecks: Int,
@@ -59,69 +61,66 @@ fun DeckControlCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(if (compact) 8.dp else 10.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                .padding(if (compact) 7.dp else 10.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Deck Controls",
+                    text = "Shoe",
                     style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "Penetration ${formatPenetration(deckPenetrationPercent)}",
+                    text = "Pen ${formatPenetration(deckPenetrationPercent)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
             ) {
                 CardsMetricChip(
                     label = "Drawn",
                     value = cardsDrawn.toString(),
                     compact = compact,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
                     label = "Left",
                     value = cardsLeft.toString(),
                     compact = compact,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
                     label = "Total",
                     value = totalCards.toString(),
                     compact = compact,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f, fill = true)
                 )
-            }
-
-            if (showAceSideCount) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
-                ) {
+                if (showAceSideCount) {
                     CardsMetricChip(
-                        label = "Aces Seen",
+                        label = "A Seen",
                         value = acesSeen.toString(),
                         valueColor = aceStatusColor,
                         compact = compact,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f, fill = true)
                     )
                     CardsMetricChip(
-                        label = "Aces Expected",
+                        label = "A Exp",
                         value = formatAcesExpected(acesExpected),
                         valueColor = aceStatusColor,
                         compact = compact,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f, fill = true)
                     )
                 }
+            }
 
+            if (showAceSideCount) {
                 Text(
                     text = aceOutlook,
                     style = MaterialTheme.typography.labelSmall,
@@ -131,7 +130,7 @@ fun DeckControlCard(
 
             Column(verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)) {
                 Text(
-                    text = "Decks in Shoe",
+                    text = "Decks",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -157,7 +156,7 @@ fun DeckControlCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Decks Remaining",
+                        text = "Remaining",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -203,7 +202,7 @@ private fun CardsMetricChip(
         Column(
             modifier = Modifier.padding(
                 horizontal = if (compact) 6.dp else 8.dp,
-                vertical = if (compact) 4.dp else 6.dp
+                vertical = if (compact) 3.dp else 5.dp
             ),
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {

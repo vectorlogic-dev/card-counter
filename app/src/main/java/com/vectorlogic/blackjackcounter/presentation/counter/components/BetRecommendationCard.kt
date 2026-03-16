@@ -36,20 +36,20 @@ fun BetRecommendationCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = if (compact) 10.dp else 12.dp,
-                    vertical = if (compact) 8.dp else 10.dp
+                    horizontal = if (compact) 8.dp else 12.dp,
+                    vertical = if (compact) 6.dp else 10.dp
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 1.dp else 4.dp)) {
                 Text(
-                    text = "BET RECOMMENDATION",
+                    text = "BET",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Based on $countLabel ${formatSignedCount(countValue)}",
+                    text = "$countLabel ${formatSignedCount(countValue)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -75,7 +75,7 @@ fun BetRecommendationCard(
                         )
                     }
                     Text(
-                        text = "1-2-4-8-12",
+                        text = "1 2 4 8 12",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
@@ -88,7 +88,7 @@ fun BetRecommendationCard(
             ) {
                 Text(
                     text = "$units",
-                    style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
+                    style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = unitColor
                 )
