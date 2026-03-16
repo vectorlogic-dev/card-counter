@@ -300,6 +300,23 @@ class CounterViewModelTest {
     }
 
     @Test
+    fun `changing total decks preserves cards drawn and updates decks remaining`() {
+        val viewModel = createViewModel()
+        repeat(10) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+
+        viewModel.setTotalDecks(4)
+
+        val updated = viewModel.uiState.value
+        assertEquals(4, updated.totalDecks)
+        assertEquals(10, updated.cardsDrawn)
+        assertEquals(208, updated.totalCards)
+        assertEquals(198, updated.cardsLeft)
+        assertEquals(198.0 / 52.0, updated.decksRemaining, 0.0001)
+    }
+
+    @Test
     fun `deviation trigger uses integerized true count thresholds`() {
         val viewModel = createViewModel()
         repeat(2) {

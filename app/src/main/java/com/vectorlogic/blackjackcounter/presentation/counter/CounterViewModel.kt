@@ -108,10 +108,10 @@ class CounterViewModel private constructor() : ViewModel() {
     fun setTotalDecks(totalDecks: Int) {
         val normalizedTotalDecks = totalDecks.coerceIn(MIN_TOTAL_DECKS, MAX_TOTAL_DECKS)
         _uiState.update { current ->
-            val normalizedDecksRemaining = current.decksRemaining.coerceIn(
-                MIN_DECKS_REMAINING,
-                normalizedTotalDecks.toDouble()
-            )
+            val totalCardsForNewShoe = normalizedTotalDecks * CARDS_PER_DECK
+            val preservedCardsDrawn = current.cardsDrawn.coerceIn(0, totalCardsForNewShoe)
+            val normalizedDecksRemaining = ((totalCardsForNewShoe - preservedCardsDrawn).toDouble() / CARDS_PER_DECK)
+                .coerceIn(MIN_DECKS_REMAINING, normalizedTotalDecks.toDouble())
 
             val nextState = current.copy(
                 totalDecks = normalizedTotalDecks,
