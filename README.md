@@ -137,6 +137,7 @@ It is a simplified training estimate.
 - Material 3
 - MVVM (`ViewModel` + `StateFlow`)
 - Local state only (no backend, no database)
+- Current gameplay/session state is in-memory only and is not restored after app restart
 
 ## Requirements
 - Android Studio (latest stable recommended)
@@ -171,6 +172,7 @@ Optional verification script:
 
 ## Privacy Policy (Play Console)
 - Privacy policy file in this repo: `docs/privacy-policy.md`
+- Current build note: gameplay/session state is not intentionally persisted across app launches.
 - Host this file on a public HTTPS URL (for example via GitHub Pages) and paste that URL into Play Console -> App content -> Privacy Policy.
 
 ## Project Structure

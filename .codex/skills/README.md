@@ -6,11 +6,17 @@ This directory contains local Codex skills used for this repository.
 - `android-compose-mvvm`
 - `android-gui-polish`
 - `android-verify-workflow`
-
-## Kept for specialized requests
 - `android-architecture`
 - `android-debugger`
+- `android-release-readiness`
+- `android-privacy-security`
+- `android-observability-quality`
 - `playstore-monetization`
+
+## Production-focused additions
+- `android-release-readiness`
+- `android-privacy-security`
+- `android-observability-quality`
 
 ## Cleanup
 Removed overlapping generic skill folders:

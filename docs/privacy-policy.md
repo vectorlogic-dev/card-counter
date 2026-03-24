@@ -1,6 +1,6 @@
 # Privacy Policy for Counting Edge: Card Counter
 
-Effective date: March 17, 2026
+Effective date: March 25, 2026
 
 Counting Edge: Card Counter ("the app") is provided by the developer of this app ("we", "us", "our"). This Privacy Policy explains how data is handled when you use the app.
 
@@ -8,7 +8,7 @@ Counting Edge: Card Counter ("the app") is provided by the developer of this app
 
 - The app does not require account creation.
 - The app does not run its own backend server.
-- Core app usage is local to your device.
+- Core app usage is local to your device while the app is open.
 
 ## Data We Handle
 
@@ -18,12 +18,14 @@ Counting Edge: Card Counter ("the app") is provided by the developer of this app
 
 ### Data stored on device
 
-The app stores state locally so features work as expected, such as:
+The current app build does not intentionally persist gameplay session state between app launches.
+During use, session data lives in app memory so features work as expected, such as:
 
 - Running count and shoe state
 - Selected table rules
 - Selected counting system and UI preferences
 
+If a future version adds on-device persistence, this policy will be updated to reflect that change.
 We do not operate a remote database for this data.
 
 ## How Data Is Used
@@ -31,8 +33,8 @@ We do not operate a remote database for this data.
 Data is used to:
 
 - provide card-counting training functionality
-- preserve your local app state between sessions
-- improve app stability and performance
+- maintain the current in-app session while the app is open
+- render strategy guidance and related UI state locally on device
 
 ## Data Sharing
 
@@ -40,7 +42,7 @@ We do not sell your personal information. We do not run a backend service that s
 
 ## Data Retention
 
-App state is primarily local to your device. You can clear app data or uninstall the app to remove locally stored data.
+Session data is primarily held in app memory during use and is not intentionally restored after an app restart in the current build. You can still clear app data or uninstall the app to remove any local app data Android may retain.
 
 ## Security
 

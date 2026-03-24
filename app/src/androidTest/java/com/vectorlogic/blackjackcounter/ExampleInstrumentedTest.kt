@@ -1,24 +1,26 @@
 package com.vectorlogic.blackjackcounter
 
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import org.junit.Assert.*
-
-/**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
+
+    @get:Rule
+    val composeRule = createAndroidComposeRule<MainActivity>()
+
     @Test
-    fun useAppContext() {
-        // Context of the app under test.
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.vectorlogic.blackjackcounter.debug", appContext.packageName)
+    fun mainScreenShowsCoreCounterControls() {
+        composeRule.onNodeWithText("Running").assertIsDisplayed()
+        composeRule.onNodeWithText("True").assertIsDisplayed()
+        composeRule.onNodeWithText("Edge %").assertIsDisplayed()
+        composeRule.onNodeWithText("Shoe").assertIsDisplayed()
+        composeRule.onNodeWithText("Reset").assertIsDisplayed()
+        composeRule.onNodeWithText("Strategy").assertIsDisplayed()
     }
 }
