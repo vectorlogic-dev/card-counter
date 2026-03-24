@@ -19,6 +19,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,6 +39,9 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.ResetBut
 import com.vectorlogic.blackjackcounter.presentation.counter.components.StrategyChartButton
 import com.vectorlogic.blackjackcounter.ui.theme.FeltGreen
 import com.vectorlogic.blackjackcounter.ui.theme.GoldAccent
+import com.vectorlogic.blackjackcounter.ui.theme.GoldBright
+import com.vectorlogic.blackjackcounter.ui.theme.GoldSoft
+import com.vectorlogic.blackjackcounter.ui.theme.SurfaceMuted
 import com.vectorlogic.blackjackcounter.ui.theme.TableEdge
 import java.util.Locale
 
@@ -66,22 +70,23 @@ fun CounterScreenContent(
                 Brush.verticalGradient(
                     colors = listOf(
                         TableEdge,
-                        FeltGreen.copy(alpha = 0.65f),
-                        GoldAccent.copy(alpha = 0.1f),
+                        FeltGreen.copy(alpha = 0.88f),
+                        GoldAccent.copy(alpha = 0.16f),
+                        SurfaceMuted,
                         TableEdge
                     )
                 )
             )
     ) {
-        val compactLayout = maxHeight < 840.dp
-        val sectionSpacing = if (compactLayout) 3.dp else 6.dp
+        val compactLayout = maxHeight < 900.dp
+        val sectionSpacing = if (compactLayout) 4.dp else 6.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(
-                    horizontal = if (compactLayout) 8.dp else 12.dp,
-                    vertical = if (compactLayout) 3.dp else 6.dp
+                    horizontal = if (compactLayout) 8.dp else 10.dp,
+                    vertical = if (compactLayout) 4.dp else 6.dp
                 ),
             verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
@@ -99,19 +104,21 @@ fun CounterScreenContent(
                 compact = compactLayout
             )
 
+            CountDisplayCard(
+                title = "Running",
+                value = formatSignedCount(state.runningCount),
+                valueColor = countColor(state.runningCount),
+                compact = compactLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            val trueCountValue = if (state.selectedSystemUsesTrueCount) state.trueCount else 0.0
+            val edgeValue = if (state.canEstimateEdge) state.estimatedPlayerEdgePercent else 0.0
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 8.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 6.dp)
             ) {
-                CountDisplayCard(
-                    title = "Running",
-                    value = formatSignedCount(state.runningCount),
-                    valueColor = countColor(state.runningCount),
-                    compact = compactLayout,
-                    modifier = Modifier.weight(1f)
-                )
-
-                val trueCountValue = if (state.selectedSystemUsesTrueCount) state.trueCount else 0.0
                 CountDisplayCard(
                     title = "True",
                     value = if (state.selectedSystemUsesTrueCount) {
@@ -128,7 +135,6 @@ fun CounterScreenContent(
                     modifier = Modifier.weight(1f)
                 )
 
-                val edgeValue = if (state.canEstimateEdge) state.estimatedPlayerEdgePercent else 0.0
                 CountDisplayCard(
                     title = "Edge %",
                     value = if (state.canEstimateEdge) {
@@ -146,12 +152,25 @@ fun CounterScreenContent(
                 )
             }
 
+            StrategyChartButton(
+                onClick = onStrategyChartClick,
+                compact = compactLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             BetRecommendationCard(
                 units = state.recommendedBetUnits,
                 countLabel = state.betSizingCountLabel,
                 countValue = state.betSizingCountValue,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            CountButtonsRow(
+                buttonTagValues = state.buttonTagValues,
+                onCardSelected = onCardSelected,
+                onFaceCardsSelected = onFaceCardsSelected,
+                compact = compactLayout
             )
 
             DeckControlCard(
@@ -169,13 +188,6 @@ fun CounterScreenContent(
                 compact = compactLayout
             )
 
-            CountButtonsRow(
-                buttonTagValues = state.buttonTagValues,
-                onCardSelected = onCardSelected,
-                onFaceCardsSelected = onFaceCardsSelected,
-                compact = compactLayout
-            )
-
             RecentCardsCard(
                 recentCardLabels = state.seenCards
                     .takeLast(if (compactLayout) 12 else 15)
@@ -185,21 +197,12 @@ fun CounterScreenContent(
                 compact = compactLayout
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 8.dp)
-            ) {
-                ResetButton(
-                    onReset = onResetClick,
-                    compact = compactLayout,
-                    modifier = Modifier.weight(1f)
-                )
-                StrategyChartButton(
-                    onClick = onStrategyChartClick,
-                    compact = compactLayout,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            ResetButton(
+                onReset = onResetClick,
+                compact = compactLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
+
         }
     }
 }
@@ -232,20 +235,26 @@ private fun CounterHeader(
             Text(
                 text = stringResource(id = R.string.app_name_short).uppercase(Locale.US),
                 style = MaterialTheme.typography.labelSmall,
-                color = GoldAccent.copy(alpha = 0.6f)
+                color = GoldSoft
             )
             Text(
                 text = systemName,
                 style = MaterialTheme.typography.titleLarge,
-                color = GoldAccent
+                color = GoldBright
             )
             if (showsAceSideCount) {
-                Text(
-                    text = "Ace side count",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = "Ace side count",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
         }
 

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.border
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -57,49 +59,70 @@ fun DeckControlCard(
         compact = compact
     )
 
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier.border(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+            shape = MaterialTheme.shapes.medium
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(if (compact) 7.dp else 10.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 8.dp)
+            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 7.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Shoe",
-                    style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = "Pen ${formatPenetration(deckPenetrationPercent)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = "SHOE",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${formatDecksRemaining(decksRemaining)} decks",
+                        style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = "Pen ${formatPenetration(deckPenetrationPercent)}",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
             ) {
                 CardsMetricChip(
                     label = "Drawn",
                     value = cardsDrawn.toString(),
-                    compact = compact,
+                    compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
                     label = "Left",
                     value = cardsLeft.toString(),
-                    compact = compact,
+                    compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
                     label = "Total",
                     value = totalCards.toString(),
-                    compact = compact,
+                    compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 if (showAceSideCount) {
@@ -107,14 +130,14 @@ fun DeckControlCard(
                         label = "A Seen",
                         value = acesSeen.toString(),
                         valueColor = aceStatusColor,
-                        compact = compact,
+                        compact = true,
                         modifier = Modifier.weight(1f, fill = true)
                     )
                     CardsMetricChip(
                         label = "A Exp",
                         value = formatAcesExpected(acesExpected),
                         valueColor = aceStatusColor,
-                        compact = compact,
+                        compact = true,
                         modifier = Modifier.weight(1f, fill = true)
                     )
                 }
@@ -128,10 +151,10 @@ fun DeckControlCard(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = "Decks",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -150,7 +173,7 @@ fun DeckControlCard(
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 5.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -161,7 +184,7 @@ fun DeckControlCard(
                     )
                     Text(
                         text = formatDecksRemaining(decksRemaining),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -240,8 +263,8 @@ private fun calculateAceOutlook(
     val diff = acesSeen - acesExpected
 
     return when {
-        diff > 1.0 -> if (compact) "Ace outlook: fewer ahead." else "Ace outlook: Fewer aces likely ahead (seen above expected)."
-        diff < -1.0 -> if (compact) "Ace outlook: more ahead." else "Ace outlook: More aces likely ahead (seen below expected)."
-        else -> if (compact) "Ace outlook: neutral." else "Ace outlook: About average Ace frequency."
+        diff > 1.0 -> if (compact) "Ace outlook: fewer ahead." else "Ace outlook: fewer aces likely ahead."
+        diff < -1.0 -> if (compact) "Ace outlook: more ahead." else "Ace outlook: more aces likely ahead."
+        else -> if (compact) "Ace outlook: neutral." else "Ace outlook: near expected."
     }
 }

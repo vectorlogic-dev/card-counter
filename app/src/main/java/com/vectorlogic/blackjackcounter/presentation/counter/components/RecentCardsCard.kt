@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,13 +28,22 @@ fun RecentCardsCard(
     compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.32f),
+                shape = MaterialTheme.shapes.medium
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(
             modifier = Modifier.padding(
                 horizontal = if (compact) 7.dp else 10.dp,
-                vertical = if (compact) 5.dp else 8.dp
+                vertical = if (compact) 5.dp else 7.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
+            verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -40,7 +51,7 @@ fun RecentCardsCard(
             ) {
                 Text(
                     text = "Recent Cards",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 TextButton(
@@ -65,8 +76,7 @@ fun RecentCardsCard(
                     recentCardLabels.forEach { label ->
                         Surface(
                             shape = MaterialTheme.shapes.extraSmall,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            tonalElevation = 2.dp
+                            color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
                                 text = label,

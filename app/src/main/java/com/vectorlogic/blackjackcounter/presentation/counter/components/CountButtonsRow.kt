@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,8 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,53 +35,80 @@ fun CountButtonsRow(
     modifier: Modifier = Modifier
 ) {
     val sectionSpacing = if (compact) 4.dp else 6.dp
-    Column(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                shape = MaterialTheme.shapes.medium
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = if (compact) 7.dp else 9.dp,
+                    vertical = if (compact) 6.dp else 8.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
-            listOf(CardRank.ACE, CardRank.TWO, CardRank.THREE, CardRank.FOUR, CardRank.FIVE).forEach { rank ->
-                val tagValue = buttonTagValues[rank] ?: 0.0
-                CardInputButton(
-                    label = rank.toButtonLabel(),
-                    tone = tagValueToTone(tagValue),
-                    tagValue = tagValue,
-                    compact = compact,
-                    onClick = { onCardSelected(rank) },
-                    modifier = Modifier.weight(1f)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "COUNT PAD",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Tap cards as they land",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-        }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            listOf(CardRank.SIX, CardRank.SEVEN, CardRank.EIGHT, CardRank.NINE).forEach { rank ->
-                val tagValue = buttonTagValues[rank] ?: 0.0
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listOf(CardRank.ACE, CardRank.TWO, CardRank.THREE, CardRank.FOUR, CardRank.FIVE).forEach { rank ->
+                    val tagValue = buttonTagValues[rank] ?: 0.0
+                    CardInputButton(
+                        label = rank.toButtonLabel(),
+                        tone = tagValueToTone(tagValue),
+                        tagValue = tagValue,
+                        compact = compact,
+                        onClick = { onCardSelected(rank) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(sectionSpacing),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listOf(CardRank.SIX, CardRank.SEVEN, CardRank.EIGHT, CardRank.NINE).forEach { rank ->
+                    val tagValue = buttonTagValues[rank] ?: 0.0
+                    CardInputButton(
+                        label = rank.toButtonLabel(),
+                        tone = tagValueToTone(tagValue),
+                        tagValue = tagValue,
+                        compact = compact,
+                        onClick = { onCardSelected(rank) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                val faceTagValue = buttonTagValues[CardRank.JACK] ?: 0.0
                 CardInputButton(
-                    label = rank.toButtonLabel(),
-                    tone = tagValueToTone(tagValue),
-                    tagValue = tagValue,
+                    label = "10-K",
+                    tone = tagValueToTone(faceTagValue),
+                    tagValue = faceTagValue,
                     compact = compact,
-                    onClick = { onCardSelected(rank) },
+                    onClick = onFaceCardsSelected,
                     modifier = Modifier.weight(1f)
                 )
             }
-            val faceTagValue = buttonTagValues[CardRank.JACK] ?: 0.0
-            CardInputButton(
-                label = "10-K",
-                tone = tagValueToTone(faceTagValue),
-                tagValue = faceTagValue,
-                compact = compact,
-                onClick = onFaceCardsSelected,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }
@@ -132,24 +163,26 @@ private fun CardInputButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(if (compact) 54.dp else 60.dp),
+        modifier = modifier.height(if (compact) 52.dp else 58.dp),
         colors = colors,
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = if (compact) 2.dp else 0.dp)
+        shape = RoundedCornerShape(if (compact) 2.dp else 4.dp),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+        contentPadding = PaddingValues(horizontal = 3.dp, vertical = if (compact) 2.dp else 2.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.CenterVertically)
+            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
         ) {
             Text(
                 text = label,
                 fontWeight = FontWeight.Bold,
-                style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
+                style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )
             Text(
                 text = tagStr,
-                style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Clip
             )

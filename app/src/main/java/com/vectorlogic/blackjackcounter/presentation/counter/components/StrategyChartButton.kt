@@ -20,11 +20,11 @@ fun StrategyChartButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(if (compact) 40.dp else 44.dp)
+            .height(if (compact) 38.dp else 42.dp)
     ) {
         Text(
-            text = "Strategy",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "Strategy Table",
+            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
     }

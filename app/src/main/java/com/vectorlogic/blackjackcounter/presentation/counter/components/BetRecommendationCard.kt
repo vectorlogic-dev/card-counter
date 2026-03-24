@@ -1,6 +1,7 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,30 +33,37 @@ fun BetRecommendationCard(
     modifier: Modifier = Modifier
 ) {
     val unitColor = unitsColor(units)
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier.border(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+            shape = MaterialTheme.shapes.medium
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
                     horizontal = if (compact) 8.dp else 12.dp,
-                    vertical = if (compact) 6.dp else 10.dp
+                    vertical = if (compact) 6.dp else 9.dp
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 1.dp else 4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 5.dp)) {
                 Text(
-                    text = "BET",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "BET RAMP",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "$countLabel ${formatSignedCount(countValue)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     BET_RAMP.forEach { threshold ->
@@ -77,7 +86,7 @@ fun BetRecommendationCard(
                     Text(
                         text = "1 2 4 8 12",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
                     )
                 }
             }
@@ -93,8 +102,8 @@ fun BetRecommendationCard(
                     color = unitColor
                 )
                 Text(
-                    text = "units",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "units live",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

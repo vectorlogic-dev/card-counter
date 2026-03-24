@@ -5,6 +5,7 @@ This directory contains local Codex skills used for this repository.
 ## Active in `AGENTS.md`
 - `android-compose-mvvm`
 - `android-gui-polish`
+- `android-ui-redesign`
 - `android-verify-workflow`
 - `android-architecture`
 - `android-debugger`
