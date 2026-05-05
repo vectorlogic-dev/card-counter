@@ -2,7 +2,7 @@ package com.vectorlogic.blackjackcounter.presentation.counter.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +16,7 @@ fun StrategyChartButton(
     compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Button(
+    OutlinedButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()

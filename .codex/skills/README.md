@@ -6,6 +6,7 @@ This directory contains local Codex skills used for this repository.
 - `android-compose-mvvm`
 - `android-gui-polish`
 - `android-ui-redesign`
+- `android-ux`
 - `android-verify-workflow`
 - `android-architecture`
 - `android-debugger`

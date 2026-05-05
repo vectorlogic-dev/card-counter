@@ -108,6 +108,7 @@ fun CounterScreenContent(
                 title = "Running",
                 value = formatSignedCount(state.runningCount),
                 valueColor = countColor(state.runningCount),
+                hero = true,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -152,16 +153,16 @@ fun CounterScreenContent(
                 )
             }
 
-            StrategyChartButton(
-                onClick = onStrategyChartClick,
-                compact = compactLayout,
-                modifier = Modifier.fillMaxWidth()
-            )
-
             BetRecommendationCard(
                 units = state.recommendedBetUnits,
                 countLabel = state.betSizingCountLabel,
                 countValue = state.betSizingCountValue,
+                compact = compactLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            StrategyChartButton(
+                onClick = onStrategyChartClick,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
             )
