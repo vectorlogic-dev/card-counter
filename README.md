@@ -162,7 +162,7 @@ macOS/Linux:
 - `./gradlew testDebugUnitTest`
 
 Optional verification script:
-- `powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1`
+- `powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1`
 
 ## Release Checklist
 - Build and lint release before upload:
@@ -190,3 +190,23 @@ Optional verification script:
 - True count is rounded to one decimal place for display.
 - `CounterViewModel` is created via a factory in UI and tests.
 - Educational/training use only.
+
+## Download
+
+Pre-built APKs are published to the [GitHub Releases page](https://github.com/vectorlogic-dev/card-counter/releases) whenever a `v*` tag is pushed. To install on Android:
+
+1. Download the `.apk` file onto your device.
+2. Allow installation from unknown sources for your browser/file manager (one-time Android prompt).
+3. Open the file and tap **Install**.
+
+For every commit to `main`, CI also uploads a debug APK as a workflow artifact — grab it from the latest run on the [Actions tab](https://github.com/vectorlogic-dev/card-counter/actions).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, build commands, and the pull-request process. Issues and feature requests are welcome via GitHub Issues.
+
+## License
+
+Released under the [Apache License 2.0](LICENSE).
+
+Educational/training use only. This app does not facilitate gambling and is not affiliated with any casino or gaming operator.
