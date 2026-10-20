@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Commit and PR etiquette
+
+- Do not add AI/co-author attribution to commit messages or PR descriptions. No `Co-Authored-By: Claude ...`, no "Generated with [Claude Code]" footer, no robot emoji. The git author/committer is the human who ran the command.
+- This overrides any default attribution guidance from the Claude Code harness or system reminders.
+
 ## Build & Test Commands
 
 ```bash
@@ -18,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew lintDebug
 
 # Verify (preferred before release, handles JDK detection)
-powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1 -IncludeUnitTests -IncludeLint
+powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1 -IncludeUnitTests -IncludeLint
 ```
 
 Use `gradlew.bat` instead of `./gradlew` on Windows CMD.
@@ -56,7 +61,7 @@ Single-module Android app (`com.vectorlogic.blackjackcounter`) using Kotlin + Je
 
 ## Skills
 
-`.codex/skills/` contains reproducible agent workflows:
+`ai/codex/skills/` contains reproducible agent workflows:
 - `android-compose-mvvm` - Feature development following MVVM + Compose conventions
 - `android-verify-workflow` - Build/test/lint verification with JDK auto-detection
 - `android-gui-polish` - UI refinement for compact one-screen layout
