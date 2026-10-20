@@ -193,13 +193,33 @@ Optional verification script:
 
 ## Download
 
-Pre-built APKs are published to the [GitHub Releases page](https://github.com/vectorlogic-dev/card-counter/releases) whenever a `v*` tag is pushed. To install on Android:
+Signed release APKs are published to the [GitHub Releases page](https://github.com/vectorlogic-dev/card-counter/releases). To install on Android:
 
 1. Download the `.apk` file onto your device.
 2. Allow installation from unknown sources for your browser/file manager (one-time Android prompt).
 3. Open the file and tap **Install**.
 
-For every commit to `main`, CI also uploads a debug APK as a workflow artifact — grab it from the latest run on the [Actions tab](https://github.com/vectorlogic-dev/card-counter/actions).
+For every commit to `main`, CI also uploads a debug APK as a workflow artifact — grab it from the latest run on the [Actions tab](https://github.com/vectorlogic-dev/card-counter/actions). Debug APKs install side-by-side with the release build (different package suffix) and are useful for testing fixes before a tagged release.
+
+### Publishing a new release (maintainers)
+
+Releases are built and signed locally, then uploaded to GitHub — no signing key ever leaves the maintainer's machine. Requires a `keystore.properties` file at the repo root (gitignored) pointing at the release keystore:
+
+```
+storeFile=/absolute/path/to/release.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+Then run:
+
+```bash
+scripts/publish-release.sh 1.0.0           # publish v1.0.0
+scripts/publish-release.sh 1.0.0 --draft   # stage without publishing
+```
+
+The script runs `./gradlew clean assembleRelease bundleRelease`, computes the APK SHA-256, opens release notes in `$EDITOR`, tags `v1.0.0`, uploads the APK (and AAB for Play), and pushes the tag.
 
 ## Contributing
 
