@@ -22,8 +22,8 @@ android {
         applicationId = "com.vectorlogic.blackjackcounter"
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.0.0-closed-testing.1"
+        versionCode = 9
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

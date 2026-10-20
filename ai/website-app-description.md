@@ -58,13 +58,13 @@ Not a gambling app. The app does not take bets, does not connect to any casino o
 - **Platform:** Android, minimum API 24 (Android 7.0), target API 36.
 - **Stack:** Kotlin, Jetpack Compose, MVVM.
 - **Open source:** Apache 2.0, source at [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter).
-- **Distribution:** Google Play (closed testing at version 1.0.0-closed-testing.1) and APK downloads via GitHub Releases.
-- **Privacy:** No analytics, no accounts, no ads. Session state is not persisted across launches.
+- **Distribution:** Direct APK download from [blackjackcounter.app](https://blackjackcounter.app) and [GitHub Releases](https://github.com/vectorlogic-dev/card-counter/releases). Not on Google Play.
+- **Privacy:** No analytics, no accounts, no in-app ads. Session state is stored locally on the device only.
 
 ## Download CTAs
 
-- **Google Play (closed testing):** Request access at [support page / contact].
-- **GitHub Releases:** Direct APK downloads at [github.com/vectorlogic-dev/card-counter/releases](https://github.com/vectorlogic-dev/card-counter/releases).
+- **Primary:** Download APK from [blackjackcounter.app](https://blackjackcounter.app).
+- **Mirror:** [github.com/vectorlogic-dev/card-counter/releases](https://github.com/vectorlogic-dev/card-counter/releases).
 - **Source:** [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter)
 
 ## Taglines (pick one)

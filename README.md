@@ -3,10 +3,11 @@
 Counting Edge: Card Counter is a Jetpack Compose training app for live card-count practice.
 It supports multiple counting systems, rule-aware strategy guidance, and a compact one-screen workflow.
 
-## Current Release Target
-- Channel: `Closed testing` (Google Play)
-- Version name: `1.0.0-closed-testing.1`
-- Version code: `8`
+## Current Release
+- Version: `1.0.0`
+- Version code: `9`
+- Distribution: [GitHub Releases](https://github.com/vectorlogic-dev/card-counter/releases) + [blackjackcounter.app](https://blackjackcounter.app)
+- Website: [github.com/vectorlogic-dev/card-counter-website](https://github.com/vectorlogic-dev/card-counter-website)
 
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
@@ -165,15 +166,12 @@ Optional verification script:
 - `powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1`
 
 ## Release Checklist
-- Build and lint release before upload:
-  - `./gradlew.bat assembleRelease lintRelease`
-- Build the upload bundle (`.aab`) for Play Console:
-  - `./gradlew.bat bundleRelease`
+- Verify tests and lint pass: `./gradlew testDebugUnitTest lintRelease`
+- Publish: `scripts/publish-release.sh <version>` — see the Download section.
 
-## Privacy Policy (Play Console)
-- Privacy policy file in this repo: `docs/privacy-policy.md`
-- Current build note: gameplay/session state is not intentionally persisted across app launches.
-- Host this file on a public HTTPS URL (for example via GitHub Pages) and paste that URL into Play Console -> App content -> Privacy Policy.
+## Privacy Policy
+- Privacy policy source: [docs/privacy-policy.md](docs/privacy-policy.md); the hosted copy is at [blackjackcounter.app/privacy-policy.html](https://blackjackcounter.app/privacy-policy.html).
+- The app stores session state locally only (SharedPreferences on-device). Nothing is transmitted off-device by the app itself.
 
 ## Project Structure
 - `app/src/main/java/com/vectorlogic/blackjackcounter/data/counting`

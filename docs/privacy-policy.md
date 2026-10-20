@@ -66,4 +66,4 @@ We may update this policy from time to time. Updates will be posted at this URL 
 
 ## Contact
 
-For privacy questions, use the developer contact email listed on this app's Google Play store listing.
+For privacy questions, open an issue at [github.com/vectorlogic-dev/card-counter/issues](https://github.com/vectorlogic-dev/card-counter/issues) or use the contact method listed at [blackjackcounter.app](https://blackjackcounter.app).
