@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ResetButton(
     onReset: () -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     OutlinedButton(
         onClick = onReset,

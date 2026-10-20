@@ -31,8 +31,8 @@ fun CountButtonsRow(
     buttonTagValues: Map<CardRank, Double>,
     onCardSelected: (CardRank) -> Unit,
     onFaceCardsSelected: () -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val sectionSpacing = if (compact) 4.dp else 6.dp
     Card(
@@ -133,8 +133,8 @@ private fun CardInputButton(
     tone: CardButtonTone,
     tagValue: Double,
     compact: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     val colors = when (tone) {
         CardButtonTone.Positive -> ButtonDefaults.buttonColors(

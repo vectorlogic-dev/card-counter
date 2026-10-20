@@ -29,8 +29,8 @@ fun BetRecommendationCard(
     units: Int,
     countLabel: String,
     countValue: Double,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val unitColor = unitsColor(units)
     Card(

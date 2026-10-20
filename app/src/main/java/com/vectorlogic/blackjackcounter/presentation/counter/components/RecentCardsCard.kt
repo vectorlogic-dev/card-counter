@@ -25,8 +25,8 @@ fun RecentCardsCard(
     recentCardLabels: List<String>,
     onUndo: () -> Unit,
     canUndo: Boolean,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     Card(
         modifier = modifier

@@ -25,11 +25,11 @@ import androidx.compose.ui.unit.dp
 fun CountDisplayCard(
     title: String,
     value: String,
+    modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
     subtitle: String? = null,
     hero: Boolean = false,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    compact: Boolean = false
 ) {
     val containerColor = if (hero) {
         MaterialTheme.colorScheme.surfaceVariant

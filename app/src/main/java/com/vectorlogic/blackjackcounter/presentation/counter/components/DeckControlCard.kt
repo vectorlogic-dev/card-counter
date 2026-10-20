@@ -41,8 +41,8 @@ fun DeckControlCard(
     acesExpected: Double,
     onTotalDecksChanged: (Int) -> Unit,
     onDecksRemainingChanged: (Double) -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val minDecksRemaining = 0.25f
     val sliderMax = totalDecks.toFloat().coerceAtLeast(minDecksRemaining)
@@ -207,9 +207,9 @@ fun DeckControlCard(
 private fun CardsMetricChip(
     label: String,
     value: String,
+    modifier: Modifier = Modifier,
     valueColor: Color = Color.Unspecified,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    compact: Boolean = false
 ) {
     val resolvedValueColor = if (valueColor == Color.Unspecified) {
         MaterialTheme.colorScheme.onSurface
