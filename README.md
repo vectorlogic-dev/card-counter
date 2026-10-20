@@ -199,7 +199,7 @@ Signed release APKs are published to the [GitHub Releases page](https://github.c
 2. Allow installation from unknown sources for your browser/file manager (one-time Android prompt).
 3. Open the file and tap **Install**.
 
-For every commit to `main`, CI also uploads a debug APK as a workflow artifact — grab it from the latest run on the [Actions tab](https://github.com/vectorlogic-dev/card-counter/actions). Debug APKs install side-by-side with the release build (different package suffix) and are useful for testing fixes before a tagged release.
+Installing a new release over an older one preserves app data (same package, same signing key).
 
 ### Publishing a new release (maintainers)
 
