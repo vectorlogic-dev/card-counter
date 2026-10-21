@@ -8,6 +8,7 @@ object HiOptIICountingSystem : CountingSystem {
     override val displayName: String = "Hi-Opt II"
     override val level: Int = 2
     override val isBalanced: Boolean = true
+    override val edgeGainPercentPerTrueCount: Double = 0.46
 
     override fun getTagValue(cardRank: CardRank): Double {
         return when (cardRank) {

@@ -84,6 +84,28 @@ class CounterCalculationsTest {
     }
 
     @Test
+    fun `calculateEstimatedPlayerEdgePercent uses per system edge gain when provided`() {
+        val rules = TableRules()
+        val hiLoEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 4.0,
+            usesTrueCount = true,
+            tableRules = rules,
+            totalDecks = 6,
+            edgeGainPercentPerTrueCount = 0.50
+        )
+        val hiOptEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 4.0,
+            usesTrueCount = true,
+            tableRules = rules,
+            totalDecks = 6,
+            edgeGainPercentPerTrueCount = 0.46
+        )
+
+        assertTrue(hiLoEdge > hiOptEdge)
+        assertEquals(0.2, hiLoEdge - hiOptEdge, 0.05)
+    }
+
+    @Test
     fun `calculateRecommendedBetUnits scales with true count`() {
         val ramp = listOf(
             CountRampStep(minCountInclusive = 1, units = 2),

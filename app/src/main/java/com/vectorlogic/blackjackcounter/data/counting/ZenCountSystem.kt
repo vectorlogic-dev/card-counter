@@ -8,6 +8,7 @@ object ZenCountSystem : CountingSystem {
     override val displayName: String = "Zen Count"
     override val level: Int = 2
     override val isBalanced: Boolean = true
+    override val edgeGainPercentPerTrueCount: Double = 0.49
 
     override fun getTagValue(cardRank: CardRank): Double {
         return when (cardRank) {

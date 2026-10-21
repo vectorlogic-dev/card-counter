@@ -8,6 +8,7 @@ object WongHalvesSystem : CountingSystem {
     override val displayName: String = "Wong Halves"
     override val level: Int = 3
     override val isBalanced: Boolean = true
+    override val edgeGainPercentPerTrueCount: Double = 0.51
 
     override fun getTagValue(cardRank: CardRank): Double {
         return when (cardRank) {

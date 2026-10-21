@@ -66,7 +66,8 @@ object CounterCalculations {
         trueCount: Double,
         usesTrueCount: Boolean,
         tableRules: TableRules,
-        totalDecks: Int
+        totalDecks: Int,
+        edgeGainPercentPerTrueCount: Double = DEFAULT_EDGE_GAIN_PER_TRUE_COUNT
     ): Double {
         if (!usesTrueCount) return 0.0
 
@@ -74,7 +75,7 @@ object CounterCalculations {
             tableRules = tableRules,
             totalDecks = totalDecks
         )
-        val countAdjustment = trueCount * PLAYER_EDGE_PER_TRUE_COUNT
+        val countAdjustment = trueCount * edgeGainPercentPerTrueCount
         return roundToOneDecimal((-houseEdge) + countAdjustment)
     }
 
@@ -172,5 +173,5 @@ object CounterCalculations {
     private const val CARDS_PER_DECK = 52.0
     private const val BASE_HOUSE_EDGE_PERCENT = 0.50
     private const val DEFAULT_TOTAL_DECKS_FOR_BASELINE = 8
-    private const val PLAYER_EDGE_PER_TRUE_COUNT = 0.5
+    private const val DEFAULT_EDGE_GAIN_PER_TRUE_COUNT = 0.50
 }

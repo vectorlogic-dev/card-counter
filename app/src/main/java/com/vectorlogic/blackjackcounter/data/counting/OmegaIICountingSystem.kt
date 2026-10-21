@@ -8,6 +8,7 @@ object OmegaIICountingSystem : CountingSystem {
     override val displayName: String = "Omega II"
     override val level: Int = 2
     override val isBalanced: Boolean = true
+    override val edgeGainPercentPerTrueCount: Double = 0.47
 
     override fun getTagValue(cardRank: CardRank): Double {
         return when (cardRank) {
