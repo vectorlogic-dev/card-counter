@@ -219,14 +219,15 @@ class CounterStrategyEngineTest {
             scales.forEach { scale ->
                 val triggeredRows = rows(state, scale).filter { it.trigger != null && it.playLabel != "Insurance vs A" }
                 assertTrue(triggeredRows.isNotEmpty())
-                (-12..12).forEach { tc ->
+                // Thresholds are one-decimal native counts, so step in tenths to hit every boundary.
+                (-120..120).map { it / 10.0 }.forEach { tc ->
                     triggeredRows.forEach { row ->
                         val cell = cellFor(state, row.playLabel, tc, scale)
                         val playPrefix = actionPrefix(row.indexLabel)
                         assertEquals(
                             "${row.playLabel} (${row.indexLabel}) at TC $tc, scale $scale, $rules",
                             cell.action.startsWith(playPrefix),
-                            row.isActiveAt(tc.toDouble())
+                            row.isActiveAt(tc)
                         )
                     }
                 }
@@ -242,8 +243,9 @@ class CounterStrategyEngineTest {
 
         val zenInsurance = rows(noSurrender, TrueCountScaling.hiLoEquivalentScale(ZenCountSystem))
             .first { it.playLabel == "Insurance vs A" }
-        assertFalse(zenInsurance.isActiveAt(4.0))
-        assertTrue(zenInsurance.isActiveAt(5.0))
+        // Hi-Lo +3 x Zen scale ~1.789 = 5.4 at one decimal.
+        assertFalse(zenInsurance.isActiveAt(5.3))
+        assertTrue(zenInsurance.isActiveAt(5.4))
     }
 
     @Test
@@ -287,13 +289,13 @@ class CounterStrategyEngineTest {
         assertTrue(pivot.isActiveAt(4.0))
     }
 
-    private fun cellFor(state: CounterSessionState, playLabel: String, decisionTrueCount: Int, scale: Double): StrategyTableCell {
+    private fun cellFor(state: CounterSessionState, playLabel: String, decisionTrueCount: Double, scale: Double): StrategyTableCell {
         val (hand, dealer) = playLabel.split(" vs ")
         val dealerUpcard = if (dealer == "A") 11 else dealer.toInt()
         val section = if (hand.contains(",")) "Pairs" else "Hard Totals"
         val chart = CounterStrategyEngine.buildStrategyChartModel(
             state = state,
-            trueCount = decisionTrueCount.toDouble(),
+            trueCount = decisionTrueCount,
             supportsTrueCount = true,
             decisionTrueCount = decisionTrueCount,
             trueCountScale = scale
