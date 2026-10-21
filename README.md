@@ -183,7 +183,7 @@ All counting systems are available in the app at no extra cost.
 - The cheat sheet lists every index for the selected system and highlights the plays that apply at the
   current count; doubles the table rules forbid show as `No double (rules)`, and plays basic strategy
   already makes at every count show as `(any TC)`
-- Help points to the Strategy Table and cheat sheet rather than repeating them
+- Help points to the Strategy Chart and cheat sheet rather than repeating them
 
 ## Estimated Edge %
 Estimated Edge % is computed from:
@@ -246,7 +246,7 @@ macOS/Linux:
 
 ## Notes
 - Deck safety floor is enforced to avoid divide-by-zero behavior.
-- True count is rounded to one decimal place for display.
+- True count is rounded to one decimal place, and that displayed value is what bets, indices and the edge estimate use.
 - `CounterViewModel` is created via a factory in UI and tests.
 - Educational/training use only.
 

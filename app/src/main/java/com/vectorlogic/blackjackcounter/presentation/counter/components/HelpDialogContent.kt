@@ -69,7 +69,7 @@ private fun HelpHeaderCard(tableRules: TableRules) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "The Strategy Table and cheat sheet follow the current table rules below.",
+                text = "The Strategy Chart and cheat sheet follow the current table rules below.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -127,7 +127,7 @@ private fun StrategyGuideCard() {
                 fontWeight = FontWeight.SemiBold
             )
             GuideEntry(
-                title = "Strategy Table",
+                title = "Strategy Chart",
                 body = "Button on the main screen. Basic strategy for the current table rules, with " +
                     "count deviations applied at the current true count (marked *)."
             )

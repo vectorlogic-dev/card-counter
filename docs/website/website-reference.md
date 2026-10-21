@@ -88,7 +88,7 @@ Match the app to real table conditions before you sit down:
 - Full-screen basic strategy chart — rule-aware, updates with current true count
 - Colour-coded chart cells (Hit, Stand, Double, Split, Surrender) with the action letters kept; deviations marked with *
 - Illustrious 18 + Fab 4 indices, scaled to each system's own true count
-- System cheat sheet (tag values + key deviations) per system
+- System cheat sheet per system — tag values and every index in that system's own true count, with the plays that apply right now highlighted
 - Counting system guides with level, balance type, and usage tips
 
 ### Session Tools
@@ -103,7 +103,7 @@ Match the app to real table conditions before you sit down:
 ### Drill Mode
 - Timed running-count practice from the Menu
 - Pick length (26 / 52 / 78 cards) and speed (Slow / Medium / Fast)
-- Cards are dealt from a shuffled real shoe and flash one at a time; enter the final running count when done
+- Cards are dealt from a shuffled real shoe and flash one at a time, with a short blank between cards so back-to-back repeats still register; enter the final running count when done
 - Scored exact / off-by-N against the active counting system
 
 ---
