@@ -39,6 +39,11 @@ CI runs tests and builds a debug APK on every pull request; please check that it
 - Match existing patterns in the module you're editing
 - Prefer small, pure functions in `domain/` and keep Compose code declarative
 
+## Commit messages
+
+- Focus on the change itself (what and why), not the tool or session that produced it.
+- Do not include `Co-Authored-By:` lines naming AI tools, "Generated with" footers, or robot emoji. The git author/committer is the human who ran the command.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the Apache License 2.0 (see [LICENSE](LICENSE)).

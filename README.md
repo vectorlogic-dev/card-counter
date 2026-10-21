@@ -162,9 +162,6 @@ macOS/Linux:
 - `./gradlew assembleDebug`
 - `./gradlew testDebugUnitTest`
 
-Optional verification script:
-- `powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1`
-
 ## Release Checklist
 - Verify tests and lint pass: `./gradlew testDebugUnitTest lintRelease`
 - Publish: `scripts/publish-release.sh <version>` — see the Download section.
