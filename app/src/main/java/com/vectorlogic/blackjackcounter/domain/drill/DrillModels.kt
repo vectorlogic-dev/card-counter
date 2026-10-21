@@ -9,9 +9,9 @@ enum class DrillSpeed(val intervalMs: Long, val label: String) {
 }
 
 enum class DrillSize(val cardCount: Int, val label: String) {
-    HALF_DECK(26, "Half deck"),
-    DECK(52, "One deck"),
-    DECK_AND_A_HALF(78, "1.5 decks")
+    HALF_DECK(26, "½ deck"),
+    DECK(52, "1 deck"),
+    DECK_AND_A_HALF(78, "1½ decks")
 }
 
 data class DrillConfig(

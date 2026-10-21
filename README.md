@@ -122,10 +122,14 @@ All counting systems are available in the app at no extra cost.
 
 ## Drill Mode
 - Open from `Menu` -> `Drill Mode`; drills use the currently selected counting system
-- Pick a length (half deck / one deck / 1.5 decks) and a speed (Slow / Medium / Fast)
+- Pick a length (½ deck / 1 deck / 1½ decks) and a speed (Slow / Medium / Fast)
 - Cards are dealt from a shuffled real shoe, so a one-deck drill is an actual deck (Hi-Lo nets `0`)
-- Enter your final running count (a `±` toggle covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
-- A drill in progress survives rotation and isn't cancelled by an accidental outside tap
+- Each card is followed by a short blank, so the same rank twice in a row still reads as two cards;
+  the counter shows the card's position (`1 / 26` for the first)
+- Enter your final running count (the keyboard opens by itself and its Done key submits; a `±` toggle
+  covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
+- A drill in progress, including the answer step, survives rotation and isn't cancelled by Back or an
+  accidental outside tap; `Close` still ends it
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`

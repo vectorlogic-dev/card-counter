@@ -1,8 +1,10 @@
 package com.vectorlogic.blackjackcounter.presentation.drill
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,9 +14,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -23,15 +25,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.domain.drill.DrillConfig
@@ -68,6 +78,8 @@ fun DrillDialog(
     var elapsedMs by rememberSaveable { mutableLongStateOf(0L) }
     var userInput by rememberSaveable { mutableStateOf("") }
     var submittedCount by rememberSaveable { mutableStateOf<Double?>(null) }
+    // False during the short blank between cards (not saved: the deal loop restarts with it shown).
+    var cardVisible by remember { mutableStateOf(true) }
 
     val result = submittedCount?.let { reported ->
         DrillResult(
@@ -78,13 +90,22 @@ fun DrillDialog(
             systemDisplayName = system.displayName
         )
     }
-    val drillInProgress = phase == DrillPhase.COUNTDOWN || phase == DrillPhase.RUNNING
+    val drillInProgress = phase == DrillPhase.COUNTDOWN ||
+        phase == DrillPhase.RUNNING ||
+        phase == DrillPhase.INPUT
+    val canSubmit = userInput.toDoubleOrNull() != null
+    val submit = {
+        if (canSubmit) {
+            submittedCount = userInput.toDouble()
+            phase = DrillPhase.RESULT
+        }
+    }
 
     AlertDialog(
-        // A stray tap outside the dialog shouldn't throw away a drill mid-run;
-        // the Close button still ends it on purpose.
+        // Back or a stray tap outside the dialog shouldn't throw away a drill that is running or
+        // waiting for its answer; the Close button still ends it on purpose.
         onDismissRequest = { if (!drillInProgress) onDismiss() },
-        title = { Text("Drill mode — ${system.displayName}") },
+        title = { DrillTitle(systemName = system.displayName) },
         text = {
             when (phase) {
                 DrillPhase.SETUP -> SetupContent(
@@ -96,13 +117,14 @@ fun DrillDialog(
                 )
                 DrillPhase.COUNTDOWN -> CountdownContent(value = countdownValue)
                 DrillPhase.RUNNING -> RunningContent(
-                    rank = cards.getOrNull(currentIndex),
-                    index = currentIndex,
+                    rank = cards.getOrNull(currentIndex)?.takeIf { cardVisible },
+                    position = currentIndex + 1,
                     total = cards.size
                 )
                 DrillPhase.INPUT -> InputContent(
                     userInput = userInput,
-                    onUserInputChanged = { userInput = it }
+                    onUserInputChanged = { userInput = it },
+                    onSubmit = submit
                 )
                 DrillPhase.RESULT -> result?.let { ResultContent(it) }
             }
@@ -117,13 +139,7 @@ fun DrillDialog(
                     submittedCount = null
                     phase = DrillPhase.COUNTDOWN
                 }) { Text("Start") }
-                DrillPhase.INPUT -> Button(
-                    enabled = userInput.toDoubleOrNull() != null,
-                    onClick = {
-                        submittedCount = userInput.toDouble()
-                        phase = DrillPhase.RESULT
-                    }
-                ) { Text("Submit") }
+                DrillPhase.INPUT -> Button(enabled = canSubmit, onClick = submit) { Text("Submit") }
                 DrillPhase.RESULT -> Button(onClick = { phase = DrillPhase.SETUP }) {
                     Text("Run again")
                 }
@@ -148,15 +164,36 @@ fun DrillDialog(
                 phase = DrillPhase.RUNNING
             }
             DrillPhase.RUNNING -> {
+                val gapMs = cardGapMs(config.speed.intervalMs)
                 while (currentIndex < cards.size) {
-                    delay(config.speed.intervalMs)
+                    cardVisible = true
+                    delay(config.speed.intervalMs - gapMs)
+                    // A short blank between cards, so the same rank twice in a row still
+                    // reads as two cards.
+                    cardVisible = false
+                    delay(gapMs)
                     currentIndex += 1
                 }
+                cardVisible = true
                 elapsedMs = System.currentTimeMillis() - startedAtMs
                 phase = DrillPhase.INPUT
             }
             else -> {}
         }
+    }
+}
+
+@Composable
+private fun DrillTitle(systemName: String) {
+    Column {
+        Text("Drill mode")
+        Text(
+            text = systemName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -172,27 +209,32 @@ private fun SetupContent(
             style = MaterialTheme.typography.bodySmall
         )
         Text("Length", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Chips keep their labels on one line and wrap to a new row if the dialog is narrow.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             DrillSize.entries.forEach { size ->
                 FilterChip(
                     selected = config.size == size,
                     onClick = { onConfigChanged(config.copy(size = size)) },
-                    label = { Text(size.label) }
+                    label = { ChipLabel(size.label) }
                 )
             }
         }
         Text("Speed", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             DrillSpeed.entries.forEach { speed ->
                 FilterChip(
                     selected = config.speed == speed,
                     onClick = { onConfigChanged(config.copy(speed = speed)) },
-                    label = { Text(speed.label) },
-                    colors = FilterChipDefaults.filterChipColors()
+                    label = { ChipLabel(speed.label) }
                 )
             }
         }
     }
+}
+
+@Composable
+private fun ChipLabel(text: String) {
+    Text(text = text, maxLines = 1, softWrap = false)
 }
 
 @Composable
@@ -213,7 +255,7 @@ private fun CountdownContent(value: Int) {
 }
 
 @Composable
-private fun RunningContent(rank: CardRank?, index: Int, total: Int) {
+private fun RunningContent(rank: CardRank?, position: Int, total: Int) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -221,18 +263,31 @@ private fun RunningContent(rank: CardRank?, index: Int, total: Int) {
     ) {
         Box(
             modifier = Modifier
-                .size(160.dp),
+                .fillMaxWidth()
+                .height(172.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = rank?.toDrillLabel() ?: "",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            // Nothing is drawn during the gap between cards, so each card visibly arrives.
+            if (rank != null) {
+                Surface(
+                    modifier = Modifier.size(width = 116.dp, height = 164.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = rank.toDrillLabel(),
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
         }
         Text(
-            text = "${index.coerceAtMost(total)} / $total",
+            text = "${position.coerceIn(1, total.coerceAtLeast(1))} / $total",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -240,7 +295,18 @@ private fun RunningContent(rank: CardRank?, index: Int, total: Int) {
 }
 
 @Composable
-private fun InputContent(userInput: String, onUserInputChanged: (String) -> Unit) {
+private fun InputContent(
+    userInput: String,
+    onUserInputChanged: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    // Open the keyboard straight away; the answer is the only thing left to do.
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        keyboardController?.show()
+    }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("What was the final running count?", style = MaterialTheme.typography.bodyMedium)
         Row(
@@ -256,8 +322,14 @@ private fun InputContent(userInput: String, onUserInputChanged: (String) -> Unit
                 value = userInput,
                 onValueChange = { input -> onUserInputChanged(input.filter { it.isDigit() || it == '-' || it == '.' }) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
             )
         }
     }
@@ -322,6 +394,9 @@ private fun CardRank.toDrillLabel(): String = when (this) {
     CardRank.KING -> "K"
     CardRank.ACE -> "A"
 }
+
+/** Blank time at the end of each card's slot: a fifth of it, kept between 100 and 200 ms. */
+private fun cardGapMs(intervalMs: Long): Long = (intervalMs / 5).coerceIn(100L, 200L)
 
 private fun toggleSign(input: String): String =
     if (input.startsWith("-")) input.removePrefix("-") else "-$input"
