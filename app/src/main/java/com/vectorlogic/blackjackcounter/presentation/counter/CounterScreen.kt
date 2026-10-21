@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -13,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -26,6 +29,7 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.Strategy
 import com.vectorlogic.blackjackcounter.presentation.counter.components.SystemSelector
 import com.vectorlogic.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.vectorlogic.blackjackcounter.presentation.drill.DrillDialog
+import kotlinx.coroutines.launch
 
 @Composable
 fun CounterScreen(
@@ -42,6 +46,8 @@ fun CounterScreen(
     var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
     var showDrillDialog by rememberSaveable { mutableStateOf(false) }
     var showResetConfirm by rememberSaveable { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // A reset wipes the whole shoe, so ask first unless there is nothing to lose.
     val requestReset = {
@@ -84,7 +90,8 @@ fun CounterScreen(
             onFaceCardsSelected = viewModel::onFaceCardsSeen,
             onUndo = viewModel::undoLastCard,
             onStrategyChartClick = { showStrategyChartDialog = true },
-            onDrillClick = { showDrillDialog = true }
+            onDrillClick = { showDrillDialog = true },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
         )
 
         if (showDrillDialog) {
@@ -130,10 +137,27 @@ fun CounterScreen(
             ) {
                 SystemSelector(
                     selectedSystemId = state.selectedCountingSystemId,
-                    availableSystems = viewModel.availableSystems,
+                    systems = viewModel.countingSystemGuides,
+                    cardsSeen = state.seenCards.size,
                     onSystemSelected = { systemId ->
+                        val before = viewModel.uiState.value
                         if (viewModel.setCountingSystem(systemId)) {
                             showSystemSelector = false
+                            val after = viewModel.uiState.value
+                            val message = systemSwitchMessage(
+                                previousSystemId = before.selectedCountingSystemId,
+                                previousRunningCount = before.runningCount,
+                                newSystemId = after.selectedCountingSystemId,
+                                newSystemName = after.selectedCountingSystemName,
+                                newRunningCount = after.runningCount,
+                                cardsSeen = after.seenCards.size
+                            )
+                            if (message != null) {
+                                scope.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(message, withDismissAction = true)
+                                }
+                            }
                         }
                     }
                 )

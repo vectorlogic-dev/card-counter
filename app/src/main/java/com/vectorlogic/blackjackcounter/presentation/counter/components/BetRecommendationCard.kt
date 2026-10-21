@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -18,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.presentation.counter.formatSignedCount
@@ -52,43 +55,22 @@ fun BetRecommendationCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 5.dp)) {
-                Text(
-                    text = "BET RAMP",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "$countLabel ${formatSignedCount(countValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BET_RAMP.forEach { threshold ->
-                        val active = units >= threshold
-                        Box(
-                            modifier = Modifier
-                                .size(
-                                    if (active) {
-                                        if (compact) 8.dp else 10.dp
-                                    } else {
-                                        if (compact) 6.dp else 8.dp
-                                    }
-                                )
-                                .background(
-                                    color = if (active) unitColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
-                                    shape = CircleShape
-                                )
-                        )
-                    }
                     Text(
-                        text = "1 2 4 8 12",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+                        text = "BET RAMP",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "$countLabel ${formatSignedCount(countValue)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
+                BetRampPips(units = units, activeColor = unitColor, compact = compact)
             }
 
             Column(
@@ -105,6 +87,57 @@ fun BetRecommendationCard(
                     text = "units live",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/** One column per ramp step: the pip, with its unit count centred underneath. */
+@Composable
+private fun BetRampPips(units: Int, activeColor: Color, compact: Boolean) {
+    val currentStep = BET_RAMP.lastOrNull { units >= it }
+    val activePip = if (compact) 8.dp else 10.dp
+    val idlePip = if (compact) 6.dp else 8.dp
+    Row(
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = "Bet ramp ${BET_RAMP.joinToString(", ")} units, at $units"
+        },
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)
+    ) {
+        BET_RAMP.forEach { step ->
+            val active = units >= step
+            val current = step == currentStep
+            Column(
+                modifier = Modifier.width(if (compact) 18.dp else 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(if (compact) 1.dp else 2.dp)
+            ) {
+                // Fixed-height slot so the numbers line up whether or not the pip is lit.
+                Box(modifier = Modifier.size(activePip), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .size(if (active) activePip else idlePip)
+                            .background(
+                                color = if (active) {
+                                    activeColor
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                },
+                                shape = CircleShape
+                            )
+                    )
+                }
+                Text(
+                    text = "$step",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
+                    color = if (current) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+                    },
+                    maxLines = 1
                 )
             }
         }

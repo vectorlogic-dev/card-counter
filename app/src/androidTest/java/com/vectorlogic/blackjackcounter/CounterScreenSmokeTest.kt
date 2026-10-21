@@ -19,7 +19,7 @@ class CounterScreenSmokeTest {
     fun mainScreenShowsCoreCounterControls() {
         // The counter screen is a scrolling column, so scroll each control into
         // view before asserting; lower controls are off-screen on short devices.
-        listOf("Running", "True", "Edge %", "Strategy Table", "SHOE", "Reset").forEach { label ->
+        listOf("Running", "True", "Edge %", "Strategy Chart", "Undo", "SHOE", "Reset").forEach { label ->
             composeRule.onNodeWithText(label)
                 .performScrollTo()
                 .assertIsDisplayed()

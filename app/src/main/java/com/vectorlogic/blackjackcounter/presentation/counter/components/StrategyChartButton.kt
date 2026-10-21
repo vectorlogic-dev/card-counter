@@ -23,7 +23,7 @@ fun StrategyChartButton(
             .height(if (compact) 38.dp else 42.dp)
     ) {
         Text(
-            text = "Strategy Table",
+            text = "Strategy Chart",
             style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )

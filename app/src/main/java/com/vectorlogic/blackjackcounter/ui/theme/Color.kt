@@ -23,3 +23,17 @@ val TextLight = Color(0xFFE8F2ED)
 val MutedText = Color(0xFFB7C8C1)
 val WarmText = Color(0xFFF5E9CB)
 val DividerGreen = Color(0xFF2A433C)
+
+// Strategy chart action fills, each paired with the colour of its letter. They differ in
+// lightness as well as hue (Hit dark, Double/Split mid, Surrender/Stand light), and every
+// letter clears 5:1 contrast on its fill.
+val ChartHit = Color(0xFF343F3B)
+val ChartOnHit = TextLight
+val ChartStand = Color(0xFFE2B34A)
+val ChartOnStand = Color(0xFF1F1707)
+val ChartDouble = Color(0xFF23784A)
+val ChartOnDouble = Color(0xFFF2FBF5)
+val ChartSplit = Color(0xFF2E67B8)
+val ChartOnSplit = Color(0xFFFFFFFF)
+val ChartSurrender = Color(0xFFE8919C)
+val ChartOnSurrender = Color(0xFF2B0B12)

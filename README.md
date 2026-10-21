@@ -20,6 +20,9 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 1. Open `Menu` -> `Table Rules` and set the table first.
    Rule choices affect strategy actions and the estimated edge model.
 2. Open `Menu` -> `Select Counting System` and choose your system.
+   Each entry shows its level, whether it is balanced, and whether it uses a true count.
+   Switching mid-shoe recounts the cards already seen with the new tags and shows a short note
+   with the old and new running count.
 3. In `Deck Controls`, set:
    - `Total Decks` (segmented button: `1 / 2 / 4 / 6 / 8`)
    - `Decks Remaining` (slider, minimum `0.25`)
@@ -34,8 +37,10 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 7. Use extras as needed:
    - `Help` for system explanations, tag values, current table rules, and where to find the strategy tools
    - `Menu` -> `Show/Hide Cheat Sheet`
-   - `Strategy Table` button for full-screen basic strategy + deviations (system back returns to the counter)
-   - `Recent Cards` panel + `Undo` for correcting missed taps
+   - `Strategy Chart` button for full-screen basic strategy + deviations (system back returns to the counter)
+   - `Undo` in the count pad header for correcting missed taps; the last few cards sit next to it
+     and the newest (the one Undo removes) is highlighted
+   - `Recent Cards` panel for a longer history
    - `Reset Count` to reset shoe depth and count state (asks to confirm when there are cards or shoe progress to lose)
    - `Menu` -> `Drill Mode` for timed running-count practice
    - For `KO` / `ReKO`, reset returns to the deck-specific initial running count (IRC)
@@ -116,7 +121,9 @@ All counting systems are available in the app at no extra cost.
   - True Count (or `N/A` for unbalanced systems)
   - Estimated Edge %
 - Bet Recommendation card:
-  - Large unit number on the right; five pip dots on the left indicating position on the `1 -> 2 -> 4 -> 8 -> 12` ramp
+  - Large unit number on the right; five pip dots on the left indicating position on the `1 -> 2 -> 4 -> 8 -> 12` ramp,
+    with each step's unit count under its pip (the current step in bold)
+- Strategy Chart button (full-screen chart)
 - Deck controls:
   - Segmented button: `1 / 2 / 4 / 6 / 8` decks
   - Decks Remaining slider (`0.25` minimum)
@@ -124,12 +131,15 @@ All counting systems are available in the app at no extra cost.
   - Cards Drawn / Cards Left / Total Cards
   - Ace side count panel when selected system recommends it
 - Card input (2 rows, each button shows rank + tag value):
+  - Header row: the last few cards (newest highlighted) and an `Undo` button
   - `A`, `2`, `3`, `4`, `5`
   - `6`, `7`, `8`, `9`, `10-K`
   - Every tap gives a haptic tick, and the screen stays awake while the counter is visible
 - Bottom actions:
-  - Recent Cards panel with badge chips + Undo (item count adapts for compact layouts; tens show as `10-K`)
-  - Reset (with confirmation) and Strategy Table (full-screen table)
+  - Recent Cards panel with badge chips, newest highlighted (item count adapts for compact layouts; tens show as `10-K`)
+  - Reset (with confirmation)
+- Landscape (480 dp wide or more) and wide screens (600 dp and up) use two panes: header, counts,
+  bet ramp and shoe on the left; count pad with Undo, Strategy Chart button and recent cards on the right
 
 ## Drill Mode
 - Open from `Menu` -> `Drill Mode`; drills use the currently selected counting system
@@ -156,9 +166,11 @@ All counting systems are available in the app at no extra cost.
 
 ## Strategy and Deviations
 - Full-screen strategy chart in table form (hard/soft/pairs)
+- Each action has its own fill as well as its letter: `H` dark slate, `S` gold, `D`/`Ds` green,
+  `P` blue, `Rh` rose; a legend sits at the top of the chart
 - Chart updates from current count context (when supported)
 - Rule-aware action adjustments
-- Deviation cells marked with `*`
+- Deviation cells marked with `*` and an outline
 - Indices are the Hi-Lo Illustrious 18 (plus 15 vs A stand at `+5`), converted to the selected
   system's true count with the scale factor above and kept to one decimal; the cheat sheet shows
   the converted values, which are exactly the ones the chart uses (e.g. Omega II 10 vs 10 double
