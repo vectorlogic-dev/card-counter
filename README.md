@@ -32,7 +32,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
    - `Edge %` (only shown when true count is supported)
 6. Use `Bet Recommendation` as a training ramp (units), then map units to your own base bet.
 7. Use extras as needed:
-   - `Help` for system explanations, tag values, and charts
+   - `Help` for system explanations, tag values, current table rules, and where to find the strategy tools
    - `Menu` -> `Show/Hide Cheat Sheet`
    - `Strategy Table` button for full-screen basic strategy + deviations (system back returns to the counter)
    - `Recent Cards` panel + `Undo` for correcting missed taps
@@ -133,10 +133,14 @@ All counting systems are available in the app at no extra cost.
 
 ## Drill Mode
 - Open from `Menu` -> `Drill Mode`; drills use the currently selected counting system
-- Pick a length (half deck / one deck / 1.5 decks) and a speed (Slow / Medium / Fast)
+- Pick a length (½ deck / 1 deck / 1½ decks) and a speed (Slow / Medium / Fast)
 - Cards are dealt from a shuffled real shoe, so a one-deck drill is an actual deck (Hi-Lo nets `0`)
-- Enter your final running count (a `±` toggle covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
-- A drill in progress survives rotation and isn't cancelled by an accidental outside tap
+- Each card is followed by a short blank, so the same rank twice in a row still reads as two cards;
+  the counter shows the card's position (`1 / 26` for the first)
+- Enter your final running count (the keyboard opens by itself and its Done key submits; a `±` toggle
+  covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
+- A drill in progress, including the answer step, survives rotation and isn't cancelled by Back or an
+  accidental outside tap; `Close` still ends it
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`
@@ -164,7 +168,10 @@ All counting systems are available in the app at no extra cost.
   - Negative indices: hit below the index (12 vs 4 `0`, 12 vs 5 `-2`, 12 vs 6 `-1`, 13 vs 2 `-1`, 13 vs 3 `-2`)
 - When surrender is offered, surrender takes precedence over stand indices (16 vs 9, 16 vs 10, 15 vs 10),
   and the Fab 4 surrender indices apply: 14 vs 10 `+3`, 15 vs 10 `0`, 15 vs 9 `+2`, 15 vs A `+1`
-- Split deviation guidance available in Help
+- The cheat sheet lists every index for the selected system and highlights the plays that apply at the
+  current count; doubles the table rules forbid show as `No double (rules)`, and plays basic strategy
+  already makes at every count show as `(any TC)`
+- Help points to the Strategy Table and cheat sheet rather than repeating them
 
 ## Estimated Edge %
 Estimated Edge % is computed from:

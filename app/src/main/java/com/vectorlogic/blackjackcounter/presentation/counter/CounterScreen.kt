@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.HelpDialogContent
@@ -146,8 +147,6 @@ fun CounterScreen(
             ) {
                 HelpDialogContent(
                     countingSystemGuides = viewModel.countingSystemGuides,
-                    basicStrategySections = viewModel.basicStrategySections,
-                    splitDeviationSections = viewModel.getSplitDeviationSections(state.tableRules),
                     tableRules = state.tableRules
                 )
             }
@@ -188,7 +187,14 @@ fun CounterScreen(
                         systemName = state.selectedCountingSystemName,
                         rows = state.cheatSheetRows,
                         strategyRows = state.strategyDeviationRows,
-                        showTrueCountDisclaimer = !state.selectedSystemUsesTrueCount
+                        usesTrueCount = state.selectedSystemUsesTrueCount,
+                        trueCountScale = CountingSystemProfiles
+                            .profileFor(state.selectedCountingSystemId)
+                            .trueCountScale,
+                        // The bet-sizing count is the same count the strategy chart decides
+                        // deviations with (TC, or RC for KO/ReKO).
+                        decisionCountLabel = state.betSizingCountLabel,
+                        decisionCount = state.betSizingCountValue
                     )
                 }
             )

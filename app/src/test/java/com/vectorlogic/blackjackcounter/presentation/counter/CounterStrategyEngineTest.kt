@@ -8,6 +8,9 @@ import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
 import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
+import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
+import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
+import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import org.junit.Assert.assertEquals
@@ -194,6 +197,117 @@ class CounterStrategyEngineTest {
         assertEquals("Surrender at TC +3", label(rows, "14 vs 10"))
         assertEquals("Surrender at TC +2", label(rows, "15 vs 9"))
         assertEquals(listOf("Surrender at TC +1"), rows.filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
+    }
+
+    @Test
+    fun `highlighted rows match the play the chart makes`() {
+        val ruleSets = listOf(
+            TableRules(),
+            TableRules(surrenderRule = SurrenderRule.LATE),
+            TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT),
+            TableRules(dealerPeekRule = DealerPeekRule.ACE_ONLY),
+            TableRules(dealerPeekRule = DealerPeekRule.NO_PEEK, dealerSoft17Rule = DealerSoft17Rule.HIT),
+            TableRules(doubleDownRule = DoubleDownRule.TEN_TO_ELEVEN, surrenderRule = SurrenderRule.LATE)
+        )
+        val scales = listOf(
+            1.0,
+            TrueCountScaling.hiLoEquivalentScale(ZenCountSystem),
+            TrueCountScaling.hiLoEquivalentScale(HiOptIICountingSystem)
+        )
+        ruleSets.forEach { rules ->
+            val state = CounterSessionState(tableRules = rules)
+            scales.forEach { scale ->
+                val triggeredRows = rows(state, scale).filter { it.trigger != null && it.playLabel != "Insurance vs A" }
+                assertTrue(triggeredRows.isNotEmpty())
+                (-12..12).forEach { tc ->
+                    triggeredRows.forEach { row ->
+                        val cell = cellFor(state, row.playLabel, tc, scale)
+                        val playPrefix = actionPrefix(row.indexLabel)
+                        assertEquals(
+                            "${row.playLabel} (${row.indexLabel}) at TC $tc, scale $scale, $rules",
+                            cell.action.startsWith(playPrefix),
+                            row.isActiveAt(tc.toDouble())
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `insurance row is active from its converted index`() {
+        val insurance = rows(noSurrender, 1.0).first { it.playLabel == "Insurance vs A" }
+        assertFalse(insurance.isActiveAt(2.0))
+        assertTrue(insurance.isActiveAt(3.0))
+
+        val zenInsurance = rows(noSurrender, TrueCountScaling.hiLoEquivalentScale(ZenCountSystem))
+            .first { it.playLabel == "Insurance vs A" }
+        assertFalse(zenInsurance.isActiveAt(4.0))
+        assertTrue(zenInsurance.isActiveAt(5.0))
+    }
+
+    @Test
+    fun `doubles the table rules forbid are labelled and never highlighted`() {
+        val noPeekOnTen = CounterSessionState(tableRules = TableRules(dealerPeekRule = DealerPeekRule.ACE_ONLY))
+        val tenVsTen = rows(noPeekOnTen, 1.0).first { it.playLabel == "10 vs 10" }
+        assertEquals("No double (rules)", tenVsTen.indexLabel)
+        assertNull(tenVsTen.trigger)
+        assertFalse(tenVsTen.isActiveAt(10.0))
+
+        val tenToEleven = CounterSessionState(tableRules = TableRules(doubleDownRule = DoubleDownRule.TEN_TO_ELEVEN))
+        val rows = rows(tenToEleven, 1.0)
+        assertEquals("No double (rules)", label(rows, "9 vs 2"))
+        assertEquals("No double (rules)", label(rows, "9 vs 7"))
+        assertEquals("Double at TC +4", label(rows, "10 vs 10"))
+    }
+
+    @Test
+    fun `eleven vs ace doubles at any count under h17`() {
+        val h17 = CounterSessionState(tableRules = TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT))
+        val row = rows(h17, 1.0).first { it.playLabel == "11 vs A" }
+        assertEquals("Double (any TC)", row.indexLabel)
+        assertNull(row.trigger)
+        assertEquals("Double at TC +1", label(rows(noSurrender, 1.0), "11 vs A"))
+    }
+
+    @Test
+    fun `running count reference rows are active once the count reaches them`() {
+        val rows = CounterStrategyEngine.buildStrategyDeviationRows(
+            state = noSurrender,
+            usesTrueCount = false,
+            keyCount = -4,
+            pivot = 4,
+            trueCountScale = 1.0
+        )
+        val keyCount = rows.first { it.playLabel.startsWith("Key Count") }
+        val pivot = rows.first { it.playLabel.startsWith("Pivot") }
+        assertFalse(keyCount.isActiveAt(-5.0))
+        assertTrue(keyCount.isActiveAt(-4.0))
+        assertFalse(pivot.isActiveAt(3.0))
+        assertTrue(pivot.isActiveAt(4.0))
+    }
+
+    private fun cellFor(state: CounterSessionState, playLabel: String, decisionTrueCount: Int, scale: Double): StrategyTableCell {
+        val (hand, dealer) = playLabel.split(" vs ")
+        val dealerUpcard = if (dealer == "A") 11 else dealer.toInt()
+        val section = if (hand.contains(",")) "Pairs" else "Hard Totals"
+        val chart = CounterStrategyEngine.buildStrategyChartModel(
+            state = state,
+            trueCount = decisionTrueCount.toDouble(),
+            supportsTrueCount = true,
+            decisionTrueCount = decisionTrueCount,
+            trueCountScale = scale
+        )
+        return chart.sections.first { it.title == section }.rows.first { it.handLabel == hand }.cells[dealerUpcard - 2]
+    }
+
+    private fun actionPrefix(indexLabel: String): String = when (indexLabel.substringBefore(" ")) {
+        "Stand" -> "S"
+        "Hit" -> "H"
+        "Split" -> "P"
+        "Double" -> "D"
+        "Surrender" -> "R"
+        else -> error("Unexpected index label $indexLabel")
     }
 
     private fun hardCell(

@@ -2,7 +2,6 @@ package com.vectorlogic.blackjackcounter.presentation.counter.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemGuide
-import com.vectorlogic.blackjackcounter.presentation.counter.StrategyChartSection
 import com.vectorlogic.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
@@ -28,8 +26,6 @@ import com.vectorlogic.blackjackcounter.domain.model.TableRules
 @Composable
 fun HelpDialogContent(
     countingSystemGuides: List<CountingSystemGuide>,
-    basicStrategySections: List<StrategyChartSection>,
-    splitDeviationSections: List<StrategyChartSection>,
     tableRules: TableRules,
     modifier: Modifier = Modifier
 ) {
@@ -42,13 +38,11 @@ fun HelpDialogContent(
     ) {
         HelpHeaderCard(tableRules = tableRules)
         CurrentRulesCard(tableRules = tableRules)
+        StrategyGuideCard()
 
         countingSystemGuides.forEach { guide ->
             CountingSystemGuideCard(guide = guide)
         }
-
-        BasicStrategyChartCard(sections = basicStrategySections)
-        SplitDeviationChartCard(sections = splitDeviationSections)
     }
 }
 
@@ -75,7 +69,7 @@ private fun HelpHeaderCard(tableRules: TableRules) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Strategy chart is baseline. Use current table rules below for context.",
+                text = "The Strategy Table and cheat sheet follow the current table rules below.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -117,16 +111,52 @@ private fun CurrentRulesCard(tableRules: TableRules) {
 
 @Composable
 private fun RuleLine(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    LabelValueRow(label = label, value = value)
+}
+
+@Composable
+private fun StrategyGuideCard() {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "Strategy and Deviations",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            GuideEntry(
+                title = "Strategy Table",
+                body = "Button on the main screen. Basic strategy for the current table rules, with " +
+                    "count deviations applied at the current true count (marked *)."
+            )
+            GuideEntry(
+                title = "Cheat Sheet",
+                body = "Menu > Show Cheat Sheet. Tag values and every deviation index for the " +
+                    "selected system, converted to its true count. Plays that apply now are highlighted."
+            )
+            GuideEntry(
+                title = "Indices used",
+                body = "Hi-Lo Illustrious 18 plus 15 vs A, and the Fab 4 surrenders when surrender " +
+                    "is offered. KO and ReKO use their key count and pivot instead."
+            )
+        }
+    }
+}
+
+@Composable
+private fun GuideEntry(title: String, body: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = label,
+            text = title,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = value,
+            text = body,
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -163,103 +193,11 @@ private fun CountingSystemGuideCard(guide: CountingSystemGuide) {
 
             HorizontalDivider()
             guide.tagRows.forEach { tagRow ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = tagRow.cardsLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = tagRow.tagValueLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BasicStrategyChartCard(sections: List<StrategyChartSection>) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Basic Strategy Chart",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            sections.forEach { section ->
-                HorizontalDivider()
-                Text(
-                    text = section.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                LabelValueRow(
+                    label = tagRow.cardsLabel,
+                    value = tagRow.tagValueLabel,
+                    valueWeight = FontWeight.Bold
                 )
-                section.rows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = row.hand,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = row.action,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SplitDeviationChartCard(sections: List<StrategyChartSection>) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Split Deviations",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            sections.forEach { section ->
-                HorizontalDivider()
-                Text(
-                    text = section.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                section.rows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = row.hand,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = row.action,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
             }
         }
     }
