@@ -136,7 +136,7 @@
     "architecture": "MVVM (ViewModel + StateFlow)",
     "state": "Local only — SharedPreferences for session resume (shoe depth, running count, selected system, table rules). No backend, no database, no network calls.",
     "buildSystem": "Gradle (Kotlin DSL)",
-    "minJdk": 11
+    "minJdk": 17
   },
   "brand": {
     "designTone": [

@@ -142,7 +142,7 @@ It is a simplified training estimate.
 
 ## Requirements
 - Android Studio (latest stable recommended)
-- JDK 11+
+- JDK 17+ (Gradle 9; the build daemon runs on JDK 21 and is provisioned automatically)
 - `compileSdk` 36
 - `minSdk` 24
 - Package/application ID: `com.vectorlogic.blackjackcounter`
