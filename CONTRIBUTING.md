@@ -12,7 +12,7 @@ Open a GitHub issue with:
 ## Development setup
 
 Requirements:
-- Android Studio (latest stable) or JDK 17 + Android SDK on the command line
+- Android Studio (latest stable) or JDK 17+ and the Android SDK on the command line (Gradle runs its daemon on JDK 21 and downloads one if none is installed)
 - Android SDK platform 36 (compile), minimum 24
 
 ```bash
@@ -24,6 +24,12 @@ cd card-counter
 
 The debug APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
 
+UI smoke tests live in `app/src/androidTest` and need a running emulator or device:
+
+```bash
+./gradlew connectedDebugAndroidTest
+```
+
 ## Submitting changes
 
 1. Fork and create a feature branch off `main`.
@@ -31,7 +37,7 @@ The debug APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
 3. Run `./gradlew testDebugUnitTest lintDebug` before pushing.
 4. Open a pull request describing what changed and why.
 
-CI runs tests and builds a debug APK on every pull request; please check that it passes.
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `testDebugUnitTest lintDebug assembleDebug` on every pull request and push to `main`; please check that it passes. It does not run the instrumented tests, so run those locally if you change the UI.
 
 ## Style
 
