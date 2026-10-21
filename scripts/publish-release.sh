@@ -100,13 +100,12 @@ echo "==> Tagging $TAG"
 git tag "$TAG"
 
 echo "==> Creating GitHub Release $TAG"
-RELEASE_FLAGS=("$@")
 gh release create "$TAG" \
   "$STAGE/$APK_NAME" \
   ${AAB_SRC:+"$STAGE/${APK_NAME%.apk}.aab"} \
   --title "Counting Edge $VERSION" \
   --notes-file "$NOTES_PATH" \
-  "${RELEASE_FLAGS[@]}"
+  "$@"
 
 echo "==> Pushing tag"
 git push origin "$TAG"
