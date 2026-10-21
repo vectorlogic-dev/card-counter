@@ -164,7 +164,7 @@ It is a simplified training estimate.
 
 ## Requirements
 - Android Studio (latest stable recommended)
-- JDK 11+
+- JDK 17+ (Gradle 9; the build daemon runs on JDK 21 and is provisioned automatically)
 - `compileSdk` 36
 - `minSdk` 24
 - Package/application ID: `com.vectorlogic.blackjackcounter`
@@ -236,7 +236,9 @@ scripts/publish-release.sh 1.0.0           # publish v1.0.0
 scripts/publish-release.sh 1.0.0 --draft   # stage without publishing
 ```
 
-The script runs `./gradlew clean assembleRelease bundleRelease`, computes the APK SHA-256, opens release notes in `$EDITOR`, tags `v1.0.0`, uploads the APK (and AAB for Play), and pushes the tag.
+Before running it, bump `versionName` and `versionCode` in `app/build.gradle.kts` and commit. The script stops before building if the version argument doesn't match `versionName`, if `versionCode` isn't higher than in the previous release tag (sideloaded installs couldn't upgrade), or if `gh` isn't authenticated.
+
+It then runs `./gradlew clean testDebugUnitTest` and `./gradlew assembleRelease bundleRelease`, computes the APK SHA-256, opens release notes in `$EDITOR`, tags and pushes `v1.0.0`, and uploads the APK (and the AAB, if one was built) to the release.
 
 ## Contributing
 

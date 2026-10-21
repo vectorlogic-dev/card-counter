@@ -6,7 +6,7 @@
 # storePassword, keyAlias, keyPassword — see app/build.gradle.kts).
 #
 # Usage:
-#   scripts/publish-release.sh <version>          # e.g. 1.0.0
+#   scripts/publish-release.sh <version>          # e.g. 1.0.0 (must match versionName)
 #   scripts/publish-release.sh <version> --draft  # don't publish yet
 #   scripts/publish-release.sh <version> --prerelease
 #
@@ -22,6 +22,11 @@ if [[ -z "$VERSION" ]]; then
   exit 2
 fi
 shift || true
+
+if [[ "$VERSION" == v* ]]; then
+  echo "ERROR: pass the version without the leading 'v' (e.g. ${VERSION#v})." >&2
+  exit 2
+fi
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -39,19 +44,61 @@ if [[ ! -f keystore.properties ]]; then
   exit 1
 fi
 
+if ! command -v gh >/dev/null 2>&1; then
+  echo "ERROR: GitHub CLI (gh) not found. Install it: https://cli.github.com" >&2
+  exit 1
+fi
+if ! gh auth status >/dev/null 2>&1; then
+  echo "ERROR: gh is not authenticated. Run 'gh auth login' first." >&2
+  exit 1
+fi
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "ERROR: working tree has uncommitted changes. Commit or stash first." >&2
   git status --short >&2
   exit 1
 fi
 
-if git rev-parse "$TAG" >/dev/null 2>&1; then
+# The tag must describe what the APK actually reports, and versionCode must
+# go up, or sideloaded installs can't upgrade over the previous release.
+GRADLE_FILE="app/build.gradle.kts"
+read_gradle_value() { # <key> <file contents>
+  sed -nE "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*\"?([^\"]+)\"?[[:space:]]*$/\1/p" <<<"$2" | head -n1
+}
+GRADLE_SRC="$(cat "$GRADLE_FILE")"
+VERSION_NAME="$(read_gradle_value versionName "$GRADLE_SRC")"
+VERSION_CODE="$(read_gradle_value versionCode "$GRADLE_SRC")"
+if [[ -z "$VERSION_NAME" || ! "$VERSION_CODE" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: could not read versionName/versionCode from $GRADLE_FILE." >&2
+  exit 1
+fi
+if [[ "$VERSION_NAME" != "$VERSION" ]]; then
+  echo "ERROR: version argument $VERSION does not match versionName \"$VERSION_NAME\" in $GRADLE_FILE." >&2
+  echo "Bump versionName (and versionCode), commit, then rerun." >&2
+  exit 1
+fi
+
+git fetch --quiet --tags origin || echo "WARN: could not fetch tags from origin; checking local tags only." >&2
+
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
   echo "ERROR: tag $TAG already exists." >&2
   exit 1
 fi
 
-echo "==> Building release APK + AAB"
-./gradlew clean assembleRelease bundleRelease
+PREV_TAG="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
+if [[ -n "$PREV_TAG" ]]; then
+  PREV_CODE="$(read_gradle_value versionCode "$(git show "$PREV_TAG:$GRADLE_FILE" 2>/dev/null || true)")"
+  if [[ "$PREV_CODE" =~ ^[0-9]+$ ]] && (( VERSION_CODE <= PREV_CODE )); then
+    echo "ERROR: versionCode $VERSION_CODE is not greater than $PREV_CODE (shipped in $PREV_TAG)." >&2
+    echo "Bump versionCode in $GRADLE_FILE, commit, then rerun." >&2
+    exit 1
+  fi
+fi
+echo "==> Releasing $VERSION_NAME (versionCode $VERSION_CODE)${PREV_TAG:+, previous $PREV_TAG}"
+
+echo "==> Running unit tests, then building release APK + AAB"
+./gradlew clean testDebugUnitTest
+./gradlew assembleRelease bundleRelease
 
 APK_SRC="app/build/outputs/apk/release/app-release.apk"
 AAB_SRC="app/build/outputs/bundle/release/app-release.aab"
@@ -64,7 +111,13 @@ fi
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 cp "$APK_SRC" "$STAGE/$APK_NAME"
-[[ -f "$AAB_SRC" ]] && cp "$AAB_SRC" "$STAGE/${APK_NAME%.apk}.aab"
+ASSETS=("$STAGE/$APK_NAME")
+if [[ -f "$AAB_SRC" ]]; then
+  cp "$AAB_SRC" "$STAGE/${APK_NAME%.apk}.aab"
+  ASSETS+=("$STAGE/${APK_NAME%.apk}.aab")
+else
+  echo "WARN: $AAB_SRC not found; publishing the APK only." >&2
+fi
 
 SHA256="$(shasum -a 256 "$STAGE/$APK_NAME" | awk '{print $1}')"
 echo "==> APK SHA-256: $SHA256"
@@ -104,8 +157,7 @@ git push origin "$TAG"
 
 echo "==> Creating GitHub Release $TAG"
 gh release create "$TAG" \
-  "$STAGE/$APK_NAME" \
-  ${AAB_SRC:+"$STAGE/${APK_NAME%.apk}.aab"} \
+  "${ASSETS[@]}" \
   --title "Counting Edge $VERSION" \
   --notes-file "$NOTES_PATH" \
   "$@"
