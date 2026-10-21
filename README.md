@@ -167,7 +167,7 @@ All counting systems are available in the app at no extra cost.
 ## Strategy and Deviations
 - Full-screen strategy chart in table form (hard/soft/pairs)
 - Each action has its own fill as well as its letter: `H` dark slate, `S` gold, `D`/`Ds` green,
-  `P` blue, `Rh` rose; a legend sits at the top of the chart
+  `P` blue, `Rh`/`Rs`/`Rp` rose; a legend sits at the top of the chart
 - Chart updates from current count context (when supported)
 - Rule-aware action adjustments
 - Deviation cells marked with `*` and an outline
@@ -180,6 +180,10 @@ All counting systems are available in the app at no extra cost.
   - Negative indices: hit below the index (12 vs 4 `0`, 12 vs 5 `-2`, 12 vs 6 `-1`, 13 vs 2 `-1`, 13 vs 3 `-2`)
 - When surrender is offered, surrender takes precedence over stand indices (16 vs 9, 16 vs 10, 15 vs 10),
   and the Fab 4 surrender indices apply: 14 vs 10 `+3`, 15 vs 10 `0`, 15 vs 9 `+2`, 15 vs A `+1`
+  (`-1` under H17, where basic strategy already surrenders it)
+- H17 basic strategy (4-8 decks) adds: double 11 vs A, double soft 18 vs 2, double soft 19 vs 6, and with
+  surrender, surrender 15, 17 and 8,8 vs A. 17 then gets its own chart row (`Rs`, surrender else stand),
+  and 8,8 vs A shows `Rp` (surrender, else split)
 - The cheat sheet lists every index for the selected system and highlights the plays that apply at the
   current count; doubles the table rules forbid show as `No double (rules)`, and plays basic strategy
   already makes at every count show as `(any TC)`

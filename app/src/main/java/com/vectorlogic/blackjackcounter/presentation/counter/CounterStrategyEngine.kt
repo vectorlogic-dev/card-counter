@@ -21,21 +21,30 @@ object CounterStrategyEngine {
         decisionTrueCount: Double,
         trueCountScale: Double
     ): StrategyChartModel {
-        val hardRows = listOf(17, 16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
-            StrategyTableRow(
-                handLabel = if (total == 17) "17+" else total.toString(),
-                cells = dealerUpcards.map { dealer ->
-                    computeChartCell(
-                        handType = ChartHandType.HARD,
-                        handValue = total,
-                        dealerUpcard = dealer,
-                        state = state,
-                        supportsTrueCount = supportsTrueCount,
-                        decisionTrueCount = decisionTrueCount,
-                        trueCountScale = trueCountScale
-                    )
-                }
+        fun hardCells(total: Int) = dealerUpcards.map { dealer ->
+            computeChartCell(
+                handType = ChartHandType.HARD,
+                handValue = total,
+                dealerUpcard = dealer,
+                state = state,
+                supportsTrueCount = supportsTrueCount,
+                decisionTrueCount = decisionTrueCount,
+                trueCountScale = trueCountScale
             )
+        }
+        val seventeen = hardCells(17)
+        val eighteenUp = hardCells(18)
+        // 17 shares a row with 18+ unless it plays differently (H17 surrenders 17 vs A).
+        val topHardRows = if (seventeen == eighteenUp) {
+            listOf(StrategyTableRow(handLabel = "17+", cells = seventeen))
+        } else {
+            listOf(
+                StrategyTableRow(handLabel = "18+", cells = eighteenUp),
+                StrategyTableRow(handLabel = "17", cells = seventeen)
+            )
+        }
+        val hardRows = topHardRows + listOf(16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
+            StrategyTableRow(handLabel = total.toString(), cells = hardCells(total))
         }
 
         val softRows = listOf(9, 8, 7, 6, 5, 4, 3, 2).map { soft ->
@@ -130,7 +139,7 @@ object CounterStrategyEngine {
             )
             when {
                 // Surrender takes precedence, so the surrender index row covers this hand.
-                surrenderAllowed && surrenderIndices.any { it.sameHandAs(index) } -> null
+                surrenderAllowed && surrenderIndices(rules).any { it.sameHandAs(index) } -> null
                 surrenderAllowed && baseAction.startsWith("R") ->
                     StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "Surrender (any TC)")
                 // The chart never shows a double the table forbids (e.g. 10 vs 10 without a peek on 10).
@@ -143,7 +152,7 @@ object CounterStrategyEngine {
             }
         }
         val surrenderRows = if (surrenderAllowed) {
-            surrenderIndices.map { it.toRow(trueCountScale) }
+            surrenderIndices(rules).map { it.toRow(trueCountScale) }
         } else {
             emptyList()
         }
@@ -180,7 +189,7 @@ object CounterStrategyEngine {
 
         val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
         val surrenderIndex = if (surrenderAllowed) {
-            findIndex(surrenderIndices, handType, handValue, dealerUpcard)
+            findIndex(surrenderIndices(rules), handType, handValue, dealerUpcard)
         } else {
             null
         }
@@ -241,15 +250,17 @@ object CounterStrategyEngine {
         rules: TableRules
     ): String {
         val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
+        val h17 = rules.dealerSoft17Rule == DealerSoft17Rule.HIT
         return when {
-            hardTotal >= 17 -> "S"
+            hardTotal >= 18 -> "S"
+            hardTotal == 17 -> if (surrenderAllowed && h17 && dealerUpcard == 11) "Rs" else "S"
             hardTotal == 16 -> when {
                 surrenderAllowed && dealerUpcard in listOf(9, 10, 11) -> "Rh"
                 dealerUpcard in 2..6 -> "S"
                 else -> "H"
             }
             hardTotal == 15 -> when {
-                surrenderAllowed && dealerUpcard == 10 -> "Rh"
+                surrenderAllowed && (dealerUpcard == 10 || (h17 && dealerUpcard == 11)) -> "Rh"
                 dealerUpcard in 2..6 -> "S"
                 else -> "H"
             }
@@ -270,7 +281,8 @@ object CounterStrategyEngine {
         rules: TableRules
     ): String {
         return when (softCard) {
-            9, 8 -> "S"
+            9 -> "S"
+            8 -> if (dealerUpcard == 6 && rules.dealerSoft17Rule == DealerSoft17Rule.HIT) "Ds" else "S"
             7 -> when {
                 dealerUpcard in 3..6 -> "Ds"
                 dealerUpcard in listOf(2, 7, 8) -> {
@@ -300,7 +312,10 @@ object CounterStrategyEngine {
             9 -> if (dealerUpcard in listOf(2, 3, 4, 5, 6, 8, 9)) "P" else "S"
             8 -> {
                 val blocked = (noPeekOnTen && dealerUpcard == 10) || (noPeekOnAce && dealerUpcard == 11)
-                if (blocked) "H" else "P"
+                val play = if (blocked) "H" else "P"
+                val surrenderVsAce = rules.surrenderRule != SurrenderRule.NONE &&
+                    rules.dealerSoft17Rule == DealerSoft17Rule.HIT && dealerUpcard == 11
+                if (surrenderVsAce) "R${play.lowercase()}" else play
             }
             7 -> if (dealerUpcard in 2..7) "P" else "H"
             6 -> {
@@ -455,12 +470,17 @@ object CounterStrategyEngine {
     )
 
     // Fab 4 late-surrender indices, applied only when surrender is offered: surrender at or above
-    // the index, otherwise play the hand without surrendering.
-    private val surrenderIndices: List<CountIndex> = listOf(
+    // the index, otherwise play the hand without surrendering. 15 vs A is +1 under S17 and -1
+    // under H17, where basic strategy already surrenders it.
+    private fun surrenderIndices(rules: TableRules): List<CountIndex> = listOf(
         CountIndex(ChartHandType.HARD, 14, 10, 3, "Rh"),
         CountIndex(ChartHandType.HARD, 15, 10, 0, "Rh"),
         CountIndex(ChartHandType.HARD, 15, 9, 2, "Rh"),
-        CountIndex(ChartHandType.HARD, 15, 11, 1, "Rh")
+        CountIndex(
+            ChartHandType.HARD, 15, 11,
+            if (rules.dealerSoft17Rule == DealerSoft17Rule.HIT) -1 else 1,
+            "Rh"
+        )
     )
 
     private fun applyRuleAdjustments(
@@ -473,7 +493,7 @@ object CounterStrategyEngine {
         var adjusted = action
 
         if (adjusted.startsWith("R") && rules.surrenderRule == SurrenderRule.NONE) {
-            adjusted = "H"
+            adjusted = adjusted.withoutSurrender()
         }
 
         val noPeekOnTenOnly = rules.dealerPeekRule == DealerPeekRule.ACE_ONLY

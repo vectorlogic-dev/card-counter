@@ -23,6 +23,80 @@ class CounterStrategyEngineTest {
 
     private val noSurrender = CounterSessionState()
     private val lateSurrender = CounterSessionState(tableRules = TableRules(surrenderRule = SurrenderRule.LATE))
+    private val h17 = CounterSessionState(tableRules = TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT))
+    private val h17LateSurrender = CounterSessionState(
+        tableRules = TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT, surrenderRule = SurrenderRule.LATE)
+    )
+
+    @Test
+    fun `soft nineteen doubles against six only under h17`() {
+        assertEquals("Ds", chartCell(h17, "Soft Totals", "A,8", 6, 0.0).action)
+        assertFalse(chartCell(h17, "Soft Totals", "A,8", 6, 0.0).isDeviation)
+        assertEquals("S", chartCell(h17, "Soft Totals", "A,8", 5, 0.0).action)
+        assertEquals("S", chartCell(noSurrender, "Soft Totals", "A,8", 6, 0.0).action)
+
+        val h17NineToEleven = CounterSessionState(
+            tableRules = TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT, doubleDownRule = DoubleDownRule.NINE_TO_ELEVEN)
+        )
+        assertEquals("S", chartCell(h17NineToEleven, "Soft Totals", "A,8", 6, 0.0).action)
+    }
+
+    @Test
+    fun `h17 with surrender gives up fifteen seventeen and eights against an ace`() {
+        listOf(-1.0, 0.0, 3.0, 8.0).forEach { tc ->
+            assertEquals("Rh", hardCell(h17LateSurrender, 15, 11, tc).action)
+            assertEquals("Rh", hardCell(h17LateSurrender, 16, 11, tc).action)
+            assertEquals("Rs", chartCell(h17LateSurrender, "Hard Totals", "17", 11, tc).action)
+            assertEquals("Rp", chartCell(h17LateSurrender, "Pairs", "8,8", 11, tc).action)
+            assertFalse(chartCell(h17LateSurrender, "Hard Totals", "17", 11, tc).isDeviation)
+        }
+        assertEquals("S", chartCell(h17LateSurrender, "Hard Totals", "18+", 11, 0.0).action)
+        assertEquals("S", chartCell(h17LateSurrender, "Hard Totals", "17", 10, 0.0).action)
+        assertEquals("P", chartCell(h17LateSurrender, "Pairs", "8,8", 10, 0.0).action)
+    }
+
+    @Test
+    fun `h17 surrenders against an ace need surrender to be offered`() {
+        assertEquals("H", hardCell(h17, 15, 11, 0).action)
+        assertEquals("S", chartCell(h17, "Hard Totals", "17+", 11, 0.0).action)
+        assertEquals("P", chartCell(h17, "Pairs", "8,8", 11, 0.0).action)
+        assertEquals("H", hardCell(lateSurrender, 15, 11, 0).action)
+        assertEquals("S", chartCell(lateSurrender, "Hard Totals", "17+", 11, 0.0).action)
+        assertEquals("P", chartCell(lateSurrender, "Pairs", "8,8", 11, 0.0).action)
+    }
+
+    @Test
+    fun `eights against an ace surrender else hit when the dealer does not peek`() {
+        val noPeek = CounterSessionState(
+            tableRules = TableRules(
+                dealerSoft17Rule = DealerSoft17Rule.HIT,
+                surrenderRule = SurrenderRule.LATE,
+                dealerPeekRule = DealerPeekRule.NO_PEEK
+            )
+        )
+        assertEquals("Rh", chartCell(noPeek, "Pairs", "8,8", 11, 0.0).action)
+    }
+
+    @Test
+    fun `seventeen gets its own row only when it plays differently from eighteen`() {
+        fun hardLabels(state: CounterSessionState) = chart(state, 0.0, 1.0).sections
+            .first { it.title == "Hard Totals" }.rows.map { it.handLabel }
+
+        assertEquals("17+", hardLabels(noSurrender).first())
+        assertEquals("17+", hardLabels(lateSurrender).first())
+        assertEquals("17+", hardLabels(h17).first())
+        assertEquals(listOf("18+", "17", "16"), hardLabels(h17LateSurrender).take(3))
+    }
+
+    @Test
+    fun `h17 fifteen vs ace surrender index is minus one`() {
+        assertEquals("Rh", hardCell(h17LateSurrender, 15, 11, -1.0).action)
+        assertEquals("H", hardCell(h17LateSurrender, 15, 11, -1.1).action)
+        assertTrue(hardCell(h17LateSurrender, 15, 11, -1.1).isDeviation)
+
+        assertEquals(listOf("Surrender at TC -1+"), rows(h17LateSurrender, 1.0).filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
+        assertEquals(listOf("Surrender at TC +1"), rows(lateSurrender, 1.0).filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
+    }
 
     @Test
     fun `stand deviations do not override surrender`() {
@@ -139,7 +213,7 @@ class CounterStrategyEngineTest {
         val thresholdPattern = Regex("""TC ([+-]?\d+(?:\.\d)?)""")
         systems.forEach { system ->
             val scale = TrueCountScaling.hiLoEquivalentScale(system)
-            listOf(noSurrender, lateSurrender).forEach { state ->
+            listOf(noSurrender, lateSurrender, h17LateSurrender).forEach { state ->
                 val indexRows = rows(state, scale).filter {
                     it.playLabel != "Insurance vs A" && thresholdPattern.containsMatchIn(it.indexLabel)
                 }
@@ -205,6 +279,7 @@ class CounterStrategyEngineTest {
             TableRules(),
             TableRules(surrenderRule = SurrenderRule.LATE),
             TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT),
+            TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT, surrenderRule = SurrenderRule.LATE),
             TableRules(dealerPeekRule = DealerPeekRule.ACE_ONLY),
             TableRules(dealerPeekRule = DealerPeekRule.NO_PEEK, dealerSoft17Rule = DealerSoft17Rule.HIT),
             TableRules(doubleDownRule = DoubleDownRule.TEN_TO_ELEVEN, surrenderRule = SurrenderRule.LATE)
@@ -301,6 +376,27 @@ class CounterStrategyEngineTest {
             trueCountScale = scale
         )
         return chart.sections.first { it.title == section }.rows.first { it.handLabel == hand }.cells[dealerUpcard - 2]
+    }
+
+    private fun chart(state: CounterSessionState, decisionTrueCount: Double, scale: Double): StrategyChartModel {
+        return CounterStrategyEngine.buildStrategyChartModel(
+            state = state,
+            trueCount = decisionTrueCount,
+            supportsTrueCount = true,
+            decisionTrueCount = decisionTrueCount,
+            trueCountScale = scale
+        )
+    }
+
+    private fun chartCell(
+        state: CounterSessionState,
+        section: String,
+        handLabel: String,
+        dealerUpcard: Int,
+        decisionTrueCount: Double
+    ): StrategyTableCell {
+        return chart(state, decisionTrueCount, 1.0).sections.first { it.title == section }
+            .rows.first { it.handLabel == handLabel }.cells[dealerUpcard - 2]
     }
 
     private fun actionPrefix(indexLabel: String): String = when (indexLabel.substringBefore(" ")) {

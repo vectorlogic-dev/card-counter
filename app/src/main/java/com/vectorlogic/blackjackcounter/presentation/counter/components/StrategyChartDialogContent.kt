@@ -84,7 +84,13 @@ fun StrategyChartFullScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StrategyChartLegend(supportsTrueCount = model.supportsTrueCount)
+                val chartActions = model.sections.flatMap { section -> section.rows.flatMap { row -> row.cells } }
+                    .map { it.action }
+                    .toSet()
+                StrategyChartLegend(
+                    supportsTrueCount = model.supportsTrueCount,
+                    actions = LEGEND_ACTIONS + OCCASIONAL_LEGEND_ACTIONS.filter { it in chartActions }
+                )
                 model.sections.forEach { section ->
                     StrategyTableSectionCard(section = section)
                 }
@@ -95,7 +101,7 @@ fun StrategyChartFullScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun StrategyChartLegend(supportsTrueCount: Boolean) {
+private fun StrategyChartLegend(supportsTrueCount: Boolean, actions: List<String>) {
     ChartCard {
         Column(
             modifier = Modifier.padding(10.dp),
@@ -116,7 +122,7 @@ private fun StrategyChartLegend(supportsTrueCount: Boolean) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                LEGEND_ACTIONS.forEach { action ->
+                actions.forEach { action ->
                     LegendEntry(action = action, isDeviation = false, meaning = actionMeaning(action))
                 }
                 if (supportsTrueCount) {
@@ -128,6 +134,9 @@ private fun StrategyChartLegend(supportsTrueCount: Boolean) {
 }
 
 private val LEGEND_ACTIONS = listOf("H", "S", "D", "Ds", "P", "Rh")
+
+// Only H17 with surrender uses these (17 vs A, 8,8 vs A), so they join the legend when shown.
+private val OCCASIONAL_LEGEND_ACTIONS = listOf("Rs", "Rp")
 
 @Composable
 private fun LegendEntry(action: String, isDeviation: Boolean, meaning: String) {
@@ -292,5 +301,7 @@ private fun actionMeaning(action: String): String = when (action) {
     "Ds" -> "Double, else stand"
     "P" -> "Split"
     "Rh" -> "Surrender, else hit"
+    "Rs" -> "Surrender, else stand"
+    "Rp" -> "Surrender, else split"
     else -> action
 }
