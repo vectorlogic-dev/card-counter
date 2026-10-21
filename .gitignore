@@ -19,3 +19,7 @@ keys/
 *.jks
 *.keystore
 keystore.properties
+
+# AI agent working materials (prompts, skills, screenshots, workflow docs).
+# Kept local only — not shipped in the public repo.
+ai/

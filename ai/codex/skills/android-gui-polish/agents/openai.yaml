@@ -1,4 +1,0 @@
-interface:
-  display_name: "Android GUI Polish"
-  short_description: "Improve Compose UI clarity, spacing, and usability."
-  default_prompt: "Use $android-gui-polish to refine the app screen layout for readability and tap efficiency."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Android Compose MVVM"
-  short_description: "Compose + MVVM workflow for this Android repo."
-  default_prompt: "Use $android-compose-mvvm to implement or refactor a feature in this Kotlin Compose MVVM app."
