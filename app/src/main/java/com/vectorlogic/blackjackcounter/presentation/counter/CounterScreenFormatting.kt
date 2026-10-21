@@ -55,3 +55,37 @@ fun countColor(value: Double): Color = when {
     value < 0 -> MaterialTheme.colorScheme.error
     else -> MaterialTheme.colorScheme.onSurface
 }
+
+/** Second line in the system selector, e.g. "Level 2 · Balanced · True count". */
+fun systemTraitsLabel(level: Int, isBalanced: Boolean, usesTrueCount: Boolean): String {
+    val balance = if (isBalanced) "Balanced" else "Unbalanced"
+    val count = if (usesTrueCount) "True count" else "Running count only"
+    return "Level $level · $balance · $count"
+}
+
+/**
+ * Note shown after switching systems. Switching re-tags every card already seen, so the running
+ * count can jump (Hi-Lo +13 becomes Omega II +22); say so rather than change it silently.
+ * Returns null when nothing visible changed.
+ */
+fun systemSwitchMessage(
+    previousSystemId: String,
+    previousRunningCount: Double,
+    newSystemId: String,
+    newSystemName: String,
+    newRunningCount: Double,
+    cardsSeen: Int
+): String? {
+    if (previousSystemId == newSystemId) return null
+    val before = formatSignedCount(previousRunningCount)
+    val after = formatSignedCount(newRunningCount)
+    return when {
+        cardsSeen > 0 -> {
+            val cards = if (cardsSeen == 1) "1 card" else "$cardsSeen cards"
+            "Recounted $cards with $newSystemName: RC $before → $after"
+        }
+        // No cards yet, but unbalanced systems start from a non-zero IRC.
+        before != after -> "$newSystemName starts at RC $after"
+        else -> null
+    }
+}

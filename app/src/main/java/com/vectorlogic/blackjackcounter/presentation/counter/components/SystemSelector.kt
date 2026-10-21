@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -14,20 +16,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemOption
+import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemGuide
+import com.vectorlogic.blackjackcounter.presentation.counter.systemTraitsLabel
 
 @Composable
 fun SystemSelector(
     selectedSystemId: String,
-    availableSystems: List<CountingSystemOption>,
+    systems: List<CountingSystemGuide>,
+    cardsSeen: Int,
     onSystemSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        // Seven systems with three lines each don't fit a landscape dialog without scrolling.
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        availableSystems.forEach { system ->
+        if (cardsSeen > 0) {
+            Text(
+                text = "Switching recounts the $cardsSeen ${if (cardsSeen == 1) "card" else "cards"} " +
+                    "seen this shoe with the new system's tags.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+        systems.forEach { system ->
             val isSelected = system.id == selectedSystemId
             Row(
                 modifier = Modifier
@@ -51,7 +67,11 @@ fun SystemSelector(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Level ${system.level}",
+                        text = systemTraitsLabel(
+                            level = system.level,
+                            isBalanced = system.isBalanced,
+                            usesTrueCount = system.usesTrueCount
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
