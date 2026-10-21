@@ -18,11 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.formatTagValue
+import com.vectorlogic.blackjackcounter.presentation.counter.toPadLabel
 import com.vectorlogic.blackjackcounter.ui.theme.ChipGreenDark
 import com.vectorlogic.blackjackcounter.ui.theme.ChipRedDark
 
@@ -35,6 +38,12 @@ fun CountButtonsRow(
     compact: Boolean = false
 ) {
     val sectionSpacing = if (compact) 4.dp else 6.dp
+    // Users tap the pad without looking at the screen, so every card tap gets a tick.
+    val haptics = LocalHapticFeedback.current
+    val tap: (() -> Unit) -> Unit = { action ->
+        haptics.performHapticFeedback(HapticFeedbackType.VirtualKey)
+        action()
+    }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -74,11 +83,11 @@ fun CountButtonsRow(
                 listOf(CardRank.ACE, CardRank.TWO, CardRank.THREE, CardRank.FOUR, CardRank.FIVE).forEach { rank ->
                     val tagValue = buttonTagValues[rank] ?: 0.0
                     CardInputButton(
-                        label = rank.toButtonLabel(),
+                        label = rank.toPadLabel(),
                         tone = tagValueToTone(tagValue),
                         tagValue = tagValue,
                         compact = compact,
-                        onClick = { onCardSelected(rank) },
+                        onClick = { tap { onCardSelected(rank) } },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -91,40 +100,26 @@ fun CountButtonsRow(
                 listOf(CardRank.SIX, CardRank.SEVEN, CardRank.EIGHT, CardRank.NINE).forEach { rank ->
                     val tagValue = buttonTagValues[rank] ?: 0.0
                     CardInputButton(
-                        label = rank.toButtonLabel(),
+                        label = rank.toPadLabel(),
                         tone = tagValueToTone(tagValue),
                         tagValue = tagValue,
                         compact = compact,
-                        onClick = { onCardSelected(rank) },
+                        onClick = { tap { onCardSelected(rank) } },
                         modifier = Modifier.weight(1f)
                     )
                 }
                 val faceTagValue = buttonTagValues[CardRank.JACK] ?: 0.0
                 CardInputButton(
-                    label = "10-K",
+                    label = CardRank.TEN.toPadLabel(),
                     tone = tagValueToTone(faceTagValue),
                     tagValue = faceTagValue,
                     compact = compact,
-                    onClick = onFaceCardsSelected,
+                    onClick = { tap(onFaceCardsSelected) },
                     modifier = Modifier.weight(1f)
                 )
             }
         }
     }
-}
-
-private fun CardRank.toButtonLabel(): String = when (this) {
-    CardRank.ACE -> "A"
-    CardRank.TWO -> "2"
-    CardRank.THREE -> "3"
-    CardRank.FOUR -> "4"
-    CardRank.FIVE -> "5"
-    CardRank.SIX -> "6"
-    CardRank.SEVEN -> "7"
-    CardRank.EIGHT -> "8"
-    CardRank.NINE -> "9"
-    CardRank.TEN -> "10"
-    CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "10-K"
 }
 
 @Composable

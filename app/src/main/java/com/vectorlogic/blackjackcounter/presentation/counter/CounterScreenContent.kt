@@ -194,7 +194,7 @@ fun CounterScreenContent(
             RecentCardsCard(
                 recentCardLabels = state.seenCards
                     .takeLast(if (compactLayout) 12 else 15)
-                    .map { it.rank.toHistoryLabel() },
+                    .map { it.rank.toPadLabel() },
                 onUndo = onUndo,
                 canUndo = state.seenCards.isNotEmpty(),
                 compact = compactLayout

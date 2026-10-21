@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
@@ -15,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.keepScreenOn
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -38,11 +40,23 @@ fun CounterScreen(
     var showHelpDialog by rememberSaveable { mutableStateOf(false) }
     var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
     var showDrillDialog by rememberSaveable { mutableStateOf(false) }
+    var showResetConfirm by rememberSaveable { mutableStateOf(false) }
+
+    // A reset wipes the whole shoe, so ask first unless there is nothing to lose.
+    val requestReset = {
+        val hasProgress = state.seenCards.isNotEmpty() || state.decksRemaining < state.totalDecks
+        if (hasProgress) showResetConfirm = true else viewModel.resetCount()
+    }
+
+    // The chart replaces the main content, so system back should close it, not the app.
+    BackHandler(enabled = showStrategyChartDialog) { showStrategyChartDialog = false }
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .safeDrawingPadding(),
+            .safeDrawingPadding()
+            // Counting a shoe takes longer than a typical screen timeout.
+            .keepScreenOn(),
         color = MaterialTheme.colorScheme.background
     ) {
         if (showStrategyChartDialog) {
@@ -61,7 +75,7 @@ fun CounterScreen(
             onHelpClick = { showHelpDialog = true },
             onSelectCountingSystem = { showSystemSelector = true },
             onTableRulesClick = { showRulesDialog = true },
-            onResetClick = viewModel::resetCount,
+            onResetClick = requestReset,
             onToggleCheatSheet = viewModel::toggleCheatSheet,
             onTotalDecksChanged = viewModel::setTotalDecks,
             onDecksRemainingChanged = viewModel::setDecksRemaining,
@@ -76,6 +90,35 @@ fun CounterScreen(
             DrillDialog(
                 system = viewModel.activeCountingSystem(),
                 onDismiss = { showDrillDialog = false }
+            )
+        }
+
+        if (showResetConfirm) {
+            val cardsSeen = state.seenCards.size
+            AlertDialog(
+                onDismissRequest = { showResetConfirm = false },
+                title = { Text("Reset count?") },
+                text = {
+                    Text(
+                        if (cardsSeen > 0) {
+                            "This clears the running count and the $cardsSeen ${if (cardsSeen == 1) "card" else "cards"} " +
+                                "seen this shoe. It can't be undone."
+                        } else {
+                            "This clears the running count and refills the shoe. It can't be undone."
+                        }
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.resetCount()
+                        showResetConfirm = false
+                    }) {
+                        Text("Reset", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetConfirm = false }) { Text("Cancel") }
+                }
             )
         }
 
