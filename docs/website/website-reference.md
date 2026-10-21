@@ -15,7 +15,7 @@ Keep this in sync with the GitHub release metadata and app strings. Structured d
 | Developer | vectorlogic |
 | Platform | Android (direct APK, not Google Play) |
 | Source | [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter) · Apache 2.0 |
-| Latest release | [v1.0.0](https://github.com/vectorlogic-dev/card-counter/releases/latest) |
+| Latest release | [v1.1.0](https://github.com/vectorlogic-dev/card-counter/releases/latest) |
 | Category | Card Games / Casino / Training Tools |
 
 ---
@@ -278,7 +278,7 @@ A: Level 1 systems (Hi-Lo, KO, ReKO) use simple ±1 tag values and are the easie
 | Primary host | `https://blackjackcounter.app` (homepage download buttons point at the latest GitHub Release asset) |
 | Download page | `https://blackjackcounter.app/download`: APK button, version, size, SHA-256, install steps, update notes, signing certificate fingerprint. Every content-page Download button links here |
 | Mirror | `https://github.com/vectorlogic-dev/card-counter/releases/latest` |
-| Latest version | `v1.0.0` |
+| Latest version | `v1.1.0` |
 | APK filename | `CountingEdge-<version>.apk` |
 | APK integrity | Each release notes file publishes the SHA-256; the site should surface it next to the download button |
 | Signing | PKCS12 keystore, self-signed. Signing certificate SHA-256: `69:B1:04:CB:37:BC:E3:1E:B6:11:71:08:D3:7E:A4:2F:57:3F:1C:9B:44:45:3A:23:2E:25:9D:69:91:83:39:8E` |
