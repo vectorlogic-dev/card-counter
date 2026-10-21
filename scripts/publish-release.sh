@@ -99,6 +99,9 @@ fi
 echo "==> Tagging $TAG"
 git tag "$TAG"
 
+echo "==> Pushing tag"
+git push origin "$TAG"
+
 echo "==> Creating GitHub Release $TAG"
 gh release create "$TAG" \
   "$STAGE/$APK_NAME" \
@@ -106,8 +109,5 @@ gh release create "$TAG" \
   --title "Counting Edge $VERSION" \
   --notes-file "$NOTES_PATH" \
   "$@"
-
-echo "==> Pushing tag"
-git push origin "$TAG"
 
 echo "==> Done. https://github.com/vectorlogic-dev/card-counter/releases/tag/$TAG"
