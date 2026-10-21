@@ -86,18 +86,19 @@ Match the app to real table conditions before you sit down:
 
 ### Strategy Reference
 - Full-screen basic strategy chart — rule-aware, updates with current true count
-- Strategy deviations marked with * on chart
+- Colour-coded chart cells (Hit, Stand, Double, Split, Surrender) with the action letters kept; deviations marked with *
 - Illustrious 18 + Fab 4 indices, scaled to each system's own true count
 - System cheat sheet (tag values + key deviations) per system
 - Counting system guides with level, balance type, and usage tips
 
 ### Session Tools
 - Recent cards history (last 12–15 cards visible)
-- One-tap Undo for correcting a missed or wrong card tap
+- One-tap Undo right beside the count pad, next to the last few cards, for correcting a missed or wrong card tap
 - Reset returns shoe and count to starting state, with a confirmation so a stray tap can't wipe a shoe
   - KO / ReKO reset returns to the deck-specific Initial Running Count (IRC), not zero
 - Session resume — running count, shoe depth, selected system, and table rules survive app restarts (stored locally)
 - Built for live use — haptic tick on every card tap, screen stays awake while counting, system back closes the strategy chart
+- Landscape and tablet layout with the count pad and Undo on one side and the stats on the other
 
 ### Drill Mode
 - Timed running-count practice from the Menu
@@ -173,7 +174,7 @@ For "How to use" sections or explainer blocks on the website:
 2. **Pick a system** — Choose from Hi-Lo (beginner) through Wong Halves (advanced).
 3. **Set the shoe** — Choose deck count and slide decks remaining as play progresses.
 4. **Tap as cards land** — Running count, true count, edge %, and bet units update instantly.
-5. **Check the chart** — Hit Strategy Table for live deviation-aware basic strategy.
+5. **Check the chart** — Open the Strategy Chart for live deviation-aware basic strategy.
 
 ---
 
