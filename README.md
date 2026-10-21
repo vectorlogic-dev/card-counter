@@ -51,20 +51,31 @@ The app recommends a unit size from the ramp `1-2-4-8-12`.
   - `2.0 to <3.0` -> `4` units
   - `3.0 to <4.0` -> `8` units
   - `>= 4.0` -> `12` units
-For balanced systems, decision thresholds use **truncated true count** by default.
 
 Level-2 systems produce true counts about 1.7-1.8x larger than Hi-Lo for the same shoe, so every
 balanced system converts Hi-Lo thresholds to its own true count with a scale factor: the ratio of
-the system's per-card tag standard deviation to Hi-Lo's, rounded to the nearest integer. The same
-scale is used for bet ramps, playing indices and the edge estimate.
+the system's per-card tag standard deviation to Hi-Lo's. A threshold is the Hi-Lo value times the
+scale, kept to one decimal (Omega II: Hi-Lo `+2` x 1.79 = `3.58` -> `3.6`). The same scale is used
+for bet ramps, playing indices and the edge estimate, so a system bets and deviates at the same
+Hi-Lo-equivalent count as Hi-Lo.
 
 | System | Scale | Ramp thresholds (`2 / 4 / 8 / 12` units) |
 |---|---|---|
 | Hi-Lo | 1.00 | TC `1 / 2 / 3 / 4` |
-| Wong Halves | 1.05 | TC `1 / 2 / 3 / 4` |
-| Hi-Opt II | 1.67 | TC `2 / 3 / 5 / 7` |
-| Omega II | 1.79 | TC `2 / 4 / 5 / 7` |
-| Zen Count | 1.79 | TC `2 / 4 / 5 / 7` |
+| Wong Halves | 1.05 | TC `1.0 / 2.1 / 3.1 / 4.2` |
+| Hi-Opt II | 1.67 | TC `1.7 / 3.3 / 5.0 / 6.7` |
+| Omega II | 1.79 | TC `1.8 / 3.6 / 5.4 / 7.2` |
+| Zen Count | 1.79 | TC `1.8 / 3.6 / 5.4 / 7.2` |
+
+**Which true count is compared.** Bets, indices and the edge estimate all use the true count as
+the app displays it, to one decimal. A step or play applies when that count is at or above the
+threshold (or below it, for the negative "hit below" indices), so the numbers on the cheat sheet
+and in the table above are exactly where things change. The count is never truncated toward zero:
+a true count of `-0.9` is below `0`, so the index-0 plays (stand 16 vs 10, stand 12 vs 4,
+surrender 15 vs 10) wait until the count reaches `0`. For whole-number thresholds such as Hi-Lo's,
+this is the same as flooring the displayed true count, which is how most index references are
+applied.
+Truncation would treat `-0.9` as `0` and make those plays while the count is still negative.
 
 For `KO` / `ReKO`, ramps are deck-aware and keyed from the system's `Key Count` and `Pivot`:
 - `< Key Count` -> `1` unit
@@ -145,7 +156,10 @@ All counting systems are available in the app at no extra cost.
 - Rule-aware action adjustments
 - Deviation cells marked with `*`
 - Indices are the Hi-Lo Illustrious 18 (plus 15 vs A stand at `+5`), converted to the selected
-  system's true count with the scale factor above; the cheat sheet shows the converted values
+  system's true count with the scale factor above and kept to one decimal; the cheat sheet shows
+  the converted values, which are exactly the ones the chart uses (e.g. Omega II 10 vs 10 double
+  at `+7.2`, 12 vs 5 hit below `-3.6`). Indices are compared with the displayed true count; see
+  "Which true count is compared" above
   - Positive indices: make the play at or above the index (e.g. stand 16 vs 10 at `TC 0+`)
   - Negative indices: hit below the index (12 vs 4 `0`, 12 vs 5 `-2`, 12 vs 6 `-1`, 13 vs 2 `-1`, 13 vs 3 `-2`)
 - When surrender is offered, surrender takes precedence over stand indices (16 vs 9, 16 vs 10, 15 vs 10),
@@ -154,8 +168,8 @@ All counting systems are available in the app at no extra cost.
 
 ## Estimated Edge %
 Estimated Edge % is computed from:
-- current true count (if supported by the selected system), converted to a Hi-Lo-equivalent
-  true count with the system's scale factor
+- current true count as displayed (if supported by the selected system), converted to a
+  Hi-Lo-equivalent true count with the system's scale factor
 - selected table rules
 - total decks in shoe
 

@@ -17,7 +17,8 @@ object CounterStrategyEngine {
         state: CounterSessionState,
         trueCount: Double,
         supportsTrueCount: Boolean,
-        decisionTrueCount: Int,
+        // CounterCalculations.decisionTrueCount: the native true count to one decimal.
+        decisionTrueCount: Double,
         trueCountScale: Double
     ): StrategyChartModel {
         val hardRows = listOf(17, 16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
@@ -145,7 +146,7 @@ object CounterStrategyEngine {
         dealerUpcard: Int,
         state: CounterSessionState,
         supportsTrueCount: Boolean,
-        decisionTrueCount: Int,
+        decisionTrueCount: Double,
         trueCountScale: Double
     ): StrategyTableCell {
         val rules = state.tableRules
@@ -323,7 +324,8 @@ object CounterStrategyEngine {
         }
     }
 
-    private fun CountIndex.isTriggered(decisionTrueCount: Int, trueCountScale: Double): Boolean {
+    // Both sides are multiples of 0.1, so a play triggers exactly at the threshold its label shows.
+    private fun CountIndex.isTriggered(decisionTrueCount: Double, trueCountScale: Double): Boolean {
         val nativeIndex = nativeIndex(hiLoIndex, trueCountScale)
         return when (direction) {
             IndexDirection.AT_OR_ABOVE -> decisionTrueCount >= nativeIndex
@@ -335,16 +337,17 @@ object CounterStrategyEngine {
         return if (startsWith("R")) drop(1).uppercase() else this
     }
 
-    private fun nativeIndex(hiLoIndex: Int, trueCountScale: Double): Int {
+    private fun nativeIndex(hiLoIndex: Int, trueCountScale: Double): Double {
         return TrueCountScaling.toNativeThreshold(hiLoIndex, trueCountScale)
     }
 
-    private fun formatAtOrAbove(index: Int): String {
-        return if (index > 0) "+$index" else "$index+"
+    // Same formatter as the bet card's count, e.g. "+7.2", "+4", "0+".
+    private fun formatAtOrAbove(index: Double): String {
+        return if (index > 0) formatSignedCount(index) else "${formatSignedCount(index)}+"
     }
 
-    private fun formatSigned(index: Int): String {
-        return if (index > 0) "+$index" else index.toString()
+    private fun formatSigned(index: Double): String {
+        return formatSignedCount(index)
     }
 
     private fun CountIndex.handLabel(): String {
@@ -383,7 +386,8 @@ object CounterStrategyEngine {
     }
 
     // Indices are Hi-Lo values (multi-deck, S17); other balanced systems use them converted to
-    // native true counts via TrueCountScaling, so labels and chart triggers always agree.
+    // native true counts (one decimal) via TrueCountScaling. Labels and chart triggers use the
+    // same converted value, so they always agree.
     private data class CountIndex(
         val handType: ChartHandType,
         val handValue: Int,

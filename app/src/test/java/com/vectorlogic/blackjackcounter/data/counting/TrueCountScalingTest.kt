@@ -24,15 +24,25 @@ class TrueCountScalingTest {
     }
 
     @Test
-    fun `native thresholds round the scaled hi lo value`() {
+    fun `native thresholds keep one decimal of the scaled hi lo value`() {
         val zen = TrueCountScaling.hiLoEquivalentScale(ZenCountSystem)
 
-        assertEquals(0, TrueCountScaling.toNativeThreshold(0, zen))
-        assertEquals(2, TrueCountScaling.toNativeThreshold(1, zen))
-        assertEquals(5, TrueCountScaling.toNativeThreshold(3, zen))
-        assertEquals(9, TrueCountScaling.toNativeThreshold(5, zen))
-        assertEquals(-2, TrueCountScaling.toNativeThreshold(-1, zen))
-        assertEquals(-4, TrueCountScaling.toNativeThreshold(-2, zen))
-        assertEquals(4, TrueCountScaling.toNativeThreshold(4, 1.0))
+        assertEquals(0.0, TrueCountScaling.toNativeThreshold(0, zen), 0.0)
+        assertEquals(1.8, TrueCountScaling.toNativeThreshold(1, zen), 0.0)
+        assertEquals(5.4, TrueCountScaling.toNativeThreshold(3, zen), 0.0)
+        assertEquals(8.9, TrueCountScaling.toNativeThreshold(5, zen), 0.0)
+        assertEquals(-1.8, TrueCountScaling.toNativeThreshold(-1, zen), 0.0)
+        assertEquals(-3.6, TrueCountScaling.toNativeThreshold(-2, zen), 0.0)
+        assertEquals(4.0, TrueCountScaling.toNativeThreshold(4, 1.0), 0.0)
+    }
+
+    @Test
+    fun `omega ii plus two is not rounded up to a whole native count`() {
+        val omega = TrueCountScaling.hiLoEquivalentScale(OmegaIICountingSystem)
+        val hiOpt = TrueCountScaling.hiLoEquivalentScale(HiOptIICountingSystem)
+
+        // 2 x 1.789 = 3.578. Rounding to 4 would ask for Hi-Lo +2.24 before betting 4 units.
+        assertEquals(3.6, TrueCountScaling.toNativeThreshold(2, omega), 0.0)
+        assertEquals(3.3, TrueCountScaling.toNativeThreshold(2, hiOpt), 0.0)
     }
 }

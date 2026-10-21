@@ -1,7 +1,8 @@
 package com.vectorlogic.blackjackcounter.domain.model
 
 data class CountRampStep(
-    val minCountInclusive: Int,
+    // A true count for balanced systems (may be fractional once scaled), a running count otherwise.
+    val minCountInclusive: Double,
     val units: Int
 )
 

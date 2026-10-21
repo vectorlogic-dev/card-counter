@@ -1,7 +1,7 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
-import kotlin.math.roundToInt
+import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
 import kotlin.math.sqrt
 
 /**
@@ -27,8 +27,16 @@ object TrueCountScaling {
         return tagStandardDeviation(system) / tagStandardDeviation(HiLoCountingSystem)
     }
 
-    /** Converts a Hi-Lo index or ramp threshold to the nearest native integer true count. */
-    fun toNativeThreshold(hiLoThreshold: Int, scale: Double): Int {
-        return (hiLoThreshold * scale).roundToInt()
+    /**
+     * Converts a Hi-Lo index or ramp threshold to this system's true count, kept to one decimal:
+     * the precision the true count is shown and decided at (CounterCalculations.decisionTrueCount).
+     * The value returned is exactly the threshold used, so labels can print it as is.
+     *
+     * Whole native thresholds lose much of the scaling: Omega II's Hi-Lo +2 (2 x 1.79 = 3.58)
+     * would become 4, and truncating the count (3.9 to 3) would delay it again, so a native +3.9
+     * (Hi-Lo +2.2) bet 2 units where Hi-Lo bets 4.
+     */
+    fun toNativeThreshold(hiLoThreshold: Int, scale: Double): Double {
+        return CounterCalculations.roundToOneDecimal(hiLoThreshold * scale)
     }
 }

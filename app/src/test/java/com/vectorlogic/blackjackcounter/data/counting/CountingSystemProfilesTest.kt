@@ -1,6 +1,5 @@
 package com.vectorlogic.blackjackcounter.data.counting
 
-import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -8,13 +7,10 @@ import org.junit.Test
 class CountingSystemProfilesTest {
 
     @Test
-    fun `balanced systems define true count integerization`() {
-        val hiLo = CountingSystemProfiles.profileFor(HiLoCountingSystem.id)
-        val wong = CountingSystemProfiles.profileFor(WongHalvesSystem.id)
-
-        assertEquals(TrueCountIntegerization.TRUNCATE, hiLo.trueCountIntegerization)
-        assertEquals(TrueCountIntegerization.TRUNCATE, wong.trueCountIntegerization)
-        assertEquals(4, hiLo.balancedBetRamp.size)
+    fun `balanced systems use a four step ramp`() {
+        assertEquals(4, CountingSystemProfiles.profileFor(HiLoCountingSystem.id).balancedBetRamp.size)
+        assertEquals(4, CountingSystemProfiles.profileFor(WongHalvesSystem.id).balancedBetRamp.size)
+        assertEquals(4, CountingSystemProfiles.profileFor("unknown").balancedBetRamp.size)
     }
 
     @Test
@@ -52,11 +48,12 @@ class CountingSystemProfilesTest {
         fun thresholds(systemId: String) =
             CountingSystemProfiles.profileFor(systemId).balancedBetRamp.map { it.minCountInclusive }
 
-        assertEquals(listOf(1, 2, 3, 4), thresholds(HiLoCountingSystem.id))
-        assertEquals(listOf(1, 2, 3, 4), thresholds(WongHalvesSystem.id))
-        assertEquals(listOf(2, 3, 5, 7), thresholds(HiOptIICountingSystem.id))
-        assertEquals(listOf(2, 4, 5, 7), thresholds(OmegaIICountingSystem.id))
-        assertEquals(listOf(2, 4, 5, 7), thresholds(ZenCountSystem.id))
+        // Hi-Lo TC 1 / 2 / 3 / 4 times each system's scale, kept to one decimal (README table).
+        assertEquals(listOf(1.0, 2.0, 3.0, 4.0), thresholds(HiLoCountingSystem.id))
+        assertEquals(listOf(1.0, 2.1, 3.1, 4.2), thresholds(WongHalvesSystem.id))
+        assertEquals(listOf(1.7, 3.3, 5.0, 6.7), thresholds(HiOptIICountingSystem.id))
+        assertEquals(listOf(1.8, 3.6, 5.4, 7.2), thresholds(OmegaIICountingSystem.id))
+        assertEquals(listOf(1.8, 3.6, 5.4, 7.2), thresholds(ZenCountSystem.id))
         assertEquals(
             listOf(2, 4, 8, 12),
             CountingSystemProfiles.profileFor(ZenCountSystem.id).balancedBetRamp.map { it.units }

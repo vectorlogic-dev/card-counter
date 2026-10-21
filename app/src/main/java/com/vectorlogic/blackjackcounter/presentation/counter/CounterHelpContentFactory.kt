@@ -125,13 +125,13 @@ object CounterHelpContentFactory {
 
     private fun systemExplanation(system: CountingSystem): String {
         return when (system.id) {
-            HiLoCountingSystem.id -> "Most common beginner system: balanced +1/-1 tags with truncated true-count decisions."
+            HiLoCountingSystem.id -> "Most common beginner system: balanced +1/-1 tags; the bet ramp and indices are calibrated for it."
             KOCountingSystem.id -> "Unbalanced running-count system using deck-specific initial running counts, key counts, and a pivot."
             ReKOCountingSystem.id -> "Refined KO variant with deck-specific initial running counts and key-count references."
-            HiOptIICountingSystem.id -> "Higher-power level-2 system with truncated true-count decisions; strongest with an Ace side count."
-            OmegaIICountingSystem.id -> "Advanced level-2 balanced count using truncated true-count decisions; often paired with Ace side count."
-            ZenCountSystem.id -> "Balanced level-2 count with heavier 4-6 tags and truncated true-count decision handling."
-            WongHalvesSystem.id -> "High-precision balanced system with half-point tags and truncated true-count decision handling."
+            HiOptIICountingSystem.id -> "Higher-power level-2 system using Hi-Lo indices scaled to its true count; strongest with an Ace side count."
+            OmegaIICountingSystem.id -> "Advanced level-2 balanced count using Hi-Lo indices scaled to its true count; often paired with Ace side count."
+            ZenCountSystem.id -> "Balanced level-2 count with heavier 4-6 tags; uses Hi-Lo indices scaled to its true count."
+            WongHalvesSystem.id -> "High-precision balanced system with half-point tags; uses Hi-Lo indices scaled to its true count."
             else -> "Card-counting system with custom tag values for betting and deviation decisions."
         }
     }

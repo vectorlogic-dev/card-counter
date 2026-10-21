@@ -15,7 +15,6 @@ import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
 import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
-import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -69,13 +68,15 @@ class CounterViewModel private constructor(
     fun buildStrategyChartModel(): StrategyChartModel {
         val state = _sessionState.value
         val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val trueCount = CounterCalculations.decisionTrueCount(
+            calculateRawTrueCount(state, selectedSystem.usesTrueCount())
+        )
         return CounterStrategyEngine.buildStrategyChartModel(
             state = state,
-            trueCount = CounterCalculations.roundToOneDecimal(
-                calculateRawTrueCount(state, selectedSystem.usesTrueCount())
-            ),
+            trueCount = trueCount,
             supportsTrueCount = selectedSystem.usesTrueCount(),
-            decisionTrueCount = decisionTrueCount(state),
+            // The chart decides on the same count its header shows.
+            decisionTrueCount = trueCount,
             trueCountScale = profileFor(selectedSystem.id).trueCountScale
         )
     }
@@ -299,20 +300,17 @@ class CounterViewModel private constructor(
         val cardsDrawn = (totalCards - cardsLeft).coerceAtLeast(0)
         val shouldTrackAces = selectedSystem.recommendsAceSideCount()
         val rawTrueCount = calculateRawTrueCount(state, usesTrueCount)
-        val trueCount = CounterCalculations.roundToOneDecimal(rawTrueCount)
+        // One count is shown, bet on, deviated on and used for the edge, so they always agree.
+        val trueCount = CounterCalculations.decisionTrueCount(rawTrueCount)
         val estimatedPlayerEdgePercent = CounterCalculations.calculateEstimatedPlayerEdgePercent(
-            trueCount = rawTrueCount,
+            trueCount = trueCount,
             usesTrueCount = usesTrueCount,
             tableRules = state.tableRules,
             totalDecks = state.totalDecks,
             edgeGainPercentPerTrueCount = selectedSystem.edgeGainPercentPerTrueCount,
             trueCountScale = profile.trueCountScale
         )
-        val betSizingCountValue = decisionCountValue(
-            state = state,
-            selectedSystem = selectedSystem,
-            rawTrueCount = rawTrueCount
-        )
+        val betSizingCountValue = if (usesTrueCount) trueCount else state.runningCount
         val betRamp = if (usesTrueCount) {
             profile.balancedBetRamp
         } else {
@@ -435,37 +433,11 @@ class CounterViewModel private constructor(
         return RunningCountTotals(runningCount = runningCount, acesSeen = acesSeen)
     }
 
-    private fun decisionCountValue(
-        state: CounterSessionState,
-        selectedSystem: CountingSystem,
-        rawTrueCount: Double
-    ): Double {
-        val profile = profileFor(selectedSystem.id)
-        return if (selectedSystem.usesTrueCount()) {
-            val method = profile.trueCountIntegerization ?: TrueCountIntegerization.TRUNCATE
-            CounterCalculations.integerizeTrueCount(rawTrueCount, method).toDouble()
-        } else {
-            state.runningCount
-        }
-    }
-
     private fun calculateDeckPenetrationPercent(state: CounterSessionState): Double {
         return CounterCalculations.calculateDeckPenetrationPercent(
             totalDecks = state.totalDecks,
             decksRemaining = state.decksRemaining
         )
-    }
-
-    private fun decisionTrueCount(state: CounterSessionState): Int {
-        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
-        if (!selectedSystem.usesTrueCount()) return 0
-
-        val rawTrueCount = calculateRawTrueCount(state, usesTrueCount = true)
-        return decisionCountValue(
-            state = state,
-            selectedSystem = selectedSystem,
-            rawTrueCount = rawTrueCount
-        ).toInt()
     }
 
     private fun updateTableRules(update: (TableRules) -> TableRules) {

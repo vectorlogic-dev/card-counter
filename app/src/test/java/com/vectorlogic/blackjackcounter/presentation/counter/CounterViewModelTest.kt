@@ -315,7 +315,7 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `deviation trigger uses integerized true count thresholds`() {
+    fun `deviation trigger compares the displayed true count with the index`() {
         val viewModel = createViewModel()
         repeat(2) {
             viewModel.onCardSeen(CardRank.TWO)
@@ -372,7 +372,7 @@ class CounterViewModelTest {
         }
         viewModel.setDecksRemaining(1.0)
 
-        // Zen TC 3 is about Hi-Lo TC 1.7: 2 units (Zen threshold 2), not Hi-Lo's 8 units at TC 3.
+        // Zen TC 3 is about Hi-Lo TC 1.7: 2 units (Zen threshold 1.8), not Hi-Lo's 8 units at TC 3.
         var updated = viewModel.uiState.value
         assertEquals(3.0, updated.betSizingCountValue, 0.0001)
         assertEquals(2, updated.recommendedBetUnits)
@@ -381,9 +381,85 @@ class CounterViewModelTest {
             viewModel.onCardSeen(CardRank.TWO)
         }
         viewModel.setDecksRemaining(1.0)
+        // Zen TC 5 is about Hi-Lo TC 2.8: 4 units (8 units starts at Zen 5.4).
         updated = viewModel.uiState.value
         assertEquals(5.0, updated.betSizingCountValue, 0.0001)
-        assertEquals(8, updated.recommendedBetUnits)
+        assertEquals(4, updated.recommendedBetUnits)
+    }
+
+    @Test
+    fun `omega ii at true count 3 point 9 bets like hi lo at 2 point 2`() {
+        val omega = createViewModel()
+        omega.setCountingSystem(OmegaIICountingSystem.id)
+        repeat(4) {
+            omega.onCardSeen(CardRank.FIVE) // +2 each, RC 8
+        }
+        omega.setDecksRemaining(2.05) // 8 / 2.05 = 3.90
+
+        val omegaState = omega.uiState.value
+        assertEquals(3.9, omegaState.trueCount, 0.0001)
+        assertEquals(3.9, omegaState.betSizingCountValue, 0.0001)
+        // 3.9 / 1.789 = Hi-Lo 2.2: 4 units. Rounded native thresholds plus truncation gave 2.
+        assertEquals(4, omegaState.recommendedBetUnits)
+
+        val hiLo = createViewModel()
+        repeat(2) {
+            hiLo.onCardSeen(CardRank.FIVE)
+        }
+        hiLo.setDecksRemaining(0.87) // 2 / 0.87 = 2.30
+        assertEquals(2.3, hiLo.uiState.value.trueCount, 0.0001)
+        assertEquals(hiLo.uiState.value.recommendedBetUnits, omegaState.recommendedBetUnits)
+
+        // Hi-Lo 12 vs 3 stand at +2 is Omega II +3.6, so it applies at 3.9 too.
+        val twelve = omega.buildStrategyChartModel().sections
+            .first { it.title == "Hard Totals" }.rows.first { it.handLabel == "12" }
+        assertEquals("S", twelve.cells[1].action)
+        assertTrue(twelve.cells[1].isDeviation)
+        assertTrue(omegaState.strategyDeviationRows.any {
+            it.playLabel == "12 vs 3" && it.indexLabel == "Stand at TC +3.6"
+        })
+    }
+
+    @Test
+    fun `omega ii bet ramp steps up exactly at the threshold it shows`() {
+        val viewModel = createViewModel()
+        viewModel.setCountingSystem(OmegaIICountingSystem.id)
+        repeat(4) {
+            viewModel.onCardSeen(CardRank.FIVE)
+        }
+        viewModel.onCardSeen(CardRank.TWO) // RC 9
+
+        viewModel.setDecksRemaining(2.5) // 3.6
+        assertEquals(3.6, viewModel.uiState.value.betSizingCountValue, 0.0001)
+        assertEquals(4, viewModel.uiState.value.recommendedBetUnits)
+
+        viewModel.setDecksRemaining(2.54) // 3.54 shows as 3.5
+        assertEquals(3.5, viewModel.uiState.value.betSizingCountValue, 0.0001)
+        assertEquals(2, viewModel.uiState.value.recommendedBetUnits)
+    }
+
+    @Test
+    fun `slightly negative true count does not trigger index zero plays`() {
+        val viewModel = createViewModel()
+        viewModel.onCardSeen(CardRank.KING) // RC -1
+        viewModel.setDecksRemaining(1.11) // -0.90
+
+        assertEquals(-0.9, viewModel.uiState.value.trueCount, 0.0001)
+        var hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        assertEquals("H", hard.rows.first { it.handLabel == "16" }.cells[8].action)
+        assertEquals("H", hard.rows.first { it.handLabel == "12" }.cells[2].action)
+
+        viewModel.setSurrenderRule(SurrenderRule.LATE)
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        assertEquals("H", hard.rows.first { it.handLabel == "15" }.cells[8].action)
+
+        viewModel.undoLastCard() // TC 0
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        assertEquals("Rh", hard.rows.first { it.handLabel == "15" }.cells[8].action)
+        viewModel.setSurrenderRule(SurrenderRule.NONE)
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        assertEquals("S", hard.rows.first { it.handLabel == "16" }.cells[8].action)
+        assertEquals("S", hard.rows.first { it.handLabel == "12" }.cells[2].action)
     }
 
     @Test
@@ -411,8 +487,8 @@ class CounterViewModelTest {
         viewModel.setCountingSystem(OmegaIICountingSystem.id)
 
         val rows = viewModel.uiState.value.strategyDeviationRows
-        assertTrue(rows.any { it.playLabel == "10 vs 10" && it.indexLabel == "Double at TC +7" })
-        assertTrue(rows.any { it.playLabel == "Insurance vs A" && it.indexLabel == "Take at TC +5" })
+        assertTrue(rows.any { it.playLabel == "10 vs 10" && it.indexLabel == "Double at TC +7.2" })
+        assertTrue(rows.any { it.playLabel == "Insurance vs A" && it.indexLabel == "Take at TC +5.4" })
     }
 
     @Test

@@ -145,10 +145,10 @@ class CounterCalculationsTest {
     @Test
     fun `calculateRecommendedBetUnits scales with true count`() {
         val ramp = listOf(
-            CountRampStep(minCountInclusive = 1, units = 2),
-            CountRampStep(minCountInclusive = 2, units = 4),
-            CountRampStep(minCountInclusive = 3, units = 8),
-            CountRampStep(minCountInclusive = 4, units = 12)
+            CountRampStep(minCountInclusive = 1.0, units = 2),
+            CountRampStep(minCountInclusive = 2.0, units = 4),
+            CountRampStep(minCountInclusive = 3.0, units = 8),
+            CountRampStep(minCountInclusive = 4.0, units = 12)
         )
         assertEquals(1, CounterCalculations.calculateRecommendedBetUnits(0.9, ramp = ramp))
         assertEquals(2, CounterCalculations.calculateRecommendedBetUnits(1.2, ramp = ramp))
@@ -160,10 +160,10 @@ class CounterCalculationsTest {
     @Test
     fun `calculateRecommendedBetUnits scales with running count for unbalanced systems`() {
         val ramp = listOf(
-            CountRampStep(minCountInclusive = -3, units = 2),
-            CountRampStep(minCountInclusive = 4, units = 4),
-            CountRampStep(minCountInclusive = 8, units = 8),
-            CountRampStep(minCountInclusive = 12, units = 12)
+            CountRampStep(minCountInclusive = -3.0, units = 2),
+            CountRampStep(minCountInclusive = 4.0, units = 4),
+            CountRampStep(minCountInclusive = 8.0, units = 8),
+            CountRampStep(minCountInclusive = 12.0, units = 12)
         )
         assertEquals(1, CounterCalculations.calculateRecommendedBetUnits(-3.1, ramp = ramp))
         assertEquals(2, CounterCalculations.calculateRecommendedBetUnits(-3.0, ramp = ramp))
@@ -173,13 +173,33 @@ class CounterCalculationsTest {
     }
 
     @Test
-    fun `integerizeTrueCount supports truncate floor and round`() {
-        assertEquals(3, CounterCalculations.integerizeTrueCount(3.9, TrueCountIntegerization.TRUNCATE))
-        assertEquals(-3, CounterCalculations.integerizeTrueCount(-3.9, TrueCountIntegerization.TRUNCATE))
-        assertEquals(3, CounterCalculations.integerizeTrueCount(3.9, TrueCountIntegerization.FLOOR))
-        assertEquals(-4, CounterCalculations.integerizeTrueCount(-3.1, TrueCountIntegerization.FLOOR))
-        assertEquals(4, CounterCalculations.integerizeTrueCount(3.6, TrueCountIntegerization.ROUND))
-        assertEquals(-4, CounterCalculations.integerizeTrueCount(-3.6, TrueCountIntegerization.ROUND))
+    fun `decisionTrueCount is the displayed one decimal true count`() {
+        assertEquals(3.9, CounterCalculations.decisionTrueCount(3.9024), 0.0)
+        assertEquals(3.6, CounterCalculations.decisionTrueCount(3.58), 0.0)
+        assertEquals(-3.6, CounterCalculations.decisionTrueCount(-3.58), 0.0)
+    }
+
+    @Test
+    fun `decisionTrueCount does not truncate negative counts toward zero`() {
+        // Truncation would make this 0 and trigger the index-0 plays at a negative count.
+        val minusPointNine = CounterCalculations.decisionTrueCount(-0.9)
+        assertEquals(-0.9, minusPointNine, 0.0)
+        assertTrue(minusPointNine < 0.0)
+        // A count that displays as 0.0 is 0.
+        assertEquals(0.0, CounterCalculations.decisionTrueCount(-0.04), 0.0)
+        assertTrue(CounterCalculations.decisionTrueCount(-0.04) >= 0.0)
+    }
+
+    @Test
+    fun `scaled ramp step triggers exactly at its one decimal threshold`() {
+        val ramp = listOf(
+            CountRampStep(minCountInclusive = 1.8, units = 2),
+            CountRampStep(minCountInclusive = 3.6, units = 4)
+        )
+        // RC 9 over 2.5 decks is exactly 3.6.
+        val atThreshold = CounterCalculations.decisionTrueCount(9.0 / 2.5)
+        assertEquals(4, CounterCalculations.calculateRecommendedBetUnits(atThreshold, ramp = ramp))
+        assertEquals(2, CounterCalculations.calculateRecommendedBetUnits(3.5, ramp = ramp))
     }
 
     @Test

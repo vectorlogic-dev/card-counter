@@ -1,7 +1,5 @@
 package com.vectorlogic.blackjackcounter.domain.model
-import kotlin.math.floor
 import kotlin.math.round
-import kotlin.math.roundToInt
 
 object CounterCalculations {
 
@@ -33,18 +31,22 @@ object CounterCalculations {
             usesTrueCount = usesTrueCount,
             minDecksRemaining = minDecksRemaining
         )
-        return roundToOneDecimal(raw)
+        return decisionTrueCount(raw)
     }
 
-    fun integerizeTrueCount(
-        rawTrueCount: Double,
-        method: TrueCountIntegerization
-    ): Int {
-        return when (method) {
-            TrueCountIntegerization.TRUNCATE -> rawTrueCount.toInt()
-            TrueCountIntegerization.FLOOR -> floor(rawTrueCount).toInt()
-            TrueCountIntegerization.ROUND -> rawTrueCount.roundToInt()
-        }
+    /**
+     * The true count the app shows and decides on (bet ramp, indices, edge): the raw true count
+     * rounded to one decimal. Scaled thresholds are kept to one decimal as well (see
+     * TrueCountScaling.toNativeThreshold), so a play triggers exactly when the displayed count
+     * reaches the threshold printed on the cheat sheet.
+     *
+     * Negative counts are not truncated toward zero. Truncation would read -0.9 as 0 and trigger
+     * the index-0 plays (16 vs 10 stand, 12 vs 4 stand, 15 vs 10 surrender) while the count is
+     * still negative. Here -0.9 stays below 0. For whole-number thresholds this is the same as
+     * flooring the displayed count, which is how most index references are applied.
+     */
+    fun decisionTrueCount(rawTrueCount: Double): Double {
+        return roundToOneDecimal(rawTrueCount)
     }
 
     fun calculateDeckPenetrationPercent(
@@ -145,6 +147,7 @@ object CounterCalculations {
         return roundToOneDecimal(houseEdge)
     }
 
+    /** [countValue] is decisionTrueCount for balanced systems and the running count otherwise. */
     fun calculateRecommendedBetUnits(
         countValue: Double,
         ramp: List<CountRampStep>,

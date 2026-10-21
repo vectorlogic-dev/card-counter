@@ -1,8 +1,12 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.data.counting.HiLoCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.HiOptIICountingSystem
+import com.vectorlogic.blackjackcounter.data.counting.OmegaIICountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.TrueCountScaling
+import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
+import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
 import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
@@ -90,15 +94,15 @@ class CounterStrategyEngineTest {
     fun `level two systems use scaled indices in the chart`() {
         val zenScale = TrueCountScaling.hiLoEquivalentScale(ZenCountSystem)
 
-        // Hi-Lo 10 vs 10 double at +4 becomes Zen +7.
-        assertEquals("H", hardCell(noSurrender, 10, 10, 6, zenScale).action)
-        assertEquals("D", hardCell(noSurrender, 10, 10, 7, zenScale).action)
-        // Hi-Lo 16 vs 9 stand at +5 becomes Zen +9.
-        assertEquals("H", hardCell(noSurrender, 16, 9, 8, zenScale).action)
-        assertEquals("S", hardCell(noSurrender, 16, 9, 9, zenScale).action)
-        // Hi-Lo 12 vs 5 hit below -2 becomes Zen -4.
-        assertEquals("S", hardCell(noSurrender, 12, 5, -4, zenScale).action)
-        assertEquals("H", hardCell(noSurrender, 12, 5, -5, zenScale).action)
+        // Hi-Lo 10 vs 10 double at +4 becomes Zen +7.2 (4 x 1.789 = 7.16).
+        assertEquals("H", hardCell(noSurrender, 10, 10, 7.1, zenScale).action)
+        assertEquals("D", hardCell(noSurrender, 10, 10, 7.2, zenScale).action)
+        // Hi-Lo 16 vs 9 stand at +5 becomes Zen +8.9.
+        assertEquals("H", hardCell(noSurrender, 16, 9, 8.8, zenScale).action)
+        assertEquals("S", hardCell(noSurrender, 16, 9, 8.9, zenScale).action)
+        // Hi-Lo 12 vs 5 hit below -2 becomes Zen -3.6.
+        assertEquals("S", hardCell(noSurrender, 12, 5, -3.6, zenScale).action)
+        assertEquals("H", hardCell(noSurrender, 12, 5, -3.7, zenScale).action)
     }
 
     @Test
@@ -106,18 +110,64 @@ class CounterStrategyEngineTest {
         val zenScale = TrueCountScaling.hiLoEquivalentScale(ZenCountSystem)
         val rows = rows(noSurrender, zenScale)
 
-        assertEquals("Take at TC +5", label(rows, "Insurance vs A"))
+        assertEquals("Take at TC +5.4", label(rows, "Insurance vs A"))
         assertEquals("Stand at TC 0+", label(rows, "16 vs 10"))
-        assertEquals("Stand at TC +7", label(rows, "15 vs 10"))
-        assertEquals("Double at TC +7", label(rows, "10 vs 10"))
-        assertEquals("Stand at TC +9", label(rows, "16 vs 9"))
-        assertEquals("Split at TC +9", label(rows, "10,10 vs 5"))
-        assertEquals("Hit below TC -4", label(rows, "12 vs 5"))
+        assertEquals("Stand at TC +7.2", label(rows, "15 vs 10"))
+        assertEquals("Double at TC +7.2", label(rows, "10 vs 10"))
+        assertEquals("Stand at TC +8.9", label(rows, "16 vs 9"))
+        assertEquals("Split at TC +8.9", label(rows, "10,10 vs 5"))
+        assertEquals("Hit below TC -3.6", label(rows, "12 vs 5"))
         assertEquals("Hit below TC 0", label(rows, "12 vs 4"))
 
         val hiOptRows = rows(noSurrender, TrueCountScaling.hiLoEquivalentScale(HiOptIICountingSystem))
-        assertEquals("Double at TC +7", label(hiOptRows, "10 vs 10"))
-        assertEquals("Stand at TC +3", label(hiOptRows, "12 vs 3"))
+        assertEquals("Double at TC +6.7", label(hiOptRows, "10 vs 10"))
+        assertEquals("Stand at TC +3.3", label(hiOptRows, "12 vs 3"))
+    }
+
+    @Test
+    fun `every deviation label is exactly where the chart changes`() {
+        val systems = listOf(
+            HiLoCountingSystem,
+            WongHalvesSystem,
+            HiOptIICountingSystem,
+            OmegaIICountingSystem,
+            ZenCountSystem
+        )
+        val thresholdPattern = Regex("""TC ([+-]?\d+(?:\.\d)?)""")
+        systems.forEach { system ->
+            val scale = TrueCountScaling.hiLoEquivalentScale(system)
+            listOf(noSurrender, lateSurrender).forEach { state ->
+                val indexRows = rows(state, scale).filter {
+                    it.playLabel != "Insurance vs A" && thresholdPattern.containsMatchIn(it.indexLabel)
+                }
+                assertTrue(indexRows.size >= 15)
+                indexRows.forEach { row ->
+                    val threshold = thresholdPattern.find(row.indexLabel)!!.groupValues[1].toDouble()
+                    val justBelow = CounterCalculations.roundToOneDecimal(threshold - 0.1)
+                    val context = "${system.displayName} ${state.tableRules.surrenderRule} ${row.playLabel} (${row.indexLabel})"
+                    assertTrue(
+                        context,
+                        cell(state, row.playLabel, threshold, scale).action !=
+                            cell(state, row.playLabel, justBelow, scale).action
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `index zero plays wait for a non negative true count`() {
+        // A raw -0.9 must not count as 0 (truncation would make it 0).
+        assertEquals("H", hardCell(noSurrender, 16, 10, -0.9).action)
+        assertEquals("S", hardCell(noSurrender, 16, 10, 0.0).action)
+        assertEquals("H", hardCell(noSurrender, 12, 4, -0.9).action)
+        assertTrue(hardCell(noSurrender, 12, 4, -0.9).isDeviation)
+        assertEquals("S", hardCell(noSurrender, 12, 4, 0.0).action)
+        assertEquals("H", hardCell(lateSurrender, 15, 10, -0.9).action)
+        assertEquals("Rh", hardCell(lateSurrender, 15, 10, 0.0).action)
+        // Hi-Lo -1 indices: -1.0 is at the index, -1.1 is below it.
+        assertEquals("S", hardCell(noSurrender, 13, 2, -1.0).action)
+        assertEquals("H", hardCell(noSurrender, 13, 2, -1.1).action)
     }
 
     @Test
@@ -152,16 +202,35 @@ class CounterStrategyEngineTest {
         dealer: Int,
         decisionTrueCount: Int,
         scale: Double = 1.0
+    ): StrategyTableCell = hardCell(state, hand, dealer, decisionTrueCount.toDouble(), scale)
+
+    private fun hardCell(
+        state: CounterSessionState,
+        hand: Int,
+        dealer: Int,
+        decisionTrueCount: Double,
+        scale: Double = 1.0
+    ): StrategyTableCell = cell(state, "$hand vs $dealer", decisionTrueCount, scale)
+
+    // playLabel as the deviation rows write it, e.g. "16 vs 10", "10,10 vs 5", "15 vs A".
+    private fun cell(
+        state: CounterSessionState,
+        playLabel: String,
+        decisionTrueCount: Double,
+        scale: Double
     ): StrategyTableCell {
+        val (hand, dealer) = playLabel.split(" vs ")
+        val dealerUpcard = if (dealer == "A") 11 else dealer.toInt()
         val chart = CounterStrategyEngine.buildStrategyChartModel(
             state = state,
-            trueCount = decisionTrueCount.toDouble(),
+            trueCount = decisionTrueCount,
             supportsTrueCount = true,
             decisionTrueCount = decisionTrueCount,
             trueCountScale = scale
         )
-        val row = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == hand.toString() }
-        return row.cells[dealer - 2]
+        val section = if ("," in hand) "Pairs" else "Hard Totals"
+        val row = chart.sections.first { it.title == section }.rows.first { it.handLabel == hand }
+        return row.cells[dealerUpcard - 2]
     }
 
     private fun rows(state: CounterSessionState, scale: Double): List<StrategyDeviationRow> {
