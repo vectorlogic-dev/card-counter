@@ -278,13 +278,24 @@ keyPassword=...
 Then run:
 
 ```bash
-scripts/publish-release.sh 1.0.0           # publish v1.0.0
-scripts/publish-release.sh 1.0.0 --draft   # stage without publishing
+scripts/publish-release.sh 1.1.0           # publish v1.1.0
+scripts/publish-release.sh 1.1.0 --draft   # stage without publishing
 ```
 
-Before running it, bump `versionName` and `versionCode` in `app/build.gradle.kts` and commit. The script stops before building if the version argument doesn't match `versionName`, if `versionCode` isn't higher than in the previous release tag (sideloaded installs couldn't upgrade), or if `gh` isn't authenticated.
+Gradle needs a JDK and the Android SDK. On macOS without a system JDK, use Android Studio's:
 
-It then runs `./gradlew clean testDebugUnitTest` and `./gradlew assembleRelease bundleRelease`, computes the APK SHA-256, opens release notes in `$EDITOR`, tags and pushes `v1.0.0`, and uploads the APK (and the AAB, if one was built) to the release.
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+```
+
+Before running it, bump `versionName` and `versionCode` in `app/build.gradle.kts`, add
+`fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` for F-Droid (500 characters max), update
+the Current Release section above, and commit and push `main`. The script stops before building if the version argument doesn't match `versionName`, if `versionCode` isn't higher than in the previous release tag (sideloaded installs couldn't upgrade), or if `gh` isn't authenticated.
+
+It then runs `./gradlew clean testDebugUnitTest` and `./gradlew assembleRelease bundleRelease`, computes the APK SHA-256, opens release notes in `$EDITOR`, tags and pushes `v1.1.0`, and uploads the APK (and the AAB, if one was built) to the release. To skip the editor, pass `NOTES_FILE=path/to/notes.md`; the script fills in `__VERSION__`, `__APK_NAME__` and `__SHA256__`. Keep the `APK SHA-256:` line in the notes, because the website reads it.
+
+After releasing, point `docs/website/` at the new version and see [docs/fdroid/README.md](docs/fdroid/README.md) for what F-Droid needs.
 
 ## Contributing
 
