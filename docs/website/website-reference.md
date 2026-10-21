@@ -1,7 +1,7 @@
 # Counting Edge — Website Reference
 
-Authoritative source document for building the marketing website.
-Keep this in sync with the Play Store listing and app strings.
+Authoritative source document for building the marketing website at **blackjackcounter.app**.
+Keep this in sync with the GitHub release metadata and app strings. Structured data lives in [`website-content.json`](./website-content.json).
 
 ---
 
@@ -13,7 +13,9 @@ Keep this in sync with the Play Store listing and app strings.
 | Short name | Counting Edge |
 | Package | `com.vectorlogic.blackjackcounter` |
 | Developer | vectorlogic |
-| Platform | Android (Google Play) |
+| Platform | Android (direct APK, not Google Play) |
+| Source | [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter) · Apache 2.0 |
+| Latest release | [v1.0.0](https://github.com/vectorlogic-dev/card-counter/releases/latest) |
 | Category | Card Games / Casino / Training Tools |
 
 ---
@@ -190,7 +192,8 @@ A "unit" is your own base bet amount — the app teaches you *when* to size up, 
 ### Hero Section
 **Headline:** Count every card. Win every edge.
 **Subhead:** The only card-counting trainer with 7 professional systems, a live true-count engine, and full table-rules support — all free, all on one screen.
-**CTA:** Get it on Google Play
+**Primary CTA:** Download APK — Android → `https://github.com/vectorlogic-dev/card-counter/releases/latest`
+**Secondary CTA:** View on GitHub → `https://github.com/vectorlogic-dev/card-counter`
 
 ### Features Section Header
 **Headline:** Everything a serious counter needs
@@ -257,12 +260,31 @@ A: Level 1 systems (Hi-Lo, KO, ReKO) use simple ±1 tag values and are the easie
 
 ---
 
-## 14. Play Store Metadata Targets
+## 14. Distribution & Download
 
-| Field | Target |
-|-------|--------|
-| Short description (80 chars) | "Live card counting with 7 systems, true count, and table rules." |
-| Full description | Use sections 3 + 4 + 8 above, ~3000 chars |
-| Category | Card |
+| Field | Value |
+|-------|-------|
+| Channel | Direct APK |
+| Primary host | `https://blackjackcounter.app` (download CTA points at the latest GitHub Release asset) |
+| Mirror | `https://github.com/vectorlogic-dev/card-counter/releases/latest` |
+| Latest version | `v1.0.0` |
+| APK filename | `CountingEdge-<version>.apk` |
+| APK integrity | Each release notes file publishes the SHA-256; the site should surface it next to the download button |
+| Signing | PKCS12 keystore, self-signed. Signing certificate SHA-256: `69:B1:04:CB:37:BC:E3:1E:B6:11:71:08:D3:7E:A4:2F:57:3F:1C:9B:44:45:3A:23:2E:25:9D:69:91:83:39:8E` |
+| License | Apache-2.0 |
+| Min Android | 7.0 (API 24) |
 | Content rating | Everyone |
-| Target SDK | Current Android release |
+
+**Install guidance (place near the download button):**
+
+> Download the APK, then open it on your Android device. The first time you install from your browser (or file manager), Android asks whether to allow installs from this source — tap allow for that one app. Updates install over the top; app data is preserved.
+
+### Fetching the latest release
+
+The site should pull the latest release metadata from the GitHub API at build time (or client-side) so the download button always points at the newest APK without a manual bump:
+
+```
+GET https://api.github.com/repos/vectorlogic-dev/card-counter/releases/latest
+```
+
+Use `assets[].name == "CountingEdge-<version>.apk"` for the direct download URL, `tag_name` for the version label, and the release body for the changelog excerpt. Fall back to the raw `/releases/latest` HTML URL if the API call fails or is rate-limited.

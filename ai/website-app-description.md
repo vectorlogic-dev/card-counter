@@ -36,6 +36,9 @@ Everything runs locally on the device. The app does not create accounts, does no
 - **Undo + recent cards panel** — Recover from mistaps without resetting the shoe.
 - **Full-screen Strategy Chart** — Basic strategy and count-based deviations in one place.
 - **Cheat Sheet overlay** — Toggle common deviations over the counter screen.
+- **Session resume** — Running count, shoe depth, selected system, and table rules survive app restarts. All stored locally.
+- **Drill Mode** — Timed running-count practice. Pick length (26/52/78 cards) and speed, watch cards flash, enter the final count, scored exact / off-by-N.
+- **Open source** — Apache 2.0, source at [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter). Anyone can audit, fork, or contribute.
 - **No login, no ads, no telemetry** — Everything runs on the device. Nothing is sent anywhere.
 
 ## Who it's for
@@ -66,6 +69,8 @@ Not a gambling app. The app does not take bets, does not connect to any casino o
 - **Primary:** Download APK from [blackjackcounter.app](https://blackjackcounter.app).
 - **Mirror:** [github.com/vectorlogic-dev/card-counter/releases](https://github.com/vectorlogic-dev/card-counter/releases).
 - **Source:** [github.com/vectorlogic-dev/card-counter](https://github.com/vectorlogic-dev/card-counter)
+
+The site should pull the latest APK URL from the GitHub Releases API so the Download button never needs a manual bump — see [`docs/website/website-reference.md`](../docs/website/website-reference.md) §14 for the exact endpoint and fallback.
 
 ## Taglines (pick one)
 

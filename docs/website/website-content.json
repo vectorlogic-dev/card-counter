@@ -5,11 +5,14 @@
     "packageId": "com.vectorlogic.blackjackcounter",
     "developer": "vectorlogic",
     "platform": "Android",
-    "store": "Google Play",
+    "distribution": "Direct APK (website + GitHub Releases)",
+    "sourceRepo": "https://github.com/vectorlogic-dev/card-counter",
+    "license": "Apache-2.0",
     "category": "Card Games / Casino / Training Tools",
-    "versionName": "1.0.0-closed-testing.1",
-    "versionCode": 8,
-    "releaseChannel": "Closed testing",
+    "versionName": "1.0.0",
+    "versionCode": 9,
+    "releaseChannel": "Stable",
+    "latestReleaseUrl": "https://github.com/vectorlogic-dev/card-counter/releases/latest",
     "minSdk": 24,
     "compileSdk": 36,
     "targetSdk": 36
@@ -23,7 +26,7 @@
     ]
   },
   "descriptions": {
-    "shortPlayStore": "Live card counting with 7 systems, true count, and table rules.",
+    "shortTag": "Live card counting with 7 systems, true count, and table rules.",
     "oneParagraph": "Counting Edge is a live blackjack card-counting trainer for Android. Tap card ranks as they fall, and the app tracks your running count, true count, player edge, and bet recommendation in real time. Seven professional counting systems — from beginner-friendly Hi-Lo to advanced Wong Halves — all rule-aware and calibrated to the exact table conditions you set. One screen. No subscriptions. No ads.",
     "summary": "An Android Jetpack Compose training app for live blackjack card-count practice. Supports 7 counting systems, rule-aware strategy guidance, and a compact one-screen workflow."
   },
@@ -50,7 +53,14 @@
       "Recent cards history (last 12–15 cards visible)",
       "One-tap Undo for correcting a missed or wrong card tap",
       "Reset returns shoe and count to starting state",
-      "KO / ReKO reset returns to the deck-specific Initial Running Count (IRC), not zero"
+      "KO / ReKO reset returns to the deck-specific Initial Running Count (IRC), not zero",
+      "Session resume — running count, shoe depth, selected system, and table rules survive app restarts (stored locally)"
+    ],
+    "drillMode": [
+      "Timed running-count practice from the Menu",
+      "Pick length (26 / 52 / 78 cards) and speed (Slow / Medium / Fast)",
+      "Cards flash one at a time; enter the final running count when done",
+      "Scored exact / off-by-N against the active counting system"
     ]
   },
   "countingSystems": [
@@ -108,9 +118,11 @@
     "7 systems in one app — most competitors offer 1–2",
     "Full table rules engine — affects both strategy display and edge calculation",
     "Strategy deviations tied to live count — not just a static chart",
-    "No subscriptions, no ads, no locked systems — all features available on install",
+    "No subscriptions, no ads, no locked systems, no tracking — all features available on install",
+    "Open source (Apache 2.0) and installed as a direct APK — nothing is sent off your device",
     "Compact one-screen workflow — count + bet + shoe controls all visible without scrolling",
-    "KO / ReKO with proper IRC — unbalanced systems reset to their deck-specific starting count, not 0"
+    "KO / ReKO with proper IRC — unbalanced systems reset to their deck-specific starting count, not 0",
+    "Timed Drill Mode — practice running-count accuracy against the clock, scored against your current system"
   ],
   "audience": {
     "primary": "Aspiring and active card counters who train seriously between sessions.",
@@ -122,7 +134,7 @@
     "ui": "Jetpack Compose",
     "designSystem": "Material 3",
     "architecture": "MVVM (ViewModel + StateFlow)",
-    "state": "Local, in-memory only (no backend, no database, no persistence across restarts)",
+    "state": "Local only — SharedPreferences for session resume (shoe depth, running count, selected system, table rules). No backend, no database, no network calls.",
     "buildSystem": "Gradle (Kotlin DSL)",
     "minJdk": 11
   },
@@ -150,7 +162,9 @@
     "hero": {
       "headline": "Count every card. Win every edge.",
       "subhead": "The only card-counting trainer with 7 professional systems, a live true-count engine, and full table-rules support — all free, all on one screen.",
-      "cta": "Get it on Google Play"
+      "cta": "Download APK — Android",
+      "ctaSecondary": "View on GitHub",
+      "ctaUrl": "https://github.com/vectorlogic-dev/card-counter/releases/latest"
     },
     "features": {
       "headline": "Everything a serious counter needs",
@@ -167,7 +181,9 @@
     "footerDisclaimer": "Counting Edge is a training tool for educational purposes. It is not gambling advice, and it does not guarantee casino winnings. Play responsibly."
   },
   "faq": [
-    { "question": "Is Counting Edge free?", "answer": "Yes. All 7 counting systems, the full strategy chart, and every feature are available on install — no in-app purchases, no subscription, no ads." },
+    { "question": "Is Counting Edge free?", "answer": "Yes, completely. The app is open source (Apache 2.0) and distributed as a direct APK download. All 7 counting systems, the full strategy chart, drill mode, and every feature are available on install — no in-app purchases, no subscription, no ads, no tracking." },
+    { "question": "How do I install the APK?", "answer": "Download the APK from the website or GitHub Releases, open it on your Android device, and when Android asks whether to allow install from an unknown source, say yes for your browser or file manager. The APK is signed, verifiable with the SHA-256 published alongside each release." },
+    { "question": "Why not Google Play?", "answer": "Direct distribution lets us ship updates immediately without review cycles, keep the app fully free with no store fees, and keep source code and build process open for anyone to audit." },
     { "question": "Which counting system should I start with?", "answer": "Hi-Lo is the standard starting point. It's balanced, level 1, and the most widely documented system. You can switch to KO or ReKO if you want to skip true count conversion. Advanced systems like Hi-Opt II and Wong Halves are there when you're ready." },
     { "question": "What does 'true count' mean?", "answer": "The true count is the running count divided by the estimated number of decks remaining. It normalizes the count across different shoe sizes, making your edge estimate more accurate. Unbalanced systems like KO don't require true count conversion by design." },
     { "question": "Is this legal to use in a casino?", "answer": "Card counting by itself is not illegal. Using software or devices at the table violates casino rules in most jurisdictions. Counting Edge is a training tool — use it to practice, not at the table." },
@@ -212,8 +228,10 @@
     "Bet ramp with active dots lit"
   ],
   "links": {
-    "repo": null,
-    "playStore": null,
+    "repo": "https://github.com/vectorlogic-dev/card-counter",
+    "latestRelease": "https://github.com/vectorlogic-dev/card-counter/releases/latest",
+    "allReleases": "https://github.com/vectorlogic-dev/card-counter/releases",
+    "issues": "https://github.com/vectorlogic-dev/card-counter/issues",
     "privacyPolicy": "../privacy-policy.md",
     "websiteReference": "./website-reference.md"
   }
