@@ -66,6 +66,11 @@ android {
         compose = true
         buildConfig = true
     }
+    // F-Droid rejects the dependency block AGP encrypts with Google's key into the APK signature.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {

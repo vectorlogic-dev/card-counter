@@ -1,0 +1,7 @@
+* Undo sits beside the count pad, with the last few cards next to it
+* Two-pane layout in landscape
+* Strategy Chart: a distinct colour per action and a legend
+* Bet ramp shows each step's unit count
+* Switching systems mid-shoe recounts the cards already seen and says so
+* Fixes to level-2 true-count thresholds, surrender and undo
+* Cheat Sheet and Help scroll and highlight the plays that apply now

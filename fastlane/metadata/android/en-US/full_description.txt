@@ -1,0 +1,35 @@
+<p>Counting Edge is a training aid for learning to count cards in blackjack. Pick a counting system, set the shoe and the table rules, and tap cards as they are dealt. The running count, true count, estimated edge and a bet recommendation stay on one screen.</p>
+
+<p><b>Seven counting systems, all free</b></p>
+<ul>
+<li>Balanced: Hi-Lo, Hi-Opt II, Omega II, Zen Count, Wong Halves</li>
+<li>Unbalanced: KO and ReKO, which reset to the right initial running count for the number of decks</li>
+<li>Ace side count for Hi-Opt II and Omega II</li>
+<li>Switching systems mid-shoe recounts the cards already seen</li>
+</ul>
+
+<p><b>Live metrics</b></p>
+<ul>
+<li>Running count, true count, estimated edge and penetration</li>
+<li>1, 2, 4, 6 or 8 deck shoes with a decks-remaining slider</li>
+<li>Bet recommendation on a 1-2-4-8-12 unit ramp, scaled to each system</li>
+</ul>
+
+<p><b>Strategy that follows the table rules</b></p>
+<ul>
+<li>Set dealer S17 or H17, double after split, surrender and split limits</li>
+<li>Full-screen Strategy Chart with basic strategy and count-based deviations at the current count</li>
+<li>Cheat Sheet overlay for commonly missed plays</li>
+</ul>
+
+<p><b>Practice tools</b></p>
+<ul>
+<li>Drill Mode: watch 26, 52 or 78 cards flash past, then enter the final count</li>
+<li>Undo and a recent-cards list for mistaps</li>
+<li>Your session is saved on the device and restored when you reopen the app</li>
+</ul>
+
+<p><b>Private by design</b></p>
+<p>No account, no ads, no analytics and no Android permissions, not even internet access. Everything stays on your device.</p>
+
+<p>Counting Edge is for education and practice. It does not take bets, connect to any casino or pay out anything.</p>
