@@ -1,7 +1,9 @@
-* Undo sits beside the count pad, with the last few cards next to it
+* New app icon
+* Undo beside the count pad, with the last few cards next to it
 * Two-pane layout in landscape
-* Strategy Chart: a distinct colour per action and a legend
+* Strategy Chart: a colour per action and a legend
+* Full H17 strategy: double soft 19 vs 6; with surrender, surrender 15, 17 and 8,8 vs A
 * Bet ramp shows each step's unit count
-* Switching systems mid-shoe recounts the cards already seen and says so
-* Fixes to level-2 true-count thresholds, surrender and undo
-* Cheat Sheet and Help scroll and highlight the plays that apply now
+* Switching systems mid-shoe recounts the cards seen
+* Fixes to level-2 thresholds, surrender and undo
+* Cheat Sheet and Help scroll and highlight plays that apply now

@@ -4,8 +4,8 @@ Counting Edge: Card Counter is a Jetpack Compose training app for live card-coun
 It supports multiple counting systems, rule-aware strategy guidance, and a compact one-screen workflow.
 
 ## Current Release
-- Version: `1.0.0`
-- Version code: `9`
+- Version: `1.1.0`
+- Version code: `10`
 - Distribution: [GitHub Releases](https://github.com/vectorlogic-dev/card-counter/releases) + [blackjackcounter.app](https://blackjackcounter.app)
 - Website: [blackjackcounter.app](https://blackjackcounter.app)
 
