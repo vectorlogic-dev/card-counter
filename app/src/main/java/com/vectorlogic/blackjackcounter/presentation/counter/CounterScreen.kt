@@ -16,16 +16,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.vectorlogic.blackjackcounter.presentation.counter.components.StrategyChartFullScreen
 import com.vectorlogic.blackjackcounter.presentation.counter.components.SystemSelector
 import com.vectorlogic.blackjackcounter.presentation.counter.components.TableRulesDialogContent
+import com.vectorlogic.blackjackcounter.presentation.drill.DrillDialog
 
 @Composable
-fun CounterScreen() {
+fun CounterScreen(
+    persister: SessionPersister? = null
+) {
     val viewModel: CounterViewModel = viewModel(
-        factory = remember { CounterViewModel.provideFactory() }
+        factory = remember(persister) { CounterViewModel.provideFactory(persister) }
     )
     val state by viewModel.uiState.collectAsState()
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -33,6 +37,7 @@ fun CounterScreen() {
     var showRulesDialog by rememberSaveable { mutableStateOf(false) }
     var showHelpDialog by rememberSaveable { mutableStateOf(false) }
     var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
+    var showDrillDialog by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier
@@ -63,8 +68,16 @@ fun CounterScreen() {
             onCardSelected = viewModel::onCardSeen,
             onFaceCardsSelected = viewModel::onFaceCardsSeen,
             onUndo = viewModel::undoLastCard,
-            onStrategyChartClick = { showStrategyChartDialog = true }
+            onStrategyChartClick = { showStrategyChartDialog = true },
+            onDrillClick = { showDrillDialog = true }
         )
+
+        if (showDrillDialog) {
+            DrillDialog(
+                system = viewModel.activeCountingSystem(),
+                onDismiss = { showDrillDialog = false }
+            )
+        }
 
         if (showSystemSelector) {
             CounterAlertDialog(

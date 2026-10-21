@@ -61,6 +61,7 @@ fun CounterScreenContent(
     onFaceCardsSelected: () -> Unit,
     onUndo: () -> Unit,
     onStrategyChartClick: () -> Unit,
+    onDrillClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(
@@ -100,6 +101,7 @@ fun CounterScreenContent(
                 onTableRulesClick = onTableRulesClick,
                 onResetClick = onResetClick,
                 onToggleCheatSheet = onToggleCheatSheet,
+                onDrillClick = onDrillClick,
                 showCheatSheet = state.showCheatSheet,
                 compact = compactLayout
             )
@@ -219,6 +221,7 @@ private fun CounterHeader(
     onTableRulesClick: () -> Unit,
     onResetClick: () -> Unit,
     onToggleCheatSheet: () -> Unit,
+    onDrillClick: () -> Unit,
     showCheatSheet: Boolean,
     compact: Boolean
 ) {
@@ -304,6 +307,13 @@ private fun CounterHeader(
                         text = { Text(if (showCheatSheet) "Hide Cheat Sheet" else "Show Cheat Sheet") },
                         onClick = {
                             onToggleCheatSheet()
+                            onMenuExpandedChange(false)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Drill Mode") },
+                        onClick = {
+                            onDrillClick()
                             onMenuExpandedChange(false)
                         }
                     )
