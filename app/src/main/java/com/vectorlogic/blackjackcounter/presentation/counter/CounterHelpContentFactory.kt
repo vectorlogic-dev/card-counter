@@ -14,6 +14,9 @@ import com.vectorlogic.blackjackcounter.domain.model.TableRules
 
 object CounterHelpContentFactory {
 
+    // Help no longer shows basicStrategySections or buildSplitDeviationSections: the static prose
+    // disagreed with the rule- and count-aware Strategy Table and cheat sheet, so the dialog points
+    // to those instead. Both stay only because CounterViewModel still exposes them; remove together.
     val basicStrategySections: List<StrategyChartSection> = listOf(
         StrategyChartSection(
             title = "Hard Totals",

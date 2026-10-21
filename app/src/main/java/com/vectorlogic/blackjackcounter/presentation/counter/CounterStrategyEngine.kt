@@ -99,13 +99,15 @@ object CounterStrategyEngine {
                 keyCount?.let {
                     StrategyDeviationRow(
                         playLabel = "Key Count (${state.totalDecks}D)",
-                        indexLabel = "RC $it"
+                        indexLabel = "RC $it",
+                        trigger = DeviationTrigger(threshold = it.toDouble())
                     )
                 },
                 pivot?.let {
                     StrategyDeviationRow(
                         playLabel = "Pivot (${state.totalDecks}D)",
-                        indexLabel = "RC $it"
+                        indexLabel = "RC $it",
+                        trigger = DeviationTrigger(threshold = it.toDouble())
                     )
                 }
             )
@@ -115,19 +117,27 @@ object CounterStrategyEngine {
         val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
         val insuranceRow = StrategyDeviationRow(
             playLabel = "Insurance vs A",
-            indexLabel = "Take at TC ${formatAtOrAbove(nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale))}"
+            indexLabel = "Take at TC ${formatAtOrAbove(nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale))}",
+            trigger = DeviationTrigger(threshold = nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale).toDouble())
         )
         val playRows = playIndices.mapNotNull { index ->
-            val baseIsSurrender = surrenderAllowed && getBaseAction(
+            val baseAction = getBaseAction(
                 handType = index.handType,
                 handValue = index.handValue,
                 dealerUpcard = index.dealerUpcard,
                 rules = rules
-            ).startsWith("R")
+            )
             when {
                 // Surrender takes precedence, so the surrender index row covers this hand.
                 surrenderAllowed && surrenderIndices.any { it.sameHandAs(index) } -> null
-                baseIsSurrender -> StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "Surrender (any TC)")
+                surrenderAllowed && baseAction.startsWith("R") ->
+                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "Surrender (any TC)")
+                // The chart never shows a double the table forbids (e.g. 10 vs 10 without a peek on 10).
+                index.isBlockedBy(rules) ->
+                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "No double (rules)")
+                // Basic strategy already makes this play at every count (11 vs A under H17).
+                baseAction == index.action ->
+                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "${index.verb()} (any TC)")
                 else -> index.toRow(trueCountScale)
             }
         }
@@ -331,6 +341,24 @@ object CounterStrategyEngine {
         }
     }
 
+    // Same threshold and direction as isTriggered, for the cheat sheet to highlight the row.
+    private fun CountIndex.trigger(trueCountScale: Double): DeviationTrigger {
+        return DeviationTrigger(
+            threshold = nativeIndex(hiLoIndex, trueCountScale).toDouble(),
+            atOrAbove = direction == IndexDirection.AT_OR_ABOVE
+        )
+    }
+
+    private fun CountIndex.isBlockedBy(rules: TableRules): Boolean {
+        return applyRuleAdjustments(
+            action = action,
+            handType = handType,
+            handValue = handValue,
+            dealerUpcard = dealerUpcard,
+            rules = rules
+        ) != action
+    }
+
     private fun String.withoutSurrender(): String {
         return if (startsWith("R")) drop(1).uppercase() else this
     }
@@ -361,20 +389,25 @@ object CounterStrategyEngine {
         return handType == other.handType && handValue == other.handValue && dealerUpcard == other.dealerUpcard
     }
 
+    private fun CountIndex.verb(): String = when {
+        action.startsWith("R") -> "Surrender"
+        action == "S" -> "Stand"
+        action == "H" -> "Hit"
+        action == "P" -> "Split"
+        else -> "Double"
+    }
+
     private fun CountIndex.toRow(trueCountScale: Double): StrategyDeviationRow {
         val nativeIndex = nativeIndex(hiLoIndex, trueCountScale)
-        val verb = when {
-            action.startsWith("R") -> "Surrender"
-            action == "S" -> "Stand"
-            action == "H" -> "Hit"
-            action == "P" -> "Split"
-            else -> "Double"
-        }
         val threshold = when (direction) {
             IndexDirection.AT_OR_ABOVE -> "at TC ${formatAtOrAbove(nativeIndex)}"
             IndexDirection.BELOW -> "below TC ${formatSigned(nativeIndex)}"
         }
-        return StrategyDeviationRow(playLabel = handLabel(), indexLabel = "$verb $threshold")
+        return StrategyDeviationRow(
+            playLabel = handLabel(),
+            indexLabel = "${verb()} $threshold",
+            trigger = trigger(trueCountScale)
+        )
     }
 
     private enum class IndexDirection {

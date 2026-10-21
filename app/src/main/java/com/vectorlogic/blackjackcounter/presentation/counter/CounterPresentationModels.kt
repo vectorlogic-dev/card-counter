@@ -11,8 +11,23 @@ data class CheatSheetRow(
 
 data class StrategyDeviationRow(
     val playLabel: String,
-    val indexLabel: String
-)
+    val indexLabel: String,
+    // Null when the row doesn't depend on the count (e.g. basic-strategy surrender, or a play the
+    // table rules don't allow).
+    val trigger: DeviationTrigger? = null
+) {
+    fun isActiveAt(decisionCount: Double): Boolean = trigger?.isMetBy(decisionCount) ?: false
+}
+
+/** The count (native TC, or RC for running-count systems) at which a deviation row applies. */
+data class DeviationTrigger(
+    val threshold: Double,
+    val atOrAbove: Boolean = true
+) {
+    fun isMetBy(decisionCount: Double): Boolean {
+        return if (atOrAbove) decisionCount >= threshold else decisionCount < threshold
+    }
+}
 
 data class CountingSystemOption(
     val id: String,
