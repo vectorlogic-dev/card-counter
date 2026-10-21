@@ -34,9 +34,10 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 7. Use extras as needed:
    - `Help` for system explanations, tag values, and charts
    - `Menu` -> `Show/Hide Cheat Sheet`
-   - `Strategy Chart` button for full-screen basic strategy + deviations
+   - `Strategy Table` button for full-screen basic strategy + deviations (system back returns to the counter)
    - `Recent Cards` panel + `Undo` for correcting missed taps
-   - `Reset Count` to reset shoe depth and count state
+   - `Reset Count` to reset shoe depth and count state (asks to confirm when there are cards or shoe progress to lose)
+   - `Menu` -> `Drill Mode` for timed running-count practice
    - For `KO` / `ReKO`, reset returns to the deck-specific initial running count (IRC)
 
 ## Bet Units Explained
@@ -98,7 +99,7 @@ All counting systems are available in the app at no extra cost.
 - Header (floating, no card):
   - Current system name in gold
   - Info icon -> Help dialog
-  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet
+  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet, Drill Mode
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
@@ -114,9 +115,17 @@ All counting systems are available in the app at no extra cost.
 - Card input (2 rows, each button shows rank + tag value):
   - `A`, `2`, `3`, `4`, `5`
   - `6`, `7`, `8`, `9`, `10-K`
+  - Every tap gives a haptic tick, and the screen stays awake while the counter is visible
 - Bottom actions:
-  - Recent Cards panel with badge chips + Undo (item count adapts for compact layouts)
-  - Reset Count and Strategy Chart (full-screen table)
+  - Recent Cards panel with badge chips + Undo (item count adapts for compact layouts; tens show as `10-K`)
+  - Reset (with confirmation) and Strategy Table (full-screen table)
+
+## Drill Mode
+- Open from `Menu` -> `Drill Mode`; drills use the currently selected counting system
+- Pick a length (half deck / one deck / 1.5 decks) and a speed (Slow / Medium / Fast)
+- Cards are dealt from a shuffled real shoe, so a one-deck drill is an actual deck (Hi-Lo nets `0`)
+- Enter your final running count (a `±` toggle covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
+- A drill in progress survives rotation and isn't cancelled by an accidental outside tap
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`
@@ -160,7 +169,7 @@ It is a simplified training estimate.
 - Material 3
 - MVVM (`ViewModel` + `StateFlow`)
 - Local state only (no backend, no database)
-- Current gameplay/session state is in-memory only and is not restored after app restart
+- Session state (running count, shoe depth, recent cards, selected system, table rules) is saved to on-device SharedPreferences and restored on the next launch; it is excluded from cloud backup and device transfer
 
 ## Requirements
 - Android Studio (latest stable recommended)

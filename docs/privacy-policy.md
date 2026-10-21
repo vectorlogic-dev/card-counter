@@ -1,6 +1,6 @@
 # Privacy Policy for Counting Edge: Card Counter
 
-Effective date: March 25, 2026
+Effective date: October 21, 2026
 
 Counting Edge: Card Counter ("the app") is provided by the developer of this app ("we", "us", "our"). This Privacy Policy explains how data is handled when you use the app.
 
@@ -8,7 +8,7 @@ Counting Edge: Card Counter ("the app") is provided by the developer of this app
 
 - The app does not require account creation.
 - The app does not run its own backend server.
-- Core app usage is local to your device while the app is open.
+- Core app usage is local to your device. Session data is stored only on your device.
 
 ## Data We Handle
 
@@ -18,14 +18,13 @@ Counting Edge: Card Counter ("the app") is provided by the developer of this app
 
 ### Data stored on device
 
-The current app build does not intentionally persist gameplay session state between app launches.
-During use, session data lives in app memory so features work as expected, such as:
+The app saves your current session on your device (in Android's app-private SharedPreferences storage) so it can resume where you left off after the app is closed or restarted. This includes:
 
-- Running count and shoe state
+- Running count, shoe state, and the recent cards you entered
 - Selected table rules
-- Selected counting system and UI preferences
+- Selected counting system
 
-If a future version adds on-device persistence, this policy will be updated to reflect that change.
+This data never leaves your device. It is excluded from Android cloud backup and device-to-device transfer.
 We do not operate a remote database for this data.
 
 ## How Data Is Used
@@ -33,7 +32,7 @@ We do not operate a remote database for this data.
 Data is used to:
 
 - provide card-counting training functionality
-- maintain the current in-app session while the app is open
+- maintain your current session, including resuming it after an app restart
 - render strategy guidance and related UI state locally on device
 
 ## Data Sharing
@@ -42,7 +41,7 @@ We do not sell your personal information. We do not run a backend service that s
 
 ## Data Retention
 
-Session data is primarily held in app memory during use and is not intentionally restored after an app restart in the current build. You can still clear app data or uninstall the app to remove any local app data Android may retain.
+Session data stays on your device until you reset it in the app, clear the app's data in Android settings, or uninstall the app. Reset clears the count and shoe state but keeps your selected system and table rules; clearing app data or uninstalling removes everything.
 
 ## Security
 
