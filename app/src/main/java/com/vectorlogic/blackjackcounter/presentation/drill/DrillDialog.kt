@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,9 +20,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,31 +45,54 @@ import kotlin.math.roundToInt
 
 private enum class DrillPhase { SETUP, COUNTDOWN, RUNNING, INPUT, RESULT }
 
+private val CardListSaver: Saver<List<CardRank>, Any> = listSaver(
+    save = { cards -> cards.map { it.ordinal } },
+    restore = { ordinals -> ordinals.map { CardRank.entries[it] } }
+)
+
 @Composable
 fun DrillDialog(
     system: CountingSystem,
     onDismiss: () -> Unit
 ) {
-    var phase by remember { mutableStateOf(DrillPhase.SETUP) }
-    var config by remember { mutableStateOf(DrillConfig()) }
-    var cards by remember { mutableStateOf<List<CardRank>>(emptyList()) }
-    var currentIndex by remember { mutableStateOf(0) }
-    var countdownValue by remember { mutableStateOf(3) }
-    var startedAtMs by remember { mutableStateOf(0L) }
-    var elapsedMs by remember { mutableStateOf(0L) }
-    var userInput by remember { mutableStateOf("") }
-    var result by remember { mutableStateOf<DrillResult?>(null) }
+    // Everything is saveable so a rotation resumes the drill where it was instead of
+    // dropping back to SETUP (the dialog itself is reopened from saved state).
+    var phase by rememberSaveable { mutableStateOf(DrillPhase.SETUP) }
+    var drillSize by rememberSaveable { mutableStateOf(DrillConfig().size) }
+    var drillSpeed by rememberSaveable { mutableStateOf(DrillConfig().speed) }
+    val config = DrillConfig(size = drillSize, speed = drillSpeed)
+    var cards by rememberSaveable(stateSaver = CardListSaver) { mutableStateOf(emptyList()) }
+    var currentIndex by rememberSaveable { mutableIntStateOf(0) }
+    var countdownValue by rememberSaveable { mutableIntStateOf(3) }
+    var startedAtMs by rememberSaveable { mutableLongStateOf(0L) }
+    var elapsedMs by rememberSaveable { mutableLongStateOf(0L) }
+    var userInput by rememberSaveable { mutableStateOf("") }
+    var submittedCount by rememberSaveable { mutableStateOf<Double?>(null) }
 
-    val scope = rememberCoroutineScope()
+    val result = submittedCount?.let { reported ->
+        DrillResult(
+            actualRunningCount = DrillEngine.runningCountFor(system, cards),
+            userReportedCount = reported,
+            cards = cards,
+            elapsedMs = elapsedMs,
+            systemDisplayName = system.displayName
+        )
+    }
+    val drillInProgress = phase == DrillPhase.COUNTDOWN || phase == DrillPhase.RUNNING
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        // A stray tap outside the dialog shouldn't throw away a drill mid-run;
+        // the Close button still ends it on purpose.
+        onDismissRequest = { if (!drillInProgress) onDismiss() },
         title = { Text("Drill mode — ${system.displayName}") },
         text = {
             when (phase) {
                 DrillPhase.SETUP -> SetupContent(
                     config = config,
-                    onConfigChanged = { config = it }
+                    onConfigChanged = {
+                        drillSize = it.size
+                        drillSpeed = it.speed
+                    }
                 )
                 DrillPhase.COUNTDOWN -> CountdownContent(value = countdownValue)
                 DrillPhase.RUNNING -> RunningContent(
@@ -87,20 +114,13 @@ fun DrillDialog(
                     currentIndex = 0
                     countdownValue = 3
                     userInput = ""
-                    result = null
+                    submittedCount = null
                     phase = DrillPhase.COUNTDOWN
                 }) { Text("Start") }
                 DrillPhase.INPUT -> Button(
                     enabled = userInput.toDoubleOrNull() != null,
                     onClick = {
-                        val parsed = userInput.toDouble()
-                        result = DrillResult(
-                            actualRunningCount = DrillEngine.runningCountFor(system, cards),
-                            userReportedCount = parsed,
-                            cards = cards,
-                            elapsedMs = elapsedMs,
-                            systemDisplayName = system.displayName
-                        )
+                        submittedCount = userInput.toDouble()
                         phase = DrillPhase.RESULT
                     }
                 ) { Text("Submit") }
@@ -223,13 +243,23 @@ private fun RunningContent(rank: CardRank?, index: Int, total: Int) {
 private fun InputContent(userInput: String, onUserInputChanged: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("What was the final running count?", style = MaterialTheme.typography.bodyMedium)
-        OutlinedTextField(
-            value = userInput,
-            onValueChange = { input -> onUserInputChanged(input.filter { it.isDigit() || it == '-' || it == '.' }) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            // Some number keyboards have no '-' key, and many answers are negative.
+            FilledTonalButton(onClick = { onUserInputChanged(toggleSign(userInput)) }) {
+                Text("±", style = MaterialTheme.typography.titleMedium)
+            }
+            OutlinedTextField(
+                value = userInput,
+                onValueChange = { input -> onUserInputChanged(input.filter { it.isDigit() || it == '-' || it == '.' }) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -292,6 +322,9 @@ private fun CardRank.toDrillLabel(): String = when (this) {
     CardRank.KING -> "K"
     CardRank.ACE -> "A"
 }
+
+private fun toggleSign(input: String): String =
+    if (input.startsWith("-")) input.removePrefix("-") else "-$input"
 
 private fun formatCount(value: Double): String {
     val rounded = (value * 10.0).roundToInt() / 10.0

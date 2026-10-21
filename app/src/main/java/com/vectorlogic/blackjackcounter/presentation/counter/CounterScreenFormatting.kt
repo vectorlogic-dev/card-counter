@@ -7,7 +7,8 @@ import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import java.util.Locale
 import kotlin.math.round
 
-fun CardRank.toHistoryLabel(): String = when (this) {
+/** Single label for a rank, shared by the count pad and the recent-cards strip. */
+fun CardRank.toPadLabel(): String = when (this) {
     CardRank.ACE -> "A"
     CardRank.TWO -> "2"
     CardRank.THREE -> "3"
@@ -17,7 +18,7 @@ fun CardRank.toHistoryLabel(): String = when (this) {
     CardRank.SEVEN -> "7"
     CardRank.EIGHT -> "8"
     CardRank.NINE -> "9"
-    CardRank.TEN, CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "T"
+    CardRank.TEN, CardRank.JACK, CardRank.QUEEN, CardRank.KING -> "10-K"
 }
 
 fun formatSignedCount(value: Double, alwaysOneDecimal: Boolean = false): String {
