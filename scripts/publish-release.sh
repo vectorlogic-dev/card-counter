@@ -70,7 +70,12 @@ SHA256="$(shasum -a 256 "$STAGE/$APK_NAME" | awk '{print $1}')"
 echo "==> APK SHA-256: $SHA256"
 
 NOTES_PATH="${NOTES_FILE:-}"
-if [[ -z "$NOTES_PATH" ]]; then
+if [[ -n "$NOTES_PATH" ]]; then
+  # Substitute placeholders in a user-supplied notes file.
+  RENDERED="$STAGE/notes.md"
+  sed -e "s|__SHA256__|$SHA256|g" -e "s|__APK_NAME__|$APK_NAME|g" -e "s|__VERSION__|$VERSION|g" "$NOTES_PATH" > "$RENDERED"
+  NOTES_PATH="$RENDERED"
+else
   NOTES_PATH="$STAGE/notes.md"
   cat > "$NOTES_PATH" <<EOF
 ## What's new
