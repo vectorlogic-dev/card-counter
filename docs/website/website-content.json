@@ -233,6 +233,12 @@
   "links": {
     "repo": "https://github.com/vectorlogic-dev/card-counter",
     "downloadPage": "https://blackjackcounter.app/download",
+    "practiceTrainer": "https://blackjackcounter.app/card-counting-practice",
+    "strategyTrainer": "https://blackjackcounter.app/basic-strategy-trainer",
+    "systemsHub": "https://blackjackcounter.app/systems",
+    "legality": "https://blackjackcounter.app/is-card-counting-illegal",
+    "countingOnline": "https://blackjackcounter.app/card-counting-online",
+    "about": "https://blackjackcounter.app/about",
     "latestRelease": "https://github.com/vectorlogic-dev/card-counter/releases/latest",
     "allReleases": "https://github.com/vectorlogic-dev/card-counter/releases",
     "issues": "https://github.com/vectorlogic-dev/card-counter/issues",

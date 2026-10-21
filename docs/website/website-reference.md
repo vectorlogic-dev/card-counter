@@ -301,3 +301,42 @@ GET https://api.github.com/repos/vectorlogic-dev/card-counter/releases/latest
 It uses the `.apk` asset for the direct download URL and size, `tag_name` for the version label, `html_url` for the release notes link, and the `APK SHA-256: <hex>` line in the release body for the checksum, so keep that line in every release's notes. If the API call fails or is rate-limited, the buttons keep their fallback `/releases/latest` URL.
 
 The app is Android-only. On iPhone and iPad, `release.js` sends the homepage download buttons to `/download`, which shows the browser practice trainer (`/card-counting-practice`) and the waitlist instead of the APK.
+
+---
+
+## 15. Website Pages
+
+The site lives in [vectorlogic-dev/card-counter-website](https://github.com/vectorlogic-dev/card-counter-website); its `CLAUDE.md` holds the full conventions. Pages as of 2026-10-22:
+
+| URL | Purpose | App code it depends on |
+|-----|---------|------------------------|
+| `/` | Homepage: download, live Hi-Lo demo, features, all 7 systems, FAQ | Edge model, tag values |
+| `/download` | APK button, version, size, SHA-256, install steps, updates, signing fingerprint; iPhone visitors get the trainer and waitlist instead | GitHub release (see §14) |
+| `/how-to-count-cards` | Beginner's guide | Hi-Lo tags, edge model, bet ramp |
+| `/card-counting-practice` | Browser trainer: deck countdown, tag flash cards, true count drill for 6 systems (ReKO shares KO's tags) | Tag values, copied into the site's `scripts/practice.js` |
+| `/basic-strategy-chart` | S17 / DAS / no-surrender chart, H17 and surrender changes, Hi-Lo index plays | `CounterStrategyEngine` |
+| `/basic-strategy-trainer` | Browser quiz: deal a hand, pick hit / stand / double / split | The chart above, copied into the site's `scripts/strategy-trainer.js` |
+| `/true-count-calculator` | True count, edge and bet calculator | `CounterCalculations`, each system's `edgeGainPercentPerTrueCount`, `CountingSystemProfile` |
+| `/systems` | Hub: level, balanced or not, true or running count, ace side count, full tag-value table for all 7 systems | Every `*System.kt`, including `recommendsAceSideCount()` |
+| `/systems/hi-lo`, `/systems/ko`, `/systems/wong-halves` | One page per system | That system's tags, `CountingSystemProfile` (KO start and key counts) |
+| `/hi-lo-vs-ko` | Comparison | Hi-Lo and KO tags, KO counts |
+| `/is-card-counting-illegal` | Legality: counting vs devices, casino back-offs, *Uston*, NRS 465.075 / 465.088 / 207.200, with sources | None. Keep the "don't use the app at a table" message |
+| `/card-counting-online` | RNG vs live dealer, links to the trainers | Edge model (0.5% per true count) |
+| `/about` | Who makes the app, how site figures are checked against this repo, further reading | Links to the files in this table |
+| `/support`, `/privacy-policy` | Support; privacy policy for the app and the website | — |
+
+### When the app changes, update the site
+
+- **Tag values or a new system:** `scripts/practice.js`, the tag table on `/systems`, the system's own page, and the homepage system card.
+- **Basic strategy or index plays (`CounterStrategyEngine`):** `/basic-strategy-chart` and `scripts/strategy-trainer.js` together; the trainer's data is a copy of the chart.
+- **Edge model or bet ramp:** `scripts/true-count.js` and the guide's edge table.
+- **KO / ReKO starting or key counts:** `/systems/ko` and `/hi-lo-vs-ko`.
+- **Ace side count support:** the `/systems` overview table.
+- **New version:** the buttons update themselves; also bump the static `softwareVersion` in the homepage JSON-LD and the example file names on `/download`.
+
+### Site conventions worth knowing
+
+- Every content page has a visible breadcrumb trail and a **Sources** list above its FAQ that links to the files in this repo the page's figures come from.
+- Cards the site draws use a **four-colour deck**: spades black, hearts red, diamonds blue, clubs green.
+- The browser trainers make no network requests and store nothing.
+- Betting correlation, playing efficiency and insurance correlation are not computed by the app; the site uses the standard published values listed in `ai/website-app-description.md`.
