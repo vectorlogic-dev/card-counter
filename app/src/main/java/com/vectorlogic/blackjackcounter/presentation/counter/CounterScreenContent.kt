@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -62,7 +63,8 @@ fun CounterScreenContent(
     onUndo: () -> Unit,
     onStrategyChartClick: () -> Unit,
     onDrillClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    snackbarHost: @Composable () -> Unit = {}
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -80,17 +82,17 @@ fun CounterScreenContent(
             )
     ) {
         val compactLayout = maxHeight < 900.dp
+        // Landscape phones, foldables and tablets: a single stretched column pushes the pad
+        // below the fold, so split into stats on the left and the pad on the right. Small
+        // phones in landscape can be under 600 dp once the camera cutout is inset, so any
+        // reasonably wide landscape window splits too.
+        val twoPane = maxWidth >= TWO_PANE_MIN_WIDTH ||
+            (maxWidth > maxHeight && maxWidth >= LANDSCAPE_TWO_PANE_MIN_WIDTH)
         val sectionSpacing = if (compactLayout) 4.dp else 6.dp
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    horizontal = if (compactLayout) 8.dp else 10.dp,
-                    vertical = if (compactLayout) 4.dp else 6.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
-        ) {
+        val horizontalPadding = if (compactLayout) 8.dp else 10.dp
+        val verticalPadding = if (compactLayout) 4.dp else 6.dp
+
+        val header: @Composable () -> Unit = {
             CounterHeader(
                 systemName = state.selectedCountingSystemName,
                 showsAceSideCount = state.selectedSystemRecommendsAceSideCount,
@@ -105,56 +107,11 @@ fun CounterScreenContent(
                 showCheatSheet = state.showCheatSheet,
                 compact = compactLayout
             )
-
-            CountDisplayCard(
-                title = "Running",
-                value = formatSignedCount(state.runningCount),
-                valueColor = countColor(state.runningCount),
-                hero = true,
-                compact = compactLayout,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            val trueCountValue = if (state.selectedSystemUsesTrueCount) state.trueCount else 0.0
-            val edgeValue = if (state.canEstimateEdge) state.estimatedPlayerEdgePercent else 0.0
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(if (compactLayout) 4.dp else 6.dp)
-            ) {
-                CountDisplayCard(
-                    title = "True",
-                    value = if (state.selectedSystemUsesTrueCount) {
-                        formatSignedCount(state.trueCount, alwaysOneDecimal = true)
-                    } else {
-                        "N/A"
-                    },
-                    valueColor = if (state.selectedSystemUsesTrueCount) {
-                        countColor(trueCountValue)
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    compact = compactLayout,
-                    modifier = Modifier.weight(1f)
-                )
-
-                CountDisplayCard(
-                    title = "Edge %",
-                    value = if (state.canEstimateEdge) {
-                        formatSignedPercent(state.estimatedPlayerEdgePercent)
-                    } else {
-                        "N/A"
-                    },
-                    valueColor = if (state.canEstimateEdge) {
-                        countColor(edgeValue)
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    compact = compactLayout,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
+        }
+        val counts: @Composable () -> Unit = {
+            CountCards(state = state, compact = compactLayout)
+        }
+        val bet: @Composable () -> Unit = {
             BetRecommendationCard(
                 units = state.recommendedBetUnits,
                 countLabel = state.betSizingCountLabel,
@@ -162,20 +119,28 @@ fun CounterScreenContent(
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
             )
-
+        }
+        val chartButton: @Composable () -> Unit = {
             StrategyChartButton(
                 onClick = onStrategyChartClick,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
             )
-
+        }
+        val pad: @Composable () -> Unit = {
             CountButtonsRow(
                 buttonTagValues = state.buttonTagValues,
+                latestCardLabels = state.seenCards
+                    .takeLast(PAD_LATEST_CARDS)
+                    .map { it.rank.toPadLabel() },
+                canUndo = state.seenCards.isNotEmpty(),
                 onCardSelected = onCardSelected,
                 onFaceCardsSelected = onFaceCardsSelected,
+                onUndo = onUndo,
                 compact = compactLayout
             )
-
+        }
+        val shoe: @Composable () -> Unit = {
             DeckControlCard(
                 totalDecks = state.totalDecks,
                 decksRemaining = state.decksRemaining,
@@ -190,22 +155,142 @@ fun CounterScreenContent(
                 onDecksRemainingChanged = onDecksRemainingChanged,
                 compact = compactLayout
             )
-
+        }
+        val recentCards: @Composable () -> Unit = {
             RecentCardsCard(
                 recentCardLabels = state.seenCards
                     .takeLast(if (compactLayout) 12 else 15)
                     .map { it.rank.toPadLabel() },
-                onUndo = onUndo,
-                canUndo = state.seenCards.isNotEmpty(),
+                totalCardsSeen = state.seenCards.size,
                 compact = compactLayout
             )
-
+        }
+        val reset: @Composable () -> Unit = {
             ResetButton(
                 onReset = onResetClick,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
 
+        if (twoPane) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                horizontalArrangement = Arrangement.spacedBy(horizontalPadding)
+            ) {
+                // Stats side. The snackbar sits here so it never covers the pad.
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+                    ) {
+                        header()
+                        counts()
+                        bet()
+                        shoe()
+                        reset()
+                    }
+                    Box(modifier = Modifier.align(Alignment.BottomCenter)) { snackbarHost() }
+                }
+                // Input side: pad and Undo first, so they're always on screen.
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+                ) {
+                    pad()
+                    chartButton()
+                    recentCards()
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                verticalArrangement = Arrangement.spacedBy(sectionSpacing)
+            ) {
+                header()
+                counts()
+                bet()
+                chartButton()
+                pad()
+                shoe()
+                recentCards()
+                reset()
+            }
+            Box(modifier = Modifier.align(Alignment.BottomCenter)) { snackbarHost() }
+        }
+    }
+}
+
+private val TWO_PANE_MIN_WIDTH = 600.dp
+private val LANDSCAPE_TWO_PANE_MIN_WIDTH = 480.dp
+
+// Cards shown in the pad header next to Undo; the strip drops older ones on narrow screens.
+private const val PAD_LATEST_CARDS = 6
+
+@Composable
+private fun CountCards(state: CounterUiState, compact: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)) {
+        CountDisplayCard(
+            title = "Running",
+            value = formatSignedCount(state.runningCount),
+            valueColor = countColor(state.runningCount),
+            hero = true,
+            compact = compact,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        val trueCountValue = if (state.selectedSystemUsesTrueCount) state.trueCount else 0.0
+        val edgeValue = if (state.canEstimateEdge) state.estimatedPlayerEdgePercent else 0.0
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
+        ) {
+            CountDisplayCard(
+                title = "True",
+                value = if (state.selectedSystemUsesTrueCount) {
+                    formatSignedCount(state.trueCount, alwaysOneDecimal = true)
+                } else {
+                    "N/A"
+                },
+                valueColor = if (state.selectedSystemUsesTrueCount) {
+                    countColor(trueCountValue)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                compact = compact,
+                modifier = Modifier.weight(1f)
+            )
+
+            CountDisplayCard(
+                title = "Edge %",
+                value = if (state.canEstimateEdge) {
+                    formatSignedPercent(state.estimatedPlayerEdgePercent)
+                } else {
+                    "N/A"
+                },
+                valueColor = if (state.canEstimateEdge) {
+                    countColor(edgeValue)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                compact = compact,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

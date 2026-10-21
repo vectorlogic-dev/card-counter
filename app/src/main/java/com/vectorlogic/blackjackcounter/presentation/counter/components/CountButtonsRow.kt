@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,21 +9,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.presentation.counter.formatTagValue
 import com.vectorlogic.blackjackcounter.presentation.counter.toPadLabel
@@ -32,8 +40,11 @@ import com.vectorlogic.blackjackcounter.ui.theme.ChipRedDark
 @Composable
 fun CountButtonsRow(
     buttonTagValues: Map<CardRank, Double>,
+    latestCardLabels: List<String>,
+    canUndo: Boolean,
     onCardSelected: (CardRank) -> Unit,
     onFaceCardsSelected: () -> Unit,
+    onUndo: () -> Unit,
     modifier: Modifier = Modifier,
     compact: Boolean = false
 ) {
@@ -63,16 +74,38 @@ fun CountButtonsRow(
                 ),
             verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Undo lives next to the pad so a missed tap can be fixed without scrolling;
+            // the strip shows what it would remove (the newest card, highlighted).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "COUNT PAD",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
                 )
-                Text(
-                    text = "Tap cards as they land",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                if (latestCardLabels.isEmpty()) {
+                    Text(
+                        text = "Tap cards as they land",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    LatestCardsStrip(
+                        labels = latestCardLabels,
+                        compact = compact,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                UndoButton(
+                    enabled = canUndo,
+                    onClick = { tap(onUndo) }
                 )
             }
 
@@ -119,6 +152,40 @@ fun CountButtonsRow(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun UndoButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            } else {
+                MaterialTheme.colorScheme.outline
+            }
+        ),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        contentPadding = PaddingValues(start = 10.dp, end = 14.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_undo),
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = "Undo",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
