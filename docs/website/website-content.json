@@ -1,0 +1,220 @@
+{
+  "app": {
+    "name": "Counting Edge: Card Counter",
+    "shortName": "Counting Edge",
+    "packageId": "com.vectorlogic.blackjackcounter",
+    "developer": "vectorlogic",
+    "platform": "Android",
+    "store": "Google Play",
+    "category": "Card Games / Casino / Training Tools",
+    "versionName": "1.0.0-closed-testing.1",
+    "versionCode": 8,
+    "releaseChannel": "Closed testing",
+    "minSdk": 24,
+    "compileSdk": 36,
+    "targetSdk": 36
+  },
+  "taglines": {
+    "primary": "Count every card. Win every edge.",
+    "alternates": [
+      "The serious card counter's training tool.",
+      "Seven counting systems. One screen. No guessing.",
+      "Live card counting. Real table rules."
+    ]
+  },
+  "descriptions": {
+    "shortPlayStore": "Live card counting with 7 systems, true count, and table rules.",
+    "oneParagraph": "Counting Edge is a live blackjack card-counting trainer for Android. Tap card ranks as they fall, and the app tracks your running count, true count, player edge, and bet recommendation in real time. Seven professional counting systems — from beginner-friendly Hi-Lo to advanced Wong Halves — all rule-aware and calibrated to the exact table conditions you set. One screen. No subscriptions. No ads.",
+    "summary": "An Android Jetpack Compose training app for live blackjack card-count practice. Supports 7 counting systems, rule-aware strategy guidance, and a compact one-screen workflow."
+  },
+  "features": {
+    "coreCounting": [
+      "Live running count updated on every card tap",
+      "True count calculation (running ÷ decks remaining) for balanced systems",
+      "Estimated player edge % from current true count and table rules",
+      "Bet recommendation ramp (1 → 2 → 4 → 8 → 12 units) tied to live count"
+    ],
+    "shoeAndDeckTracking": [
+      "Set total decks (1 / 2 / 4 / 6 / 8) with a tap",
+      "Adjust decks remaining with a precision slider (0.25 deck steps)",
+      "Live penetration %, cards drawn, cards left, total cards",
+      "Optional Ace side count for Hi-Opt II and Omega II"
+    ],
+    "strategyReference": [
+      "Full-screen basic strategy chart — rule-aware, updates with current true count",
+      "Strategy deviations marked with * on chart",
+      "System cheat sheet (tag values + key deviations) per system",
+      "Counting system guides with level, balance type, and usage tips"
+    ],
+    "sessionTools": [
+      "Recent cards history (last 12–15 cards visible)",
+      "One-tap Undo for correcting a missed or wrong card tap",
+      "Reset returns shoe and count to starting state",
+      "KO / ReKO reset returns to the deck-specific Initial Running Count (IRC), not zero"
+    ]
+  },
+  "countingSystems": [
+    { "name": "Hi-Lo",       "level": 1, "type": "Balanced",   "aceSideCount": false, "description": "The standard starting point. Simple ±1 tag values and the most widely documented system." },
+    { "name": "KO",          "level": 1, "type": "Unbalanced", "aceSideCount": false, "description": "Knock-Out. No true-count conversion required. Uses Key Count and Pivot." },
+    { "name": "ReKO",        "level": 1, "type": "Unbalanced", "aceSideCount": false, "description": "Simplified KO variant with deck-specific IRC." },
+    { "name": "Hi-Opt II",   "level": 2, "type": "Balanced",   "aceSideCount": true,  "description": "Level 2 system with wider tag range; Ace side count recommended." },
+    { "name": "Omega II",    "level": 2, "type": "Balanced",   "aceSideCount": true,  "description": "Level 2 system with strong betting/playing correlation; Ace side count recommended." },
+    { "name": "Zen Count",   "level": 2, "type": "Balanced",   "aceSideCount": false, "description": "Level 2 balanced system; aces counted in main tag values." },
+    { "name": "Wong Halves", "level": 3, "type": "Balanced",   "aceSideCount": false, "description": "Level 3 system with fractional tags for maximum precision." }
+  ],
+  "tableRules": [
+    { "rule": "Dealer Soft 17",          "options": ["S17", "H17"] },
+    { "rule": "Dealer Peek",             "options": ["Ace + 10", "Ace only", "No peek (European)"] },
+    { "rule": "Blackjack Payout",        "options": ["3:2", "6:5"] },
+    { "rule": "Double Down",             "options": ["Any 2 cards", "9–11", "10–11"] },
+    { "rule": "Double After Split (DAS)", "options": ["On", "Off"] },
+    { "rule": "Surrender",               "options": ["None", "Late", "Early"] },
+    { "rule": "Resplit Aces",            "options": ["On", "Off"] },
+    { "rule": "Hit Split Aces",          "options": ["On", "Off"] },
+    { "rule": "Max Split Hands",         "options": ["2", "3", "4", "5", "6"] },
+    { "rule": "6-Card Charlie Auto Win", "options": ["On", "Off"] }
+  ],
+  "betRamp": {
+    "units": [1, 2, 4, 8, 12],
+    "explanation": "A 'unit' is your own base bet amount. The app teaches you when to size up, not how much to bet.",
+    "balancedThresholds": [
+      { "trueCount": "< 1.0",   "units": 1 },
+      { "trueCount": "1.0–2.0", "units": 2 },
+      { "trueCount": "2.0–3.0", "units": 4 },
+      { "trueCount": "3.0–4.0", "units": 8 },
+      { "trueCount": "≥ 4.0",   "units": 12 }
+    ],
+    "unbalancedThresholds": [
+      { "level": "< Key Count",   "units": 1 },
+      { "level": "≥ Key Count",   "units": 2 },
+      { "level": "≥ Pivot",       "units": 4 },
+      { "level": "≥ Pivot + 4",   "units": 8 },
+      { "level": "≥ Pivot + 8",   "units": 12 }
+    ],
+    "unbalancedIRC": {
+      "KO":   "4 - (4 × decks); 1-deck special case = 0",
+      "ReKO": "1 - (3 × decks)",
+      "example6Decks": { "KO": -20, "ReKO": -17 }
+    }
+  },
+  "howItWorks": [
+    { "step": 1, "title": "Set the table", "detail": "Open Menu → Table Rules and configure the conditions at your table." },
+    { "step": 2, "title": "Pick a system", "detail": "Choose from Hi-Lo (beginner) through Wong Halves (advanced)." },
+    { "step": 3, "title": "Set the shoe",  "detail": "Choose deck count and slide decks remaining as play progresses." },
+    { "step": 4, "title": "Tap as cards land", "detail": "Running count, true count, edge %, and bet units update instantly." },
+    { "step": 5, "title": "Check the chart", "detail": "Open Strategy Table for live deviation-aware basic strategy." }
+  ],
+  "differentiators": [
+    "7 systems in one app — most competitors offer 1–2",
+    "Full table rules engine — affects both strategy display and edge calculation",
+    "Strategy deviations tied to live count — not just a static chart",
+    "No subscriptions, no ads, no locked systems — all features available on install",
+    "Compact one-screen workflow — count + bet + shoe controls all visible without scrolling",
+    "KO / ReKO with proper IRC — unbalanced systems reset to their deck-specific starting count, not 0"
+  ],
+  "audience": {
+    "primary": "Aspiring and active card counters who train seriously between sessions.",
+    "secondary": "Casino strategy enthusiasts who want to understand counting system mechanics side-by-side, or verify how table rules affect strategy actions.",
+    "notFor": "Casual blackjack players looking only for a basic strategy app."
+  },
+  "techStack": {
+    "language": "Kotlin",
+    "ui": "Jetpack Compose",
+    "designSystem": "Material 3",
+    "architecture": "MVVM (ViewModel + StateFlow)",
+    "state": "Local, in-memory only (no backend, no database, no persistence across restarts)",
+    "buildSystem": "Gradle (Kotlin DSL)",
+    "minJdk": 11
+  },
+  "brand": {
+    "designTone": [
+      "Dark, high-contrast — suited for use in dim casino lighting",
+      "Angular shapes (4–6dp corners) — not bubbly Material default",
+      "Dense but legible — information-packed without clutter",
+      "Casino-adjacent without being kitschy"
+    ],
+    "colorPalette": [
+      { "name": "Felt Green",        "hex": "#0E3A2F", "use": "Background, primary surface" },
+      { "name": "Felt Green Bright", "hex": "#1C6D57", "use": "Secondary surface, accents" },
+      { "name": "Table Edge",        "hex": "#091B17", "use": "Deepest background, edges" },
+      { "name": "Gold Accent",       "hex": "#D8B04C", "use": "Primary action color" },
+      { "name": "Gold Bright",       "hex": "#F1C96A", "use": "Header text, active labels" },
+      { "name": "Chip Red",          "hex": "#B83A3A", "use": "Negative count, warnings" },
+      { "name": "Chip Green",        "hex": "#2D8A45", "use": "Positive count, advantage state" },
+      { "name": "Text Light",        "hex": "#E8F2ED", "use": "Body text on dark" },
+      { "name": "Warm Text",         "hex": "#F5E9CB", "use": "Secondary text on dark" },
+      { "name": "Muted Text",        "hex": "#B7C8C1", "use": "Labels, metadata" }
+    ]
+  },
+  "copyBlocks": {
+    "hero": {
+      "headline": "Count every card. Win every edge.",
+      "subhead": "The only card-counting trainer with 7 professional systems, a live true-count engine, and full table-rules support — all free, all on one screen.",
+      "cta": "Get it on Google Play"
+    },
+    "features": {
+      "headline": "Everything a serious counter needs",
+      "subhead": "No subscriptions. No ads. No watered-down free tier. Just the tool."
+    },
+    "systems": {
+      "headline": "Seven systems. One app.",
+      "subhead": "From Hi-Lo beginners to Wong Halves experts — switch systems anytime and see how the bet ramp and strategy deviations shift."
+    },
+    "tableRules": {
+      "headline": "Your table. Your rules.",
+      "subhead": "Configure 10 rule parameters before you sit down. Edge calculations and strategy deviations update automatically."
+    },
+    "footerDisclaimer": "Counting Edge is a training tool for educational purposes. It is not gambling advice, and it does not guarantee casino winnings. Play responsibly."
+  },
+  "faq": [
+    { "question": "Is Counting Edge free?", "answer": "Yes. All 7 counting systems, the full strategy chart, and every feature are available on install — no in-app purchases, no subscription, no ads." },
+    { "question": "Which counting system should I start with?", "answer": "Hi-Lo is the standard starting point. It's balanced, level 1, and the most widely documented system. You can switch to KO or ReKO if you want to skip true count conversion. Advanced systems like Hi-Opt II and Wong Halves are there when you're ready." },
+    { "question": "What does 'true count' mean?", "answer": "The true count is the running count divided by the estimated number of decks remaining. It normalizes the count across different shoe sizes, making your edge estimate more accurate. Unbalanced systems like KO don't require true count conversion by design." },
+    { "question": "Is this legal to use in a casino?", "answer": "Card counting by itself is not illegal. Using software or devices at the table violates casino rules in most jurisdictions. Counting Edge is a training tool — use it to practice, not at the table." },
+    { "question": "What are the system levels?", "answer": "Level 1 systems (Hi-Lo, KO, ReKO) use simple ±1 tag values and are the easiest to learn. Level 2 systems (Hi-Opt II, Omega II, Zen Count) use a wider tag range for a small accuracy gain. Level 3 (Wong Halves) uses fractional tags for maximum precision, requiring more mental effort." }
+  ],
+  "edgeModel": {
+    "inputs": ["current true count (if supported)", "selected table rules", "total decks in shoe"],
+    "basis": "Wizard of Odds rule-variation deltas (8-deck baseline model, adjusted by selected deck count)",
+    "note": "Simplified training estimate, not a guarantee."
+  },
+  "privacy": {
+    "analytics": false,
+    "crashReporting": false,
+    "trackingSDKs": false,
+    "accountRequired": false,
+    "networkCalls": false,
+    "policyPath": "../privacy-policy.md",
+    "contentRating": "Everyone"
+  },
+  "seoKeywords": {
+    "primary": [
+      "card counting app android",
+      "blackjack card counter android",
+      "hi lo counting app",
+      "blackjack trainer android"
+    ],
+    "secondary": [
+      "true count calculator",
+      "blackjack counting systems",
+      "KO counting system app",
+      "wong halves card counting",
+      "blackjack edge calculator",
+      "blackjack table rules trainer"
+    ]
+  },
+  "screenshotIdeas": [
+    "Hero: Running count card showing '+8' or '-4' in large display",
+    "Card input pad with color-coded buttons (red / neutral / green)",
+    "Strategy chart full-screen with deviation markers",
+    "System selector showing all 7 systems",
+    "Table rules dialog",
+    "Bet ramp with active dots lit"
+  ],
+  "links": {
+    "repo": null,
+    "playStore": null,
+    "privacyPolicy": "../privacy-policy.md",
+    "websiteReference": "./website-reference.md"
+  }
+}

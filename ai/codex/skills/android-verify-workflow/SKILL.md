@@ -15,13 +15,13 @@ Prefer the provided script so checks are consistent across sessions.
 Run from repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1
+powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1
 ```
 
 Optional full run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .codex/skills/android-verify-workflow/scripts/verify.ps1 -IncludeUnitTests -IncludeLint
+powershell -ExecutionPolicy Bypass -File ai/codex/skills/android-verify-workflow/scripts/verify.ps1 -IncludeUnitTests -IncludeLint
 ```
 
 ## Workflow
