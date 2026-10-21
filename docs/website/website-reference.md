@@ -202,7 +202,7 @@ A "unit" is your own base bet amount — the app teaches you *when* to size up, 
 ### Hero Section
 **Headline:** Count every card. Win every edge.
 **Subhead:** The only card-counting trainer with 7 professional systems, a live true-count engine, and full table-rules support — all free, all on one screen.
-**Primary CTA:** Download APK — Android → `https://github.com/vectorlogic-dev/card-counter/releases/latest`
+**Primary CTA:** Download APK — Android → the latest APK asset, filled in by `scripts/release.js` (falls back to `https://github.com/vectorlogic-dev/card-counter/releases/latest`; goes to `/download` on iPhone)
 **Secondary CTA:** View on GitHub → `https://github.com/vectorlogic-dev/card-counter`
 
 ### Features Section Header
@@ -275,7 +275,8 @@ A: Level 1 systems (Hi-Lo, KO, ReKO) use simple ±1 tag values and are the easie
 | Field | Value |
 |-------|-------|
 | Channel | Direct APK |
-| Primary host | `https://blackjackcounter.app` (download CTA points at the latest GitHub Release asset) |
+| Primary host | `https://blackjackcounter.app` (homepage download buttons point at the latest GitHub Release asset) |
+| Download page | `https://blackjackcounter.app/download`: APK button, version, size, SHA-256, install steps, update notes, signing certificate fingerprint. Every content-page Download button links here |
 | Mirror | `https://github.com/vectorlogic-dev/card-counter/releases/latest` |
 | Latest version | `v1.0.0` |
 | APK filename | `CountingEdge-<version>.apk` |
@@ -291,10 +292,12 @@ A: Level 1 systems (Hi-Lo, KO, ReKO) use simple ±1 tag values and are the easie
 
 ### Fetching the latest release
 
-The site should pull the latest release metadata from the GitHub API at build time (or client-side) so the download button always points at the newest APK without a manual bump:
+The site pulls the latest release metadata from the GitHub API client-side, so the download buttons always point at the newest APK without a manual bump. `scripts/release.js` in the website repo does this, and only the homepage and `/download` load it:
 
 ```
 GET https://api.github.com/repos/vectorlogic-dev/card-counter/releases/latest
 ```
 
-Use `assets[].name == "CountingEdge-<version>.apk"` for the direct download URL, `tag_name` for the version label, and the release body for the changelog excerpt. Fall back to the raw `/releases/latest` HTML URL if the API call fails or is rate-limited.
+It uses the `.apk` asset for the direct download URL and size, `tag_name` for the version label, `html_url` for the release notes link, and the `APK SHA-256: <hex>` line in the release body for the checksum, so keep that line in every release's notes. If the API call fails or is rate-limited, the buttons keep their fallback `/releases/latest` URL.
+
+The app is Android-only. On iPhone and iPad, `release.js` sends the homepage download buttons to `/download`, which shows the browser practice trainer (`/card-counting-practice`) and the waitlist instead of the APK.
