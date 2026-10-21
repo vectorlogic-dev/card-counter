@@ -16,6 +16,7 @@ import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
+import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,9 @@ private data class RunningCountTotals(
     val acesSeen: Int
 )
 
-class CounterViewModel private constructor() : ViewModel() {
+class CounterViewModel private constructor(
+    private val persister: SessionPersister? = null
+) : ViewModel() {
 
     private val allSystems: List<CountingSystem> = CountingSystemsCatalog.allSystems
     private val systemsById: Map<String, CountingSystem> = CountingSystemsCatalog.systemsById
@@ -35,7 +38,7 @@ class CounterViewModel private constructor() : ViewModel() {
         system.id to CountingSystemProfiles.profileFor(system.id)
     }
 
-    private val _sessionState = MutableStateFlow(initialSessionState())
+    private val _sessionState = MutableStateFlow(persister?.load() ?: initialSessionState())
     private val _showCheatSheet = MutableStateFlow(false)
     private val _uiState = MutableStateFlow(buildUiState(_sessionState.value, _showCheatSheet.value))
     val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
@@ -57,6 +60,10 @@ class CounterViewModel private constructor() : ViewModel() {
 
     fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
         return CounterHelpContentFactory.buildSplitDeviationSections(tableRules)
+    }
+
+    fun activeCountingSystem(): CountingSystem {
+        return getSelectedSystem(_sessionState.value.selectedCountingSystemId)
     }
 
     fun buildStrategyChartModel(): StrategyChartModel {
@@ -267,7 +274,12 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     private fun updateSessionState(transform: (CounterSessionState) -> CounterSessionState) {
-        _sessionState.value = transform(_sessionState.value)
+        val next = transform(_sessionState.value)
+        _sessionState.value = next
+        // Persistence must never crash the Activity on a routine tap: a storage
+        // failure (encrypted-user state, disk I/O, etc.) is non-fatal here — the
+        // in-memory state is still correct, we just lose the resume-on-restart.
+        runCatching { persister?.save(next) }
         syncUiState()
     }
 
@@ -289,7 +301,8 @@ class CounterViewModel private constructor() : ViewModel() {
             trueCount = rawTrueCount,
             usesTrueCount = usesTrueCount,
             tableRules = state.tableRules,
-            totalDecks = state.totalDecks
+            totalDecks = state.totalDecks,
+            edgeGainPercentPerTrueCount = selectedSystem.edgeGainPercentPerTrueCount
         )
         val betSizingCountValue = decisionCountValue(
             state = state,
@@ -457,11 +470,11 @@ class CounterViewModel private constructor() : ViewModel() {
     }
 
     companion object {
-        fun provideFactory(): ViewModelProvider.Factory {
+        fun provideFactory(persister: SessionPersister? = null): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return CounterViewModel() as T
+                    return CounterViewModel(persister) as T
                 }
             }
         }

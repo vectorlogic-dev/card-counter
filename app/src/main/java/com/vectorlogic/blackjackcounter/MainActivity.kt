@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.vectorlogic.blackjackcounter.data.persistence.SharedPreferencesSessionPersister
 import com.vectorlogic.blackjackcounter.presentation.counter.CounterScreen
 import com.vectorlogic.blackjackcounter.ui.theme.BlackjackCounterTheme
 
@@ -13,13 +14,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val persister = SharedPreferencesSessionPersister(applicationContext)
+
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(scrim = AndroidColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(scrim = AndroidColor.TRANSPARENT)
         )
         setContent {
             BlackjackCounterTheme {
-                CounterScreen()
+                CounterScreen(persister = persister)
             }
         }
     }
