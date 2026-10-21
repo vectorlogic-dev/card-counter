@@ -7,7 +7,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
 - Version: `1.0.0`
 - Version code: `9`
 - Distribution: [GitHub Releases](https://github.com/vectorlogic-dev/card-counter/releases) + [blackjackcounter.app](https://blackjackcounter.app)
-- Website: [github.com/vectorlogic-dev/card-counter-website](https://github.com/vectorlogic-dev/card-counter-website)
+- Website: [blackjackcounter.app](https://blackjackcounter.app)
 
 ## 30-Second Setup Checklist
 - Open `Menu` -> `Table Rules` and set table conditions first.
