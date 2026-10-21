@@ -47,7 +47,7 @@ fun CheatSheetCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "System-aware guide. Verify rules and deck count before using live.",
+                    text = "Hi-Lo indices converted to this system's true count. Verify rules and deck count before using live.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

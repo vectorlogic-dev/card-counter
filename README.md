@@ -44,13 +44,26 @@ The app recommends a unit size from the ramp `1-2-4-8-12`.
 
 - A "unit" is your base bet amount.
   Example: if `1 unit = $10`, then `8 units = $80`.
-- For true-count systems (balanced systems), thresholds are:
+- For true-count systems (balanced systems), thresholds are calibrated for Hi-Lo:
   - `< 1.0` -> `1` unit
   - `1.0 to <2.0` -> `2` units
   - `2.0 to <3.0` -> `4` units
   - `3.0 to <4.0` -> `8` units
   - `>= 4.0` -> `12` units
 For balanced systems, decision thresholds use **truncated true count** by default.
+
+Level-2 systems produce true counts about 1.7-1.8x larger than Hi-Lo for the same shoe, so every
+balanced system converts Hi-Lo thresholds to its own true count with a scale factor: the ratio of
+the system's per-card tag standard deviation to Hi-Lo's, rounded to the nearest integer. The same
+scale is used for bet ramps, playing indices and the edge estimate.
+
+| System | Scale | Ramp thresholds (`2 / 4 / 8 / 12` units) |
+|---|---|---|
+| Hi-Lo | 1.00 | TC `1 / 2 / 3 / 4` |
+| Wong Halves | 1.05 | TC `1 / 2 / 3 / 4` |
+| Hi-Opt II | 1.67 | TC `2 / 3 / 5 / 7` |
+| Omega II | 1.79 | TC `2 / 4 / 5 / 7` |
+| Zen Count | 1.79 | TC `2 / 4 / 5 / 7` |
 
 For `KO` / `ReKO`, ramps are deck-aware and keyed from the system's `Key Count` and `Pivot`:
 - `< Key Count` -> `1` unit
@@ -60,7 +73,9 @@ For `KO` / `ReKO`, ramps are deck-aware and keyed from the system's `Key Count` 
 - `>= Pivot + 8` -> `12` units
 
 Unbalanced-system reset references are deck-specific:
-- `KO` IRC formula: `4 - (4 * decks)` (special case for `1` deck = `0`)
+- `KO` IRC formula: `4 - (4 * decks)`
+- `KO` key counts follow *Knock-Out Blackjack*: `1D +2`, `2D +1`, `6D -4`, `8D -6`
+  (other deck counts fall back to `2 - decks`); pivot is `+4`
 - `ReKO` IRC formula: `1 - (3 * decks)`
 - Example on `6` decks: `KO = -20`, `ReKO = -17`
 
@@ -120,11 +135,18 @@ All counting systems are available in the app at no extra cost.
 - Chart updates from current count context (when supported)
 - Rule-aware action adjustments
 - Deviation cells marked with `*`
+- Indices are the Hi-Lo Illustrious 18 (plus 15 vs A stand at `+5`), converted to the selected
+  system's true count with the scale factor above; the cheat sheet shows the converted values
+  - Positive indices: make the play at or above the index (e.g. stand 16 vs 10 at `TC 0+`)
+  - Negative indices: hit below the index (12 vs 4 `0`, 12 vs 5 `-2`, 12 vs 6 `-1`, 13 vs 2 `-1`, 13 vs 3 `-2`)
+- When surrender is offered, surrender takes precedence over stand indices (16 vs 9, 16 vs 10, 15 vs 10),
+  and the Fab 4 surrender indices apply: 14 vs 10 `+3`, 15 vs 10 `0`, 15 vs 9 `+2`, 15 vs A `+1`
 - Split deviation guidance available in Help
 
 ## Estimated Edge %
 Estimated Edge % is computed from:
-- current true count (if supported by the selected system)
+- current true count (if supported by the selected system), converted to a Hi-Lo-equivalent
+  true count with the system's scale factor
 - selected table rules
 - total decks in shoe
 

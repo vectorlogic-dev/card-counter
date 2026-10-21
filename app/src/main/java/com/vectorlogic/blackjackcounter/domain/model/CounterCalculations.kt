@@ -67,7 +67,8 @@ object CounterCalculations {
         usesTrueCount: Boolean,
         tableRules: TableRules,
         totalDecks: Int,
-        edgeGainPercentPerTrueCount: Double = DEFAULT_EDGE_GAIN_PER_TRUE_COUNT
+        edgeGainPercentPerTrueCount: Double = DEFAULT_EDGE_GAIN_PER_TRUE_COUNT,
+        trueCountScale: Double = 1.0
     ): Double {
         if (!usesTrueCount) return 0.0
 
@@ -75,7 +76,9 @@ object CounterCalculations {
             tableRules = tableRules,
             totalDecks = totalDecks
         )
-        val countAdjustment = trueCount * edgeGainPercentPerTrueCount
+        // The edge slope is per Hi-Lo-equivalent true count, so level-2 counts are scaled down first.
+        val hiLoEquivalentTrueCount = trueCount / trueCountScale.coerceAtLeast(MIN_TRUE_COUNT_SCALE)
+        val countAdjustment = hiLoEquivalentTrueCount * edgeGainPercentPerTrueCount
         return roundToOneDecimal((-houseEdge) + countAdjustment)
     }
 
@@ -174,4 +177,5 @@ object CounterCalculations {
     private const val BASE_HOUSE_EDGE_PERCENT = 0.50
     private const val DEFAULT_TOTAL_DECKS_FOR_BASELINE = 8
     private const val DEFAULT_EDGE_GAIN_PER_TRUE_COUNT = 0.50
+    private const val MIN_TRUE_COUNT_SCALE = 0.1
 }

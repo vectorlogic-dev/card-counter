@@ -10,6 +10,7 @@ import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
+import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -332,6 +333,103 @@ class CounterViewModelTest {
         dealerTenCell = hardTenRow.cells[8]
         assertTrue(dealerTenCell.action.startsWith("D"))
         assertTrue(dealerTenCell.isDeviation)
+    }
+
+    @Test
+    fun `undo restores only the penetration a clamped card actually consumed`() {
+        val viewModel = createViewModel()
+        viewModel.setDecksRemaining(0.26)
+
+        viewModel.onCardSeen(CardRank.TWO) // partially clamped: 0.26 -> 0.25
+        viewModel.onCardSeen(CardRank.TWO) // fully clamped: stays at 0.25
+        assertEquals(0.25, viewModel.uiState.value.decksRemaining, 0.0001)
+
+        viewModel.undoLastCard()
+        assertEquals(0.25, viewModel.uiState.value.decksRemaining, 0.0001)
+
+        viewModel.undoLastCard()
+        assertEquals(0.26, viewModel.uiState.value.decksRemaining, 0.0001)
+        assertEquals(0.0, viewModel.uiState.value.runningCount, 0.0001)
+    }
+
+    @Test
+    fun `undo of an unclamped card restores one card of penetration`() {
+        val viewModel = createViewModel()
+        val initialDecksRemaining = viewModel.uiState.value.decksRemaining
+
+        viewModel.onCardSeen(CardRank.KING)
+        viewModel.undoLastCard()
+
+        assertEquals(initialDecksRemaining, viewModel.uiState.value.decksRemaining, 0.0001)
+    }
+
+    @Test
+    fun `zen bet ramp uses converted true count thresholds`() {
+        val viewModel = createViewModel()
+        viewModel.setCountingSystem(ZenCountSystem.id)
+        repeat(3) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+
+        // Zen TC 3 is about Hi-Lo TC 1.7: 2 units (Zen threshold 2), not Hi-Lo's 8 units at TC 3.
+        var updated = viewModel.uiState.value
+        assertEquals(3.0, updated.betSizingCountValue, 0.0001)
+        assertEquals(2, updated.recommendedBetUnits)
+
+        repeat(2) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+        updated = viewModel.uiState.value
+        assertEquals(5.0, updated.betSizingCountValue, 0.0001)
+        assertEquals(8, updated.recommendedBetUnits)
+    }
+
+    @Test
+    fun `zen edge estimate is lower than an unscaled native true count would give`() {
+        val hiLo = createViewModel()
+        val zen = createViewModel()
+        zen.setCountingSystem(ZenCountSystem.id)
+        repeat(4) {
+            hiLo.onCardSeen(CardRank.TWO)
+            zen.onCardSeen(CardRank.FOUR)
+        }
+        hiLo.setDecksRemaining(1.0)
+        zen.setDecksRemaining(1.0)
+
+        // Hi-Lo TC 4 vs Zen TC 8 (~Hi-Lo 4.5): edges should be comparable, not doubled.
+        val hiLoEdge = hiLo.uiState.value.estimatedPlayerEdgePercent
+        val zenEdge = zen.uiState.value.estimatedPlayerEdgePercent
+        assertEquals(8.0, zen.uiState.value.trueCount, 0.0001)
+        assertEquals(hiLoEdge, zenEdge, 0.35)
+    }
+
+    @Test
+    fun `cheat sheet deviation rows reflect the selected system`() {
+        val viewModel = createViewModel()
+        viewModel.setCountingSystem(OmegaIICountingSystem.id)
+
+        val rows = viewModel.uiState.value.strategyDeviationRows
+        assertTrue(rows.any { it.playLabel == "10 vs 10" && it.indexLabel == "Double at TC +7" })
+        assertTrue(rows.any { it.playLabel == "Insurance vs A" && it.indexLabel == "Take at TC +5" })
+    }
+
+    @Test
+    fun `surrender table keeps surrender on 16 vs 10 at positive counts`() {
+        val viewModel = createViewModel()
+        viewModel.setSurrenderRule(SurrenderRule.LATE)
+        repeat(4) {
+            viewModel.onCardSeen(CardRank.TWO)
+        }
+        viewModel.setDecksRemaining(1.0)
+
+        val chart = viewModel.buildStrategyChartModel()
+        val sixteen = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "16" }
+        assertEquals("Rh", sixteen.cells[8].action)
+        assertTrue(viewModel.uiState.value.strategyDeviationRows.any {
+            it.playLabel == "16 vs 10" && it.indexLabel == "Surrender (any TC)"
+        })
     }
 
     private fun createViewModel(): CounterViewModel {

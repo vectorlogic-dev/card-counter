@@ -106,6 +106,43 @@ class CounterCalculationsTest {
     }
 
     @Test
+    fun `calculateEstimatedPlayerEdgePercent converts native true count to hi lo equivalent`() {
+        val rules = TableRules()
+        val houseEdge = CounterCalculations.estimateHouseEdgePercent(tableRules = rules, totalDecks = 6)
+        // A Zen TC of ~3.6 is about a Hi-Lo TC of 2, so it should add ~2 x 0.49%, not ~3.6 x 0.49%.
+        val zenEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 3.578,
+            usesTrueCount = true,
+            tableRules = rules,
+            totalDecks = 6,
+            edgeGainPercentPerTrueCount = 0.49,
+            trueCountScale = 1.789
+        )
+
+        assertEquals(-houseEdge + (2.0 * 0.49), zenEdge, 0.051)
+    }
+
+    @Test
+    fun `calculateEstimatedPlayerEdgePercent is unchanged for hi lo scale`() {
+        val rules = TableRules()
+        val defaultScaleEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 3.0,
+            usesTrueCount = true,
+            tableRules = rules,
+            totalDecks = 6
+        )
+        val explicitScaleEdge = CounterCalculations.calculateEstimatedPlayerEdgePercent(
+            trueCount = 3.0,
+            usesTrueCount = true,
+            tableRules = rules,
+            totalDecks = 6,
+            trueCountScale = 1.0
+        )
+
+        assertEquals(defaultScaleEdge, explicitScaleEdge, 0.0)
+    }
+
+    @Test
     fun `calculateRecommendedBetUnits scales with true count`() {
         val ramp = listOf(
             CountRampStep(minCountInclusive = 1, units = 2),

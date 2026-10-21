@@ -8,8 +8,9 @@ interface CountingSystem {
     val level: Int
     val isBalanced: Boolean
 
-    // Approximate player edge gained per +1 true count, scaled by the system's
-    // Betting Correlation. Hi-Lo baseline = 0.50% / TC.
+    // Approximate player edge gained per +1 Hi-Lo-equivalent true count (native TC divided by
+    // TrueCountScaling.hiLoEquivalentScale), scaled by the system's Betting Correlation.
+    // Hi-Lo baseline = 0.50% / TC.
     val edgeGainPercentPerTrueCount: Double get() = 0.50
 
     fun getTagValue(cardRank: CardRank): Double

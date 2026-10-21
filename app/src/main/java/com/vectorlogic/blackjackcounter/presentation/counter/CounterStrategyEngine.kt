@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.data.counting.TrueCountScaling
 import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
@@ -16,7 +17,8 @@ object CounterStrategyEngine {
         state: CounterSessionState,
         trueCount: Double,
         supportsTrueCount: Boolean,
-        decisionTrueCount: Int
+        decisionTrueCount: Int,
+        trueCountScale: Double
     ): StrategyChartModel {
         val hardRows = listOf(17, 16, 15, 14, 13, 12, 11, 10, 9, 8).map { total ->
             StrategyTableRow(
@@ -28,7 +30,8 @@ object CounterStrategyEngine {
                         dealerUpcard = dealer,
                         state = state,
                         supportsTrueCount = supportsTrueCount,
-                        decisionTrueCount = decisionTrueCount
+                        decisionTrueCount = decisionTrueCount,
+                        trueCountScale = trueCountScale
                     )
                 }
             )
@@ -44,7 +47,8 @@ object CounterStrategyEngine {
                         dealerUpcard = dealer,
                         state = state,
                         supportsTrueCount = supportsTrueCount,
-                        decisionTrueCount = decisionTrueCount
+                        decisionTrueCount = decisionTrueCount,
+                        trueCountScale = trueCountScale
                     )
                 }
             )
@@ -61,7 +65,8 @@ object CounterStrategyEngine {
                         dealerUpcard = dealer,
                         state = state,
                         supportsTrueCount = supportsTrueCount,
-                        decisionTrueCount = decisionTrueCount
+                        decisionTrueCount = decisionTrueCount,
+                        trueCountScale = trueCountScale
                     )
                 }
             )
@@ -86,7 +91,8 @@ object CounterStrategyEngine {
         state: CounterSessionState,
         usesTrueCount: Boolean,
         keyCount: Int?,
-        pivot: Int?
+        pivot: Int?,
+        trueCountScale: Double
     ): List<StrategyDeviationRow> {
         if (!usesTrueCount) {
             return listOfNotNull(
@@ -105,17 +111,32 @@ object CounterStrategyEngine {
             )
         }
 
-        return listOf(
-            StrategyDeviationRow(playLabel = "Insurance vs A", indexLabel = "Take at TC +3"),
-            StrategyDeviationRow(playLabel = "16 vs 10", indexLabel = "Stand at TC 0+"),
-            StrategyDeviationRow(playLabel = "15 vs 10", indexLabel = "Stand at TC +4"),
-            StrategyDeviationRow(playLabel = "10 vs 10", indexLabel = "Double at TC +4"),
-            StrategyDeviationRow(playLabel = "12 vs 3", indexLabel = "Stand at TC +2"),
-            StrategyDeviationRow(playLabel = "12 vs 2", indexLabel = "Stand at TC +3"),
-            StrategyDeviationRow(playLabel = "11 vs A", indexLabel = "Double at TC +1"),
-            StrategyDeviationRow(playLabel = "9 vs 2", indexLabel = "Double at TC +1"),
-            StrategyDeviationRow(playLabel = "9 vs 7", indexLabel = "Double at TC +3")
+        val rules = state.tableRules
+        val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
+        val insuranceRow = StrategyDeviationRow(
+            playLabel = "Insurance vs A",
+            indexLabel = "Take at TC ${formatAtOrAbove(nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale))}"
         )
+        val playRows = playIndices.mapNotNull { index ->
+            val baseIsSurrender = surrenderAllowed && getBaseAction(
+                handType = index.handType,
+                handValue = index.handValue,
+                dealerUpcard = index.dealerUpcard,
+                rules = rules
+            ).startsWith("R")
+            when {
+                // Surrender takes precedence, so the surrender index row covers this hand.
+                surrenderAllowed && surrenderIndices.any { it.sameHandAs(index) } -> null
+                baseIsSurrender -> StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "Surrender (any TC)")
+                else -> index.toRow(trueCountScale)
+            }
+        }
+        val surrenderRows = if (surrenderAllowed) {
+            surrenderIndices.map { it.toRow(trueCountScale) }
+        } else {
+            emptyList()
+        }
+        return listOf(insuranceRow) + playRows + surrenderRows
     }
 
     private fun computeChartCell(
@@ -124,46 +145,58 @@ object CounterStrategyEngine {
         dealerUpcard: Int,
         state: CounterSessionState,
         supportsTrueCount: Boolean,
-        decisionTrueCount: Int
+        decisionTrueCount: Int,
+        trueCountScale: Double
     ): StrategyTableCell {
+        val rules = state.tableRules
         val baseAction = getBaseAction(
             handType = handType,
             handValue = handValue,
             dealerUpcard = dealerUpcard,
-            rules = state.tableRules
+            rules = rules
         )
         val baseAdjusted = applyRuleAdjustments(
             action = baseAction,
             handType = handType,
             handValue = handValue,
             dealerUpcard = dealerUpcard,
-            rules = state.tableRules
+            rules = rules
         )
 
         if (!supportsTrueCount) {
             return StrategyTableCell(action = baseAdjusted, isDeviation = false)
         }
 
-        val deviationAction = getCountDeviationAction(
-            handType = handType,
-            handValue = handValue,
-            dealerUpcard = dealerUpcard,
-            trueCount = decisionTrueCount
-        ) ?: return StrategyTableCell(action = baseAdjusted, isDeviation = false)
+        val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
+        val surrenderIndex = if (surrenderAllowed) {
+            findIndex(surrenderIndices, handType, handValue, dealerUpcard)
+        } else {
+            null
+        }
+        val afterSurrender = when {
+            surrenderIndex == null -> baseAction
+            surrenderIndex.isTriggered(decisionTrueCount, trueCountScale) -> surrenderIndex.action
+            else -> baseAction.withoutSurrender()
+        }
+        // Playing indices (e.g. stand 16 vs 10) only apply when surrender is not the chosen play;
+        // at those counts surrendering is still better than standing.
+        val playDeviation = if (afterSurrender.startsWith("R")) {
+            null
+        } else {
+            findIndex(playIndices, handType, handValue, dealerUpcard)
+                ?.takeIf { it.isTriggered(decisionTrueCount, trueCountScale) }
+                ?.action
+        }
 
         val deviationAdjusted = applyRuleAdjustments(
-            action = deviationAction,
+            action = playDeviation ?: afterSurrender,
             handType = handType,
             handValue = handValue,
             dealerUpcard = dealerUpcard,
-            rules = state.tableRules
+            rules = rules
         )
 
-        return if (deviationAdjusted != baseAdjusted) {
-            StrategyTableCell(action = deviationAdjusted, isDeviation = true)
-        } else {
-            StrategyTableCell(action = baseAdjusted, isDeviation = false)
-        }
+        return StrategyTableCell(action = deviationAdjusted, isDeviation = deviationAdjusted != baseAdjusted)
     }
 
     private fun getBaseAction(
@@ -279,40 +312,119 @@ object CounterStrategyEngine {
         }
     }
 
-    private fun getCountDeviationAction(
+    private fun findIndex(
+        indices: List<CountIndex>,
         handType: ChartHandType,
         handValue: Int,
-        dealerUpcard: Int,
-        trueCount: Int
-    ): String? {
-        if (handType == ChartHandType.HARD) {
-            return when {
-                handValue == 16 && dealerUpcard == 10 && trueCount >= 0 -> "S"
-                handValue == 15 && dealerUpcard == 10 && trueCount >= 4 -> "S"
-                handValue == 12 && dealerUpcard == 3 && trueCount >= 2 -> "S"
-                handValue == 12 && dealerUpcard == 2 && trueCount >= 3 -> "S"
-                handValue == 11 && dealerUpcard == 11 && trueCount >= 1 -> "D"
-                handValue == 10 && dealerUpcard == 11 && trueCount >= 4 -> "D"
-                handValue == 10 && dealerUpcard == 10 && trueCount >= 4 -> "D"
-                handValue == 9 && dealerUpcard == 2 && trueCount >= 1 -> "D"
-                handValue == 9 && dealerUpcard == 7 && trueCount >= 3 -> "D"
-                handValue == 16 && dealerUpcard == 9 && trueCount >= 5 -> "S"
-                handValue == 15 && dealerUpcard == 9 && trueCount >= 2 -> "S"
-                handValue == 15 && dealerUpcard == 11 && trueCount >= 5 -> "S"
-                else -> null
-            }
+        dealerUpcard: Int
+    ): CountIndex? {
+        return indices.firstOrNull {
+            it.handType == handType && it.handValue == handValue && it.dealerUpcard == dealerUpcard
         }
-
-        if (handType == ChartHandType.PAIR && handValue == 10) {
-            return when {
-                dealerUpcard == 5 && trueCount >= 5 -> "P"
-                dealerUpcard == 6 && trueCount >= 4 -> "P"
-                else -> null
-            }
-        }
-
-        return null
     }
+
+    private fun CountIndex.isTriggered(decisionTrueCount: Int, trueCountScale: Double): Boolean {
+        val nativeIndex = nativeIndex(hiLoIndex, trueCountScale)
+        return when (direction) {
+            IndexDirection.AT_OR_ABOVE -> decisionTrueCount >= nativeIndex
+            IndexDirection.BELOW -> decisionTrueCount < nativeIndex
+        }
+    }
+
+    private fun String.withoutSurrender(): String {
+        return if (startsWith("R")) drop(1).uppercase() else this
+    }
+
+    private fun nativeIndex(hiLoIndex: Int, trueCountScale: Double): Int {
+        return TrueCountScaling.toNativeThreshold(hiLoIndex, trueCountScale)
+    }
+
+    private fun formatAtOrAbove(index: Int): String {
+        return if (index > 0) "+$index" else "$index+"
+    }
+
+    private fun formatSigned(index: Int): String {
+        return if (index > 0) "+$index" else index.toString()
+    }
+
+    private fun CountIndex.handLabel(): String {
+        val dealerLabel = if (dealerUpcard == 11) "A" else dealerUpcard.toString()
+        val handLabel = when (handType) {
+            ChartHandType.PAIR -> if (handValue == 11) "A,A" else "$handValue,$handValue"
+            ChartHandType.SOFT -> "A,$handValue"
+            ChartHandType.HARD -> handValue.toString()
+        }
+        return "$handLabel vs $dealerLabel"
+    }
+
+    private fun CountIndex.sameHandAs(other: CountIndex): Boolean {
+        return handType == other.handType && handValue == other.handValue && dealerUpcard == other.dealerUpcard
+    }
+
+    private fun CountIndex.toRow(trueCountScale: Double): StrategyDeviationRow {
+        val nativeIndex = nativeIndex(hiLoIndex, trueCountScale)
+        val verb = when {
+            action.startsWith("R") -> "Surrender"
+            action == "S" -> "Stand"
+            action == "H" -> "Hit"
+            action == "P" -> "Split"
+            else -> "Double"
+        }
+        val threshold = when (direction) {
+            IndexDirection.AT_OR_ABOVE -> "at TC ${formatAtOrAbove(nativeIndex)}"
+            IndexDirection.BELOW -> "below TC ${formatSigned(nativeIndex)}"
+        }
+        return StrategyDeviationRow(playLabel = handLabel(), indexLabel = "$verb $threshold")
+    }
+
+    private enum class IndexDirection {
+        AT_OR_ABOVE,
+        BELOW
+    }
+
+    // Indices are Hi-Lo values (multi-deck, S17); other balanced systems use them converted to
+    // native true counts via TrueCountScaling, so labels and chart triggers always agree.
+    private data class CountIndex(
+        val handType: ChartHandType,
+        val handValue: Int,
+        val dealerUpcard: Int,
+        val hiLoIndex: Int,
+        val action: String,
+        val direction: IndexDirection = IndexDirection.AT_OR_ABOVE
+    )
+
+    private const val INSURANCE_HI_LO_INDEX = 3
+
+    // Illustrious 18 (minus insurance, which has no chart cell) plus 15 vs A.
+    private val playIndices: List<CountIndex> = listOf(
+        CountIndex(ChartHandType.HARD, 16, 10, 0, "S"),
+        CountIndex(ChartHandType.HARD, 15, 10, 4, "S"),
+        CountIndex(ChartHandType.PAIR, 10, 5, 5, "P"),
+        CountIndex(ChartHandType.PAIR, 10, 6, 4, "P"),
+        CountIndex(ChartHandType.HARD, 10, 10, 4, "D"),
+        CountIndex(ChartHandType.HARD, 12, 3, 2, "S"),
+        CountIndex(ChartHandType.HARD, 12, 2, 3, "S"),
+        CountIndex(ChartHandType.HARD, 11, 11, 1, "D"),
+        CountIndex(ChartHandType.HARD, 9, 2, 1, "D"),
+        CountIndex(ChartHandType.HARD, 10, 11, 4, "D"),
+        CountIndex(ChartHandType.HARD, 9, 7, 3, "D"),
+        CountIndex(ChartHandType.HARD, 16, 9, 5, "S"),
+        CountIndex(ChartHandType.HARD, 13, 2, -1, "H", IndexDirection.BELOW),
+        CountIndex(ChartHandType.HARD, 12, 4, 0, "H", IndexDirection.BELOW),
+        CountIndex(ChartHandType.HARD, 12, 5, -2, "H", IndexDirection.BELOW),
+        CountIndex(ChartHandType.HARD, 12, 6, -1, "H", IndexDirection.BELOW),
+        CountIndex(ChartHandType.HARD, 13, 3, -2, "H", IndexDirection.BELOW),
+        CountIndex(ChartHandType.HARD, 15, 11, 5, "S")
+    )
+
+    // Fab 4 late-surrender indices, applied only when surrender is offered: surrender at or above
+    // the index, otherwise play the hand without surrendering.
+    private val surrenderIndices: List<CountIndex> = listOf(
+        CountIndex(ChartHandType.HARD, 14, 10, 3, "Rh"),
+        CountIndex(ChartHandType.HARD, 15, 10, 0, "Rh"),
+        CountIndex(ChartHandType.HARD, 15, 9, 2, "Rh"),
+        CountIndex(ChartHandType.HARD, 15, 11, 1, "Rh")
+    )
 
     private fun applyRuleAdjustments(
         action: String,

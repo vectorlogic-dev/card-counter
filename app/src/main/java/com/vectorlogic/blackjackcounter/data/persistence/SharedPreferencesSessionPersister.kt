@@ -38,12 +38,21 @@ class SharedPreferencesSessionPersister(context: Context) : SessionPersister {
             .filter { it.isNotBlank() }
             .mapNotNull { token -> token.toIntOrNull()?.let { CardRank.entries.getOrNull(it) } }
 
+        // Older saves have no per-card penetration; treat each card as one card's worth.
+        val decksAdvanced = prefs.getString(KEY_SEEN_DECKS_ADVANCED, "")
+            .orEmpty()
+            .split(',')
+            .filter { it.isNotBlank() }
+            .map { token -> token.toDoubleOrNull()?.coerceAtLeast(0.0) }
+            .takeIf { values -> values.size == seenRanks.size && values.all { it != null } }
+
         val shouldTrackAces = system.recommendsAceSideCount()
-        val seenCards = seenRanks.map { rank ->
+        val seenCards = seenRanks.mapIndexed { i, rank ->
             SeenCard(
                 rank = rank,
                 deltaApplied = system.getTagValue(rank),
-                countedAce = shouldTrackAces && rank == CardRank.ACE
+                countedAce = shouldTrackAces && rank == CardRank.ACE,
+                decksAdvanced = decksAdvanced?.get(i) ?: SeenCard.DECKS_PER_CARD
             )
         }
 
@@ -69,6 +78,10 @@ class SharedPreferencesSessionPersister(context: Context) : SessionPersister {
             putString(
                 KEY_SEEN_RANKS,
                 state.seenCards.joinToString(",") { it.rank.ordinal.toString() }
+            )
+            putString(
+                KEY_SEEN_DECKS_ADVANCED,
+                state.seenCards.joinToString(",") { it.decksAdvanced.toString() }
             )
             writeTableRules(this, state.tableRules)
         }
@@ -124,6 +137,7 @@ class SharedPreferencesSessionPersister(context: Context) : SessionPersister {
         const val KEY_RUNNING_COUNT = "running_count_bits"
         const val KEY_ACES_SEEN = "aces_seen"
         const val KEY_SEEN_RANKS = "seen_ranks_csv"
+        const val KEY_SEEN_DECKS_ADVANCED = "seen_decks_advanced_csv"
 
         const val KEY_S17 = "rule_s17"
         const val KEY_PEEK = "rule_peek"

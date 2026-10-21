@@ -6,6 +6,8 @@ import com.vectorlogic.blackjackcounter.domain.model.TrueCountIntegerization
 
 data class CountingSystemProfile(
     val trueCountIntegerization: TrueCountIntegerization? = null,
+    // Native true count / trueCountScale = Hi-Lo-equivalent true count. See TrueCountScaling.
+    val trueCountScale: Double = 1.0,
     val balancedBetRamp: List<CountRampStep> = emptyList(),
     val runningCountReferencesByDeck: Map<Int, RunningCountReferences> = emptyMap(),
     val runningCountBetRampByDeck: Map<Int, List<CountRampStep>> = emptyMap()
@@ -28,24 +30,22 @@ data class CountingSystemProfile(
 }
 
 object CountingSystemProfiles {
-    private val defaultBalancedBetRamp: List<CountRampStep> = listOf(
+    // Hi-Lo calibrated thresholds; other balanced systems use them scaled to native true counts.
+    private val hiLoBalancedBetRamp: List<CountRampStep> = listOf(
         CountRampStep(minCountInclusive = 1, units = 2),
         CountRampStep(minCountInclusive = 2, units = 4),
         CountRampStep(minCountInclusive = 3, units = 8),
         CountRampStep(minCountInclusive = 4, units = 12)
     )
 
+    // Knock-Out Blackjack (Vancura & Fuchs) publishes key counts for these deck counts only;
+    // the 2 - decks formula matches 6D and 8D but not 1D (+2) or 2D (+1).
+    private val koPublishedKeyCounts: Map<Int, Int> = mapOf(1 to 2, 2 to 1, 6 to -4, 8 to -6)
+
     private val koReferencesByDeck: Map<Int, RunningCountReferences> = (1..8).associateWith { decks ->
-        val keyCount = 2 - decks
         RunningCountReferences(
             initialRunningCount = 4 - (4 * decks),
-            keyCount = keyCount,
-            pivot = 4
-        )
-    }.toMutableMap().also { map ->
-        map[1] = RunningCountReferences(
-            initialRunningCount = 0,
-            keyCount = 1,
+            keyCount = koPublishedKeyCounts[decks] ?: (2 - decks),
             pivot = 4
         )
     }
@@ -57,6 +57,23 @@ object CountingSystemProfiles {
             initialRunningCount = initialCount,
             keyCount = keyCount,
             pivot = 4
+        )
+    }
+
+    fun scaledBalancedBetRamp(trueCountScale: Double): List<CountRampStep> {
+        return hiLoBalancedBetRamp.map { step ->
+            step.copy(
+                minCountInclusive = TrueCountScaling.toNativeThreshold(step.minCountInclusive, trueCountScale)
+            )
+        }
+    }
+
+    private fun balancedProfile(system: CountingSystem): CountingSystemProfile {
+        val scale = TrueCountScaling.hiLoEquivalentScale(system)
+        return CountingSystemProfile(
+            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
+            trueCountScale = scale,
+            balancedBetRamp = scaledBalancedBetRamp(scale)
         )
     }
 
@@ -74,26 +91,11 @@ object CountingSystemProfiles {
     }
 
     private val profiles: Map<String, CountingSystemProfile> = mapOf(
-        HiLoCountingSystem.id to CountingSystemProfile(
-            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
-        ),
-        HiOptIICountingSystem.id to CountingSystemProfile(
-            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
-        ),
-        OmegaIICountingSystem.id to CountingSystemProfile(
-            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
-        ),
-        ZenCountSystem.id to CountingSystemProfile(
-            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
-        ),
-        WongHalvesSystem.id to CountingSystemProfile(
-            trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
-        ),
+        HiLoCountingSystem.id to balancedProfile(HiLoCountingSystem),
+        HiOptIICountingSystem.id to balancedProfile(HiOptIICountingSystem),
+        OmegaIICountingSystem.id to balancedProfile(OmegaIICountingSystem),
+        ZenCountSystem.id to balancedProfile(ZenCountSystem),
+        WongHalvesSystem.id to balancedProfile(WongHalvesSystem),
         KOCountingSystem.id to CountingSystemProfile(
             runningCountReferencesByDeck = koReferencesByDeck,
             runningCountBetRampByDeck = buildUnbalancedRampByDeck(koReferencesByDeck)
@@ -107,7 +109,7 @@ object CountingSystemProfiles {
     fun profileFor(systemId: String): CountingSystemProfile {
         return profiles[systemId] ?: CountingSystemProfile(
             trueCountIntegerization = TrueCountIntegerization.TRUNCATE,
-            balancedBetRamp = defaultBalancedBetRamp
+            balancedBetRamp = hiLoBalancedBetRamp
         )
     }
 }

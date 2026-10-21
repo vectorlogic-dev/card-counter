@@ -75,7 +75,8 @@ class CounterViewModel private constructor(
                 calculateRawTrueCount(state, selectedSystem.usesTrueCount())
             ),
             supportsTrueCount = selectedSystem.usesTrueCount(),
-            decisionTrueCount = decisionTrueCount(state)
+            decisionTrueCount = decisionTrueCount(state),
+            trueCountScale = profileFor(selectedSystem.id).trueCountScale
         )
     }
 
@@ -171,7 +172,7 @@ class CounterViewModel private constructor(
             val lastSeen = current.seenCards.lastOrNull() ?: return@updateSessionState current
             current.copy(
                 runningCount = current.runningCount - lastSeen.deltaApplied,
-                decksRemaining = (current.decksRemaining + DECKS_PER_CARD)
+                decksRemaining = (current.decksRemaining + lastSeen.decksAdvanced)
                     .coerceAtMost(current.totalDecks.toDouble()),
                 acesSeen = if (lastSeen.countedAce) {
                     (current.acesSeen - 1).coerceAtLeast(0)
@@ -254,7 +255,9 @@ class CounterViewModel private constructor(
                     current.seenCards + SeenCard(
                         rank = seenCardRank,
                         deltaApplied = delta,
-                        countedAce = seenAce
+                        countedAce = seenAce,
+                        // Less than one card's worth when the decks-remaining floor clamps it.
+                        decksAdvanced = (current.decksRemaining - nextDecksRemaining).coerceAtLeast(0.0)
                     )
                 } else {
                     current.seenCards
@@ -302,7 +305,8 @@ class CounterViewModel private constructor(
             usesTrueCount = usesTrueCount,
             tableRules = state.tableRules,
             totalDecks = state.totalDecks,
-            edgeGainPercentPerTrueCount = selectedSystem.edgeGainPercentPerTrueCount
+            edgeGainPercentPerTrueCount = selectedSystem.edgeGainPercentPerTrueCount,
+            trueCountScale = profile.trueCountScale
         )
         val betSizingCountValue = decisionCountValue(
             state = state,
@@ -355,7 +359,8 @@ class CounterViewModel private constructor(
                 state = state,
                 usesTrueCount = usesTrueCount,
                 keyCount = profile.keyCount(state.totalDecks),
-                pivot = profile.pivot(state.totalDecks)
+                pivot = profile.pivot(state.totalDecks),
+                trueCountScale = profile.trueCountScale
             ),
             showCheatSheet = showCheatSheet
         )
