@@ -1,6 +1,6 @@
 # F-Droid
 
-**Status (2026-10-22):** ready to submit, merge request not opened yet.
+**Status (2026-10-23):** submitted as [fdroiddata!53737](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/53737) from the fork `vectorlogic-dev/fdroiddata`, branch `com.vectorlogic.blackjackcounter`. CI runs on the fork; check the merge request's Pipelines tab.
 
 - `com.vectorlogic.blackjackcounter.yml` is the fdroiddata recipe for v1.1.0 (versionCode 10, commit `1f945d9`). It passes `fdroid lint` and `fdroid rewritemeta`.
 - Store text, icon, changelog and screenshots are in `fastlane/metadata/android/en-US/`.

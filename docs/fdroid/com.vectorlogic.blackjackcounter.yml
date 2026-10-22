@@ -12,7 +12,8 @@ AutoName: 'Counting Edge: Card Counter'
 
 RepoType: git
 Repo: https://github.com/vectorlogic-dev/card-counter.git
-Binaries: https://github.com/vectorlogic-dev/card-counter/releases/download/v%v/CountingEdge-%v.apk
+Binaries: 
+  https://github.com/vectorlogic-dev/card-counter/releases/download/v%v/CountingEdge-%v.apk
 
 Builds:
   - versionName: 1.1.0
@@ -25,6 +26,7 @@ Builds:
       - update-java-alternatives -a
     gradle:
       - yes
+    prebuild: sed -i -e '/foojay-resolver/d' ../settings.gradle.kts
 
 AllowedAPKSigningKeys: 69b104cb37bce31eb6117108d37ea42f573f1c9b44453a232e259d699183398e
 
