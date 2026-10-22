@@ -306,7 +306,7 @@ The app is Android-only. On iPhone and iPad, `release.js` sends the homepage dow
 
 ## 15. Website Pages
 
-The site lives in [vectorlogic-dev/card-counter-website](https://github.com/vectorlogic-dev/card-counter-website); its `CLAUDE.md` holds the full conventions. Pages as of 2026-10-22:
+The site lives in [vectorlogic-dev/card-counter-website](https://github.com/vectorlogic-dev/card-counter-website); its `CLAUDE.md` holds the full conventions. Pages as of 2026-10-23:
 
 | URL | Purpose | App code it depends on |
 |-----|---------|------------------------|
@@ -317,9 +317,12 @@ The site lives in [vectorlogic-dev/card-counter-website](https://github.com/vect
 | `/basic-strategy-chart` | S17 / DAS / no-surrender chart, H17 and surrender changes, Hi-Lo index plays | `CounterStrategyEngine` |
 | `/basic-strategy-trainer` | Browser quiz: deal a hand, pick hit / stand / double / split | The chart above, copied into the site's `scripts/strategy-trainer.js` |
 | `/true-count-calculator` | True count, edge and bet calculator | `CounterCalculations`, each system's `edgeGainPercentPerTrueCount`, `CountingSystemProfile` |
+| `/bet-spread-calculator` | Bet ramp by count for all 7 systems, in units and dollars, with a table maximum cap and the estimated edge at each step | `CountingSystemProfile` (ramps, KO/ReKO start and key counts), `TrueCountScaling`, `CounterCalculations`, each system's tags and `edgeGainPercentPerTrueCount` |
 | `/systems` | Hub: level, balanced or not, true or running count, ace side count, full tag-value table for all 7 systems | Every `*System.kt`, including `recommendsAceSideCount()` |
 | `/systems/hi-lo`, `/systems/ko`, `/systems/wong-halves` | One page per system | That system's tags, `CountingSystemProfile` (KO start and key counts) |
+| `/systems/hi-opt-ii` | Hi-Opt II: tags, ace side count and ace outlook, true count scale, scaled bet ramp and key index plays | `HiOptIICountingSystem`, `TrueCountScaling`, `CountingSystemProfile`, `CounterStrategyEngine`, ace panel in `DeckControlCard` |
 | `/hi-lo-vs-ko` | Comparison | Hi-Lo and KO tags, KO counts |
+| `/illustrious-18` | The 18 Hi-Lo index plays with their true counts, the Fab 4 surrender plays, and the indexes converted for Hi-Opt II, Omega II, Zen Count and Wong Halves | `CounterStrategyEngine` (`playIndices`, `surrenderIndices`), `TrueCountScaling` |
 | `/is-card-counting-illegal` | Legality: counting vs devices, casino back-offs, *Uston*, NRS 465.075 / 465.088 / 207.200, with sources | None. Keep the "don't use the app at a table" message |
 | `/card-counting-online` | RNG vs live dealer, links to the trainers | Edge model (0.5% per true count) |
 | `/about` | Who makes the app, how site figures are checked against this repo, further reading | Links to the files in this table |
@@ -327,9 +330,9 @@ The site lives in [vectorlogic-dev/card-counter-website](https://github.com/vect
 
 ### When the app changes, update the site
 
-- **Tag values or a new system:** `scripts/practice.js`, the tag table on `/systems`, the system's own page, and the homepage system card.
-- **Basic strategy or index plays (`CounterStrategyEngine`):** `/basic-strategy-chart` and `scripts/strategy-trainer.js` together; the trainer's data is a copy of the chart.
-- **Edge model or bet ramp:** `scripts/true-count.js` and the guide's edge table.
+- **Tag values or a new system:** `scripts/practice.js`, `scripts/bet-spread.js` (it derives each system's true count scale from the tags), the tag table on `/systems`, the system's own page, and the homepage system card.
+- **Basic strategy or index plays (`CounterStrategyEngine`):** `/basic-strategy-chart` and `scripts/strategy-trainer.js` together (the trainer's data is a copy of the chart), and `/illustrious-18`.
+- **Edge model or bet ramp:** `scripts/true-count.js`, `scripts/bet-spread.js` (and the ramp tables on `/bet-spread-calculator`) and the guide's edge table.
 - **KO / ReKO starting or key counts:** `/systems/ko` and `/hi-lo-vs-ko`.
 - **Ace side count support:** the `/systems` overview table.
 - **New version:** the buttons update themselves; also bump the static `softwareVersion` in the homepage JSON-LD and the example file names on `/download`.
