@@ -1,6 +1,6 @@
 # F-Droid
 
-**Status (2026-10-23):** submitted as [fdroiddata!53737](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/53737) from the fork `vectorlogic-dev/fdroiddata`, branch `com.vectorlogic.blackjackcounter`. The full fdroiddata pipeline passes, including the build and the reproducible-APK check. Waiting for F-Droid review.
+**Status (2026-11-24):** [fdroiddata!53737](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/53737), from the fork `vectorlogic-dev/fdroiddata`, branch `com.vectorlogic.blackjackcounter`. The reviewer asked for the `sudo` block to be removed; nobody replied, so it was closed for inactivity on Nov 22. It was reopened on Nov 24 without `sudo`, the full pipeline passes (build and reproducible-APK check included), and the reviewer has been pinged. Reply to reviewer comments within a few days, or the merge request gets closed again.
 
 - `com.vectorlogic.blackjackcounter.yml` is the fdroiddata recipe for v1.1.0 (versionCode 10, commit `1f945d9`), identical to the file in the merge request.
 - Store text, icon, changelog and screenshots are in `fastlane/metadata/android/en-US/`.
@@ -10,7 +10,7 @@
 
 1. Fork https://gitlab.com/fdroid/fdroiddata and add `com.vectorlogic.blackjackcounter.yml` as `metadata/com.vectorlogic.blackjackcounter.yml`.
 2. Open a merge request with the "App inclusion" template. Mention that the build is reproducible and the signing key is pinned.
-3. Watch the merge request pipeline and answer reviewer comments. Expected questions: the `sudo` JDK 21 install (the Gradle daemon needs JDK 21), the `prebuild` line and the categories.
+3. Watch the merge request pipeline and answer reviewer comments. Expected questions: the `prebuild` line and the categories. Don't add a `sudo` block: F-Droid's build server already has JDK 21, and reviewers ask for `sudo` to be removed when it isn't needed.
 
 What the first pipeline caught, now fixed in the recipe:
 
