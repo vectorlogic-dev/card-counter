@@ -30,6 +30,8 @@ UI smoke tests live in `app/src/androidTest` and need a running emulator or devi
 ./gradlew connectedDebugAndroidTest
 ```
 
+CI runs them on an API 34 emulator for every pull request and every push to `main`.
+
 ## Submitting changes
 
 1. Fork and create a feature branch off `main`.
