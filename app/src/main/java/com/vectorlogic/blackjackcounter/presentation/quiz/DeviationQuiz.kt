@@ -3,6 +3,7 @@ package com.vectorlogic.blackjackcounter.presentation.quiz
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
 import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
+import com.vectorlogic.blackjackcounter.domain.stats.QuizHand
 import com.vectorlogic.blackjackcounter.presentation.counter.CounterStrategyEngine
 import com.vectorlogic.blackjackcounter.presentation.counter.DeviationQuizItem
 import com.vectorlogic.blackjackcounter.presentation.counter.DeviationTrigger
@@ -12,16 +13,24 @@ import kotlin.random.Random
 /** One question: a count-dependent hand ([itemIndex] into [DeviationQuiz.items]) at a true count. */
 data class QuizQuestion(val itemIndex: Int, val trueCount: Double)
 
+/** How a round went, for the stats screen. Counts only the questions answered. */
+data class QuizRoundScore(
+    val questionCount: Int,
+    val correctCount: Int,
+    val missedHands: List<QuizHand>
+)
+
 /**
  * A deviation quiz for one set of table rules and one counting system. Answers come from the
  * same engine as the Strategy Chart, so the quiz never disagrees with the chart.
  *
- * @param systemName the system whose true counts the questions use. Running-count systems (KO,
- *   ReKO) have no true-count indices, so they are quizzed on Hi-Lo.
+ * @param systemId the system whose true counts the questions use, and [systemName] its name.
+ *   Running-count systems (KO, ReKO) have no true-count indices, so they are quizzed on Hi-Lo.
  */
 class DeviationQuiz(
     private val state: CounterSessionState,
     private val trueCountScale: Double,
+    val systemId: String,
     val systemName: String,
     val usesSelectedSystem: Boolean
 ) {
@@ -45,6 +54,18 @@ class DeviationQuiz(
             StrategyPlay.SURRENDER -> surrenderAllowed
             else -> true
         }
+    }
+
+    fun score(questions: List<QuizQuestion>, answers: List<StrategyPlay>): QuizRoundScore {
+        val answered = questions.zip(answers)
+        val missed = answered.filter { (question, answer) -> correctPlay(question) != answer }
+        return QuizRoundScore(
+            questionCount = answered.size,
+            correctCount = answered.size - missed.size,
+            missedHands = missed.map { (question, _) ->
+                item(question).let { QuizHand(hand = it.handLabel, dealer = it.dealerLabel) }
+            }
+        )
     }
 
     fun newRound(count: Int = QUESTIONS_PER_ROUND, random: Random = Random.Default): List<QuizQuestion> =

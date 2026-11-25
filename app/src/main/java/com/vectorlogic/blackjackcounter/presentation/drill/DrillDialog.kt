@@ -65,6 +65,7 @@ private val CardListSaver: Saver<List<CardRank>, Any> = listSaver(
 @Composable
 fun DrillDialog(
     system: CountingSystem,
+    onDrillFinished: (DrillSpeed, DrillResult) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Everything is saveable so a rotation resumes the drill where it was instead of
@@ -97,9 +98,21 @@ fun DrillDialog(
         phase == DrillPhase.INPUT
     val canSubmit = userInput.toDoubleOrNull() != null
     val submit = {
-        if (canSubmit) {
-            submittedCount = userInput.toDouble()
+        // The phase check stops a double tap (button and keyboard Done) recording a drill twice.
+        if (canSubmit && phase == DrillPhase.INPUT) {
+            val reported = userInput.toDouble()
+            submittedCount = reported
             phase = DrillPhase.RESULT
+            onDrillFinished(
+                config.speed,
+                DrillResult(
+                    actualRunningCount = DrillEngine.runningCountFor(system, cards),
+                    userReportedCount = reported,
+                    cards = cards,
+                    elapsedMs = elapsedMs,
+                    systemDisplayName = system.displayName
+                )
+            )
         }
     }
 
@@ -400,14 +413,14 @@ private fun CardRank.toDrillLabel(): String = when (this) {
     CardRank.ACE -> "A"
 }
 
-private val DrillSize.labelRes: Int
+internal val DrillSize.labelRes: Int
     get() = when (this) {
         DrillSize.HALF_DECK -> R.string.drill_size_half_deck
         DrillSize.DECK -> R.string.drill_size_one_deck
         DrillSize.DECK_AND_A_HALF -> R.string.drill_size_deck_and_a_half
     }
 
-private val DrillSpeed.labelRes: Int
+internal val DrillSpeed.labelRes: Int
     get() = when (this) {
         DrillSpeed.SLOW -> R.string.drill_speed_slow
         DrillSpeed.MEDIUM -> R.string.drill_speed_medium
@@ -420,7 +433,7 @@ private fun cardGapMs(intervalMs: Long): Long = (intervalMs / 5).coerceIn(100L, 
 private fun toggleSign(input: String): String =
     if (input.startsWith("-")) input.removePrefix("-") else "-$input"
 
-private fun formatCount(value: Double): String {
+internal fun formatCount(value: Double): String {
     val rounded = (value * 10.0).roundToInt() / 10.0
     return if (rounded == rounded.toInt().toDouble()) {
         rounded.toInt().toString()

@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
+import com.vectorlogic.blackjackcounter.domain.persistence.PracticeStatsStore
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
 import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
@@ -36,14 +37,20 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.TableRul
 import com.vectorlogic.blackjackcounter.presentation.drill.DrillDialog
 import com.vectorlogic.blackjackcounter.presentation.quiz.DeviationQuizDialog
 import com.vectorlogic.blackjackcounter.presentation.resolve
+import com.vectorlogic.blackjackcounter.presentation.stats.PracticeStatsDialog
+import com.vectorlogic.blackjackcounter.presentation.stats.PracticeStatsViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun CounterScreen(
-    persister: SessionPersister? = null
+    persister: SessionPersister? = null,
+    statsStore: PracticeStatsStore? = null
 ) {
     val viewModel: CounterViewModel = viewModel(
         factory = remember(persister) { CounterViewModel.provideFactory(persister) }
+    )
+    val statsViewModel: PracticeStatsViewModel = viewModel(
+        factory = remember(statsStore) { PracticeStatsViewModel.provideFactory(statsStore) }
     )
     val state by viewModel.uiState.collectAsState()
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -53,6 +60,7 @@ fun CounterScreen(
     var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
     var showDrillDialog by rememberSaveable { mutableStateOf(false) }
     var showQuizDialog by rememberSaveable { mutableStateOf(false) }
+    var showStatsDialog by rememberSaveable { mutableStateOf(false) }
     var showResetConfirm by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -101,12 +109,15 @@ fun CounterScreen(
             onStrategyChartClick = { showStrategyChartDialog = true },
             onDrillClick = { showDrillDialog = true },
             onQuizClick = { showQuizDialog = true },
+            onStatsClick = { showStatsDialog = true },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
         )
 
         if (showDrillDialog) {
+            val system = viewModel.activeCountingSystem()
             DrillDialog(
-                system = viewModel.activeCountingSystem(),
+                system = system,
+                onDrillFinished = { speed, result -> statsViewModel.recordDrill(system.id, speed, result) },
                 onDismiss = { showDrillDialog = false }
             )
         }
@@ -116,7 +127,17 @@ fun CounterScreen(
             val quiz = remember { viewModel.buildDeviationQuiz() }
             DeviationQuizDialog(
                 quiz = quiz,
+                onRoundFinished = { score -> statsViewModel.recordQuiz(quiz.systemId, score) },
                 onDismiss = { showQuizDialog = false }
+            )
+        }
+
+        if (showStatsDialog) {
+            val history by statsViewModel.history.collectAsState()
+            PracticeStatsDialog(
+                history = history,
+                onClear = statsViewModel::clear,
+                onDismiss = { showStatsDialog = false }
             )
         }
 

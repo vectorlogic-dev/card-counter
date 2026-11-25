@@ -74,6 +74,7 @@ class CounterViewModel private constructor(
         return DeviationQuiz(
             state = state,
             trueCountScale = profileFor(quizSystem.id).trueCountScale,
+            systemId = quizSystem.id,
             systemName = quizSystem.displayName,
             usesSelectedSystem = usesSelectedSystem
         )

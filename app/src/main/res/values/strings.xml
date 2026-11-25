@@ -274,4 +274,67 @@
     <!-- %1$s hand, %2$s true count, %3$s right play, %4$s the player's answer -->
     <string name="quiz_result_miss">%1$s at TC %2$s: %3$s (you said %4$s)</string>
     <string name="help_quiz_body">Menu &gt; Deviation Quiz. Ten hands at counts on both sides of their index; pick the play. Answers follow the current table rules and system, like the Strategy Chart.</string>
+    <!-- Practice stats: drill and quiz results kept across sessions -->
+    <string name="menu_practice_stats">Practice Stats</string>
+    <string name="stats_title">Practice stats</string>
+    <string name="stats_empty">Nothing yet. Finish a counting drill or a deviation quiz round and your results build up here.</string>
+    <string name="stats_on_device">Saved only on this device.</string>
+    <string name="stats_drills_heading">Counting drills</string>
+    <string name="stats_drills_none">No drills yet.</string>
+    <string name="stats_quiz_heading">Deviation quiz</string>
+    <string name="stats_quiz_none">No quiz rounds yet.</string>
+    <!-- Labels under the big numbers -->
+    <string name="stats_tile_drills">Drills</string>
+    <string name="stats_tile_exact">Exact</string>
+    <!-- Share exact over the most recent drills; %1$d is how many, e.g. Last 10 -->
+    <string name="stats_tile_last_n">Last %1$d</string>
+    <string name="stats_tile_rounds">Rounds</string>
+    <string name="stats_tile_correct">Correct</string>
+    <string name="stats_tile_best">Best</string>
+    <!-- A whole percentage, e.g. 64% -->
+    <string name="stats_percent">%1$d%%</string>
+    <!-- A quiz score, e.g. 8/10 -->
+    <string name="stats_score">%1$d/%2$d</string>
+    <!-- Above a row of dots, one per drill -->
+    <plurals name="stats_streak_label">
+        <item quantity="one">Last drill</item>
+        <item quantity="other">Last %1$d drills</item>
+    </plurals>
+    <!-- Screen reader text for the row of dots. %1$d exact out of the last %2$d drills. -->
+    <plurals name="stats_streak_description">
+        <item quantity="one">Last drill: %1$d of %2$d exact</item>
+        <item quantity="other">Last %2$d drills: %1$d exact</item>
+    </plurals>
+    <!-- Average error on the drills that weren't exact -->
+    <string name="stats_average_miss">Average miss</string>
+    <string name="stats_by_speed">By speed</string>
+    <!-- %1$d drills exact out of %2$d -->
+    <plurals name="stats_tally">
+        <item quantity="one">%1$d of %2$d exact</item>
+        <item quantity="other">%1$d of %2$d exact</item>
+    </plurals>
+    <string name="stats_recent">Recent</string>
+    <!-- A date and a counting system, e.g. Nov 26 · Hi-Lo -->
+    <string name="stats_entry_two">%1$s · %2$s</string>
+    <!-- A date, a counting system and the drill setup, e.g. Nov 26 · Hi-Lo · 52 cards, Fast -->
+    <string name="stats_entry_three">%1$s · %2$s · %3$s</string>
+    <!-- %1$s is a number of cards, %2$s a speed -->
+    <string name="stats_drill_setup">%1$s, %2$s</string>
+    <plurals name="stats_cards">
+        <item quantity="one">%1$d card</item>
+        <item quantity="other">%1$d cards</item>
+    </plurals>
+    <string name="stats_exact">Exact</string>
+    <!-- %1$s is how far the answer was from the count, e.g. 2 -->
+    <string name="stats_off_by">Off by %1$s</string>
+    <string name="stats_most_missed">Most missed</string>
+    <plurals name="stats_times">
+        <item quantity="one">%1$d time</item>
+        <item quantity="other">%1$d times</item>
+    </plurals>
+    <string name="stats_clear">Clear stats</string>
+    <string name="stats_clear_title">Clear practice stats?</string>
+    <string name="stats_clear_message">This deletes every drill and quiz result saved on this device. It can\'t be undone.</string>
+    <string name="stats_clear_confirm">Clear</string>
+    <string name="help_stats_body">Menu &gt; Practice Stats. Every finished drill and quiz round is saved on this device, so you can see how often you\'re exact, at which speeds, and which index plays you miss most.</string>
 </resources>

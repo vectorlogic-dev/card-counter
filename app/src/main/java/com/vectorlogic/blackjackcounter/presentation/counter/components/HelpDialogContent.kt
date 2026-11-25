@@ -153,6 +153,10 @@ private fun StrategyGuideCard() {
                 body = stringResource(R.string.help_quiz_body)
             )
             GuideEntry(
+                title = stringResource(R.string.stats_title),
+                body = stringResource(R.string.help_stats_body)
+            )
+            GuideEntry(
                 title = stringResource(R.string.help_indices_used),
                 body = stringResource(R.string.help_indices_used_body)
             )

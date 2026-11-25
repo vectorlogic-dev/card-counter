@@ -9,6 +9,7 @@ import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
+import com.vectorlogic.blackjackcounter.domain.stats.QuizHand
 import com.vectorlogic.blackjackcounter.presentation.counter.CounterStrategyEngine
 import com.vectorlogic.blackjackcounter.presentation.counter.StrategyPlay
 import com.vectorlogic.blackjackcounter.presentation.text
@@ -36,6 +37,7 @@ class DeviationQuizTest {
     private fun quiz(rules: TableRules = TableRules(), scale: Double = 1.0) = DeviationQuiz(
         state = CounterSessionState(tableRules = rules),
         trueCountScale = scale,
+        systemId = "hi_lo",
         systemName = "Hi-Lo",
         usesSelectedSystem = true
     )
@@ -115,5 +117,24 @@ class DeviationQuizTest {
         }
         val late = quiz(TableRules(surrenderRule = SurrenderRule.LATE))
         assertTrue(StrategyPlay.SURRENDER in late.choices(QuizQuestion(0, 0.0)))
+    }
+
+    @Test
+    fun `a round's score counts answered questions and lists the hands missed`() {
+        val quiz = quiz()
+        val round = quiz.newRound(count = 4, random = Random(3))
+        val right = round.map { quiz.correctPlay(it) }
+        // Get the second and third wrong, and leave the last unanswered.
+        val answers = right.take(3).mapIndexed { i, play ->
+            if (i == 0) play else quiz.choices(round[i]).first { it != play }
+        }
+        val score = quiz.score(round, answers)
+
+        assertEquals(3, score.questionCount)
+        assertEquals(1, score.correctCount)
+        assertEquals(
+            round.subList(1, 3).map { quiz.item(it).let { item -> QuizHand(item.handLabel, item.dealerLabel) } },
+            score.missedHands
+        )
     }
 }

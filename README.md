@@ -43,6 +43,7 @@ It supports multiple counting systems, rule-aware strategy guidance, and a compa
    - `Recent Cards` panel for a longer history
    - `Reset Count` to reset shoe depth and count state (asks to confirm when there are cards or shoe progress to lose)
    - `Menu` -> `Drill Mode` for timed running-count practice
+   - `Menu` -> `Practice Stats` to see drill and quiz results over time
    - For `KO` / `ReKO`, reset returns to the deck-specific initial running count (IRC)
 
 ## Bet Units Explained
@@ -115,7 +116,7 @@ All counting systems are available in the app at no extra cost.
 - Header (floating, no card):
   - Current system name in gold
   - Info icon -> Help dialog
-  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet, Drill Mode, Deviation Quiz
+  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet, Drill Mode, Deviation Quiz, Practice Stats
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
@@ -165,6 +166,15 @@ All counting systems are available in the app at no extra cost.
 - After each answer the quiz shows the index and whether it applies at that count; the end of the
   round lists the misses to review
 - A round survives rotation and isn't cancelled by Back or an accidental outside tap
+
+## Practice Stats
+- Open from `Menu` -> `Practice Stats`; every finished drill and quiz round is saved on the device
+- Drills: how many, the share exact overall and over the last 10, a dot per drill for the last 20
+  (filled when exact), the average miss, exact drills by speed, and the five most recent
+- Quiz: rounds played, the share of answers right, the best round, the three hands missed most,
+  and the five most recent rounds
+- Kept in its own on-device store, apart from the shoe, so `Reset Count` never touches it; the latest
+  500 drills and 500 rounds are kept, and `Clear stats` (with confirmation) deletes them all
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`
@@ -250,13 +260,15 @@ macOS/Linux:
 
 ## Privacy Policy
 - Privacy policy source: [docs/privacy-policy.md](docs/privacy-policy.md); the hosted copy is at [blackjackcounter.app/privacy-policy.html](https://blackjackcounter.app/privacy-policy.html).
-- The app stores session state locally only (SharedPreferences on-device). Nothing is transmitted off-device by the app itself.
+- The app stores session state and practice results locally only (SharedPreferences on-device). Nothing is transmitted off-device by the app itself.
 
 ## Project Structure
 - `app/src/main/java/com/vectorlogic/blackjackcounter/data/counting`
   - Counting system interface + implementations
 - `app/src/main/java/com/vectorlogic/blackjackcounter/domain/model`
   - App state, card/rule models, and core calculations
+- `app/src/main/java/com/vectorlogic/blackjackcounter/domain/stats`
+  - Drill and quiz history, its storage format, and the stats summaries
 - `app/src/main/java/com/vectorlogic/blackjackcounter/presentation/counter`
   - `CounterViewModel`, screen, and reusable UI components
 - `app/src/main/java/com/vectorlogic/blackjackcounter/ui/theme`

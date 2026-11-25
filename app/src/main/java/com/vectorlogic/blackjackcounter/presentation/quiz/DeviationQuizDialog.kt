@@ -52,6 +52,7 @@ private val AnswerListSaver: Saver<List<StrategyPlay>, Any> = listSaver(
 @Composable
 fun DeviationQuizDialog(
     quiz: DeviationQuiz,
+    onRoundFinished: (QuizRoundScore) -> Unit,
     onDismiss: () -> Unit
 ) {
     // Saveable so a rotation keeps the round, the answers and the feedback on screen.
@@ -86,7 +87,7 @@ fun DeviationQuizDialog(
                         question = questions[position],
                         number = position + 1,
                         total = questions.size,
-                        correctSoFar = questions.zip(answers).count { (q, a) -> quiz.correctPlay(q) == a },
+                        correctSoFar = quiz.score(questions, answers).correctCount,
                         answer = answers.getOrNull(position),
                         onAnswer = { play -> if (!answered) answers = answers + play }
                     )
@@ -100,7 +101,11 @@ fun DeviationQuizDialog(
                     answers = emptyList()
                     position = 0
                 }) { Text(stringResource(R.string.drill_run_again)) }
-                answered -> Button(onClick = { position += 1 }) {
+                answered -> Button(onClick = {
+                    // Recorded here, once, rather than when the results show, which a rotation repeats.
+                    if (position == questions.lastIndex) onRoundFinished(quiz.score(questions, answers))
+                    position += 1
+                }) {
                     Text(
                         stringResource(
                             if (position == questions.lastIndex) R.string.quiz_see_results else R.string.quiz_next

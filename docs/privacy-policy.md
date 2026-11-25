@@ -1,6 +1,6 @@
 # Privacy Policy for Counting Edge: Card Counter
 
-Effective date: October 21, 2026
+Effective date: November 26, 2026
 
 Counting Edge: Card Counter ("the app") is provided by the developer of this app ("we", "us", "our"). This Privacy Policy explains how data is handled when you use the app.
 
@@ -8,7 +8,7 @@ Counting Edge: Card Counter ("the app") is provided by the developer of this app
 
 - The app does not require account creation.
 - The app does not run its own backend server.
-- Core app usage is local to your device. Session data is stored only on your device.
+- Core app usage is local to your device. Session data and practice results are stored only on your device.
 
 ## Data We Handle
 
@@ -24,6 +24,11 @@ The app saves your current session on your device (in Android's app-private Shar
 - Selected table rules
 - Selected counting system
 
+It also keeps your practice results so the Practice Stats screen can show your progress:
+
+- For each finished drill: when it finished, the counting system, its length and speed, the time it took, the correct count and the count you entered
+- For each finished deviation quiz round: when it finished, the counting system, your score and the hands you got wrong
+
 This data never leaves your device. It is excluded from Android cloud backup and device-to-device transfer.
 We do not operate a remote database for this data.
 
@@ -33,6 +38,7 @@ Data is used to:
 
 - provide card-counting training functionality
 - maintain your current session, including resuming it after an app restart
+- show your drill and quiz progress over time
 - render strategy guidance and related UI state locally on device
 
 ## Data Sharing
@@ -42,6 +48,8 @@ We do not sell your personal information. We do not run a backend service that s
 ## Data Retention
 
 Session data stays on your device until you reset it in the app, clear the app's data in Android settings, or uninstall the app. Reset clears the count and shoe state but keeps your selected system and table rules; clearing app data or uninstalling removes everything.
+
+Practice results stay on your device until you tap Clear stats on the Practice Stats screen, clear the app's data, or uninstall the app. The app keeps at most the latest 500 drills and 500 quiz rounds and drops older ones.
 
 ## Security
 
