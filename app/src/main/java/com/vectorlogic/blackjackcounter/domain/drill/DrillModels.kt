@@ -2,16 +2,16 @@ package com.vectorlogic.blackjackcounter.domain.drill
 
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 
-enum class DrillSpeed(val intervalMs: Long, val label: String) {
-    SLOW(1500L, "Slow"),
-    MEDIUM(1000L, "Medium"),
-    FAST(600L, "Fast")
+enum class DrillSpeed(val intervalMs: Long) {
+    SLOW(1500L),
+    MEDIUM(1000L),
+    FAST(600L)
 }
 
-enum class DrillSize(val cardCount: Int, val label: String) {
-    HALF_DECK(26, "½ deck"),
-    DECK(52, "1 deck"),
-    DECK_AND_A_HALF(78, "1½ decks")
+enum class DrillSize(val cardCount: Int) {
+    HALF_DECK(26),
+    DECK(52),
+    DECK_AND_A_HALF(78)
 }
 
 data class DrillConfig(

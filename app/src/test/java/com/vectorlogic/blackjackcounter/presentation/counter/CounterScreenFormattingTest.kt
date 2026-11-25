@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.presentation.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -10,11 +11,11 @@ class CounterScreenFormattingTest {
     fun `system traits label names balance and count type`() {
         assertEquals(
             "Level 2 · Balanced · True count",
-            systemTraitsLabel(level = 2, isBalanced = true, usesTrueCount = true)
+            systemTraitsLabel(level = 2, isBalanced = true, usesTrueCount = true).text
         )
         assertEquals(
             "Level 1 · Unbalanced · Running count only",
-            systemTraitsLabel(level = 1, isBalanced = false, usesTrueCount = false)
+            systemTraitsLabel(level = 1, isBalanced = false, usesTrueCount = false).text
         )
     }
 
@@ -29,11 +30,11 @@ class CounterScreenFormattingTest {
                 newSystemName = "Omega II",
                 newRunningCount = 22.0,
                 cardsSeen = 20
-            )
+            )?.text
         )
         assertEquals(
             "Recounted 1 card with Wong Halves: RC +1 → +0.5",
-            systemSwitchMessage("hi_lo", 1.0, "wong_halves", "Wong Halves", 0.5, cardsSeen = 1)
+            systemSwitchMessage("hi_lo", 1.0, "wong_halves", "Wong Halves", 0.5, cardsSeen = 1)?.text
         )
     }
 
@@ -41,7 +42,7 @@ class CounterScreenFormattingTest {
     fun `switching on an empty shoe only reports a non-zero starting count`() {
         assertEquals(
             "KO starts at RC -20",
-            systemSwitchMessage("hi_lo", 0.0, "ko", "KO", -20.0, cardsSeen = 0)
+            systemSwitchMessage("hi_lo", 0.0, "ko", "KO", -20.0, cardsSeen = 0)?.text
         )
         assertNull(systemSwitchMessage("hi_lo", 0.0, "zen", "Zen Count", 0.0, cardsSeen = 0))
     }

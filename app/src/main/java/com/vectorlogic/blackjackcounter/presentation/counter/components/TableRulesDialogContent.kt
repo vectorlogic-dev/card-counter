@@ -16,9 +16,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
@@ -49,28 +51,28 @@ fun TableRulesDialogContent(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         RulesRadioCard(
-            title = "Dealer Soft 17",
+            title = stringResource(R.string.rules_dealer_soft_17),
             selectedValue = rules.dealerSoft17Rule,
             options = listOf(
-                DealerSoft17Rule.STAND to "S17 (Stand on soft 17)",
-                DealerSoft17Rule.HIT to "H17 (Hit soft 17)"
+                DealerSoft17Rule.STAND to stringResource(R.string.rules_s17_option),
+                DealerSoft17Rule.HIT to stringResource(R.string.rules_h17_option)
             ),
             onSelected = onDealerSoft17RuleChanged
         )
 
         RulesRadioCard(
-            title = "Dealer Peek Rule",
+            title = stringResource(R.string.rules_dealer_peek),
             selectedValue = rules.dealerPeekRule,
             options = listOf(
-                DealerPeekRule.ACE_AND_TEN to "Peek on Ace and 10",
-                DealerPeekRule.ACE_ONLY to "Peek on Ace only (no peek on 10)",
-                DealerPeekRule.NO_PEEK to "No peek (European style)"
+                DealerPeekRule.ACE_AND_TEN to stringResource(R.string.rules_peek_ace_and_ten),
+                DealerPeekRule.ACE_ONLY to stringResource(R.string.rules_peek_ace_only),
+                DealerPeekRule.NO_PEEK to stringResource(R.string.rules_no_peek_option)
             ),
             onSelected = onDealerPeekRuleChanged
         )
 
         RulesRadioCard(
-            title = "Blackjack Payout",
+            title = stringResource(R.string.rules_blackjack_payout),
             selectedValue = rules.blackjackPayoutRule,
             options = listOf(
                 BlackjackPayoutRule.THREE_TO_TWO to "3:2",
@@ -80,47 +82,47 @@ fun TableRulesDialogContent(
         )
 
         RulesRadioCard(
-            title = "Double Down Rule",
+            title = stringResource(R.string.rules_double_down),
             selectedValue = rules.doubleDownRule,
             options = listOf(
-                DoubleDownRule.ANY_TWO_CARDS to "Any 2 cards",
-                DoubleDownRule.NINE_TO_ELEVEN to "9-11 only",
-                DoubleDownRule.TEN_TO_ELEVEN to "10-11 only"
+                DoubleDownRule.ANY_TWO_CARDS to stringResource(R.string.rules_double_any_two),
+                DoubleDownRule.NINE_TO_ELEVEN to stringResource(R.string.rules_double_nine_to_eleven),
+                DoubleDownRule.TEN_TO_ELEVEN to stringResource(R.string.rules_double_ten_to_eleven)
             ),
             onSelected = onDoubleDownRuleChanged
         )
 
         RulesRadioCard(
-            title = "Surrender",
+            title = stringResource(R.string.action_surrender),
             selectedValue = rules.surrenderRule,
             options = listOf(
-                SurrenderRule.NONE to "None",
-                SurrenderRule.LATE to "Late surrender",
-                SurrenderRule.EARLY to "Early surrender"
+                SurrenderRule.NONE to stringResource(R.string.rules_none),
+                SurrenderRule.LATE to stringResource(R.string.rules_late_surrender),
+                SurrenderRule.EARLY to stringResource(R.string.rules_early_surrender)
             ),
             onSelected = onSurrenderRuleChanged
         )
 
         RulesSwitchCard(
-            title = "Double After Split (DAS)",
+            title = stringResource(R.string.rules_double_after_split),
             checked = rules.doubleAfterSplit,
             onCheckedChange = onDoubleAfterSplitChanged
         )
 
         RulesSwitchCard(
-            title = "Resplit Aces",
+            title = stringResource(R.string.rules_resplit_aces),
             checked = rules.resplitAces,
             onCheckedChange = onResplitAcesChanged
         )
 
         RulesSwitchCard(
-            title = "Hit Split Aces",
+            title = stringResource(R.string.rules_hit_split_aces),
             checked = rules.hitSplitAces,
             onCheckedChange = onHitSplitAcesChanged
         )
 
         RulesSwitchCard(
-            title = "6-Card Charlie Auto Win",
+            title = stringResource(R.string.rules_six_card_charlie),
             checked = rules.sixCardCharlieAutoWin,
             onCheckedChange = onSixCardCharlieAutoWinChanged
         )
@@ -209,7 +211,7 @@ private fun MaxSplitHandsCard(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = "Max Split Hands",
+                text = stringResource(R.string.rules_max_split_hands),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )

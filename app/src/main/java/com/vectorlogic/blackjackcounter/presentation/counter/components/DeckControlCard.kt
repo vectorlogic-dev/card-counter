@@ -1,13 +1,13 @@
 package com.vectorlogic.blackjackcounter.presentation.counter.components
 
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.border
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,9 +19,11 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -53,10 +55,12 @@ fun DeckControlCard(
         aceDiff < -1.0 -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    val aceOutlook = calculateAceOutlook(
-        acesSeen = acesSeen,
-        acesExpected = acesExpected,
-        compact = compact
+    val aceOutlook = stringResource(
+        calculateAceOutlook(
+            acesSeen = acesSeen,
+            acesExpected = acesExpected,
+            compact = compact
+        )
     )
 
     Card(
@@ -79,12 +83,12 @@ fun DeckControlCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
-                        text = "SHOE",
+                        text = stringResource(R.string.shoe),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${formatDecksRemaining(decksRemaining)} decks",
+                        text = stringResource(R.string.shoe_decks_value, formatDecksRemaining(decksRemaining)),
                         style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -94,7 +98,7 @@ fun DeckControlCard(
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Text(
-                        text = "Pen ${formatPenetration(deckPenetrationPercent)}",
+                        text = stringResource(R.string.shoe_penetration_value, formatPenetration(deckPenetrationPercent)),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -108,33 +112,33 @@ fun DeckControlCard(
                 verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
             ) {
                 CardsMetricChip(
-                    label = "Drawn",
+                    label = stringResource(R.string.shoe_drawn),
                     value = cardsDrawn.toString(),
                     compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
-                    label = "Left",
+                    label = stringResource(R.string.shoe_left),
                     value = cardsLeft.toString(),
                     compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 CardsMetricChip(
-                    label = "Total",
+                    label = stringResource(R.string.shoe_total),
                     value = totalCards.toString(),
                     compact = true,
                     modifier = Modifier.weight(1f, fill = true)
                 )
                 if (showAceSideCount) {
                     CardsMetricChip(
-                        label = "A Seen",
+                        label = stringResource(R.string.shoe_aces_seen),
                         value = acesSeen.toString(),
                         valueColor = aceStatusColor,
                         compact = true,
                         modifier = Modifier.weight(1f, fill = true)
                     )
                     CardsMetricChip(
-                        label = "A Exp",
+                        label = stringResource(R.string.shoe_aces_expected),
                         value = formatAcesExpected(acesExpected),
                         valueColor = aceStatusColor,
                         compact = true,
@@ -153,7 +157,7 @@ fun DeckControlCard(
 
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
-                    text = "Decks",
+                    text = stringResource(R.string.shoe_decks),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -179,7 +183,7 @@ fun DeckControlCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Remaining",
+                        text = stringResource(R.string.shoe_remaining),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -259,12 +263,12 @@ private fun calculateAceOutlook(
     acesSeen: Int,
     acesExpected: Double,
     compact: Boolean
-): String {
+): Int {
     val diff = acesSeen - acesExpected
 
     return when {
-        diff > 1.0 -> if (compact) "Ace outlook: fewer ahead." else "Ace outlook: fewer aces likely ahead."
-        diff < -1.0 -> if (compact) "Ace outlook: more ahead." else "Ace outlook: more aces likely ahead."
-        else -> if (compact) "Ace outlook: neutral." else "Ace outlook: near expected."
+        diff > 1.0 -> if (compact) R.string.ace_outlook_fewer_short else R.string.ace_outlook_fewer
+        diff < -1.0 -> if (compact) R.string.ace_outlook_more_short else R.string.ace_outlook_more
+        else -> if (compact) R.string.ace_outlook_neutral_short else R.string.ace_outlook_neutral
     }
 }

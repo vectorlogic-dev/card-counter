@@ -7,8 +7,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 
 @Composable
 fun ResetButton(
@@ -23,7 +25,7 @@ fun ResetButton(
             .height(if (compact) 38.dp else 42.dp)
     ) {
         Text(
-            text = "Reset",
+            text = stringResource(R.string.reset),
             style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )

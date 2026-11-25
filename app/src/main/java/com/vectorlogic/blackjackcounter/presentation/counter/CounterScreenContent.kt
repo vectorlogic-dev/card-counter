@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.components.BetRecommendationCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountButtonsRow
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CountDisplayCard
@@ -44,7 +45,6 @@ import com.vectorlogic.blackjackcounter.ui.theme.GoldBright
 import com.vectorlogic.blackjackcounter.ui.theme.GoldSoft
 import com.vectorlogic.blackjackcounter.ui.theme.SurfaceMuted
 import com.vectorlogic.blackjackcounter.ui.theme.TableEdge
-import java.util.Locale
 
 @Composable
 fun CounterScreenContent(
@@ -114,7 +114,7 @@ fun CounterScreenContent(
         val bet: @Composable () -> Unit = {
             BetRecommendationCard(
                 units = state.recommendedBetUnits,
-                countLabel = state.betSizingCountLabel,
+                countLabel = state.betSizingCountLabel.asString(),
                 countValue = state.betSizingCountValue,
                 compact = compactLayout,
                 modifier = Modifier.fillMaxWidth()
@@ -245,7 +245,7 @@ private const val PAD_LATEST_CARDS = 6
 private fun CountCards(state: CounterUiState, compact: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)) {
         CountDisplayCard(
-            title = "Running",
+            title = stringResource(R.string.count_running),
             value = formatSignedCount(state.runningCount),
             valueColor = countColor(state.runningCount),
             hero = true,
@@ -261,11 +261,11 @@ private fun CountCards(state: CounterUiState, compact: Boolean) {
             horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
         ) {
             CountDisplayCard(
-                title = "True",
+                title = stringResource(R.string.count_true),
                 value = if (state.selectedSystemUsesTrueCount) {
                     formatSignedCount(state.trueCount, alwaysOneDecimal = true)
                 } else {
-                    "N/A"
+                    stringResource(R.string.not_available)
                 },
                 valueColor = if (state.selectedSystemUsesTrueCount) {
                     countColor(trueCountValue)
@@ -277,11 +277,11 @@ private fun CountCards(state: CounterUiState, compact: Boolean) {
             )
 
             CountDisplayCard(
-                title = "Edge %",
+                title = stringResource(R.string.count_edge_percent),
                 value = if (state.canEstimateEdge) {
                     formatSignedPercent(state.estimatedPlayerEdgePercent)
                 } else {
-                    "N/A"
+                    stringResource(R.string.not_available)
                 },
                 valueColor = if (state.canEstimateEdge) {
                     countColor(edgeValue)
@@ -322,7 +322,7 @@ private fun CounterHeader(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = stringResource(id = R.string.app_name_short).uppercase(Locale.US),
+                text = stringResource(id = R.string.app_name_short).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = GoldSoft
             )
@@ -337,7 +337,7 @@ private fun CounterHeader(
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Text(
-                        text = "Ace side count",
+                        text = stringResource(R.string.ace_side_count),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
@@ -351,7 +351,7 @@ private fun CounterHeader(
             IconButton(onClick = onHelpClick) {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = "Help",
+                    contentDescription = stringResource(R.string.help_title),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
@@ -359,7 +359,7 @@ private fun CounterHeader(
                 IconButton(onClick = { onMenuExpandedChange(true) }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu",
+                        contentDescription = stringResource(R.string.menu),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
@@ -368,35 +368,41 @@ private fun CounterHeader(
                     onDismissRequest = { onMenuExpandedChange(false) }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Select Counting System") },
+                        text = { Text(stringResource(R.string.menu_select_counting_system)) },
                         onClick = {
                             onSelectCountingSystem()
                             onMenuExpandedChange(false)
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Table Rules") },
+                        text = { Text(stringResource(R.string.table_rules_title)) },
                         onClick = {
                             onTableRulesClick()
                             onMenuExpandedChange(false)
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Reset Count") },
+                        text = { Text(stringResource(R.string.menu_reset_count)) },
                         onClick = {
                             onResetClick()
                             onMenuExpandedChange(false)
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(if (showCheatSheet) "Hide Cheat Sheet" else "Show Cheat Sheet") },
+                        text = {
+                            Text(
+                                stringResource(
+                                    if (showCheatSheet) R.string.menu_hide_cheat_sheet else R.string.menu_show_cheat_sheet
+                                )
+                            )
+                        },
                         onClick = {
                             onToggleCheatSheet()
                             onMenuExpandedChange(false)
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Drill Mode") },
+                        text = { Text(stringResource(R.string.menu_drill_mode)) },
                         onClick = {
                             onDrillClick()
                             onMenuExpandedChange(false)

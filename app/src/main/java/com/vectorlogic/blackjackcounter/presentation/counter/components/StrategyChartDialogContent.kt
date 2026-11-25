@@ -26,10 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
+import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.StrategyChartModel
 import com.vectorlogic.blackjackcounter.presentation.counter.StrategyTableSection
 import com.vectorlogic.blackjackcounter.ui.theme.ChartDouble
@@ -68,10 +71,10 @@ fun StrategyChartFullScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onBack) {
-                    Text("Back")
+                    Text(stringResource(R.string.back))
                 }
                 Text(
-                    text = "Strategy Chart (${model.trueCountLabel})",
+                    text = stringResource(R.string.strategy_chart_title, model.trueCountLabel.asString()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -108,11 +111,9 @@ private fun StrategyChartLegend(supportsTrueCount: Boolean, actions: List<String
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = if (supportsTrueCount) {
-                    "Actions update with the current true count."
-                } else {
-                    "Running-count system selected. Deviations are disabled."
-                },
+                text = stringResource(
+                    if (supportsTrueCount) R.string.chart_legend_true_count else R.string.chart_legend_running_count
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -126,7 +127,11 @@ private fun StrategyChartLegend(supportsTrueCount: Boolean, actions: List<String
                     LegendEntry(action = action, isDeviation = false, meaning = actionMeaning(action))
                 }
                 if (supportsTrueCount) {
-                    LegendEntry(action = "S", isDeviation = true, meaning = "Count deviation")
+                    LegendEntry(
+                        action = "S",
+                        isDeviation = true,
+                        meaning = stringResource(R.string.chart_count_deviation)
+                    )
                 }
             }
         }
@@ -170,14 +175,14 @@ private fun StrategyTableSectionCard(section: StrategyTableSection) {
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = section.title,
+                text = section.title.asString(),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 2.dp, bottom = 2.dp)
             )
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                TableHeaderCell(text = "Hand", modifier = Modifier.weight(1.7f))
+                TableHeaderCell(text = stringResource(R.string.chart_hand), modifier = Modifier.weight(1.7f))
                 DEALER_UPCARDS.forEach { header ->
                     TableHeaderCell(text = header, modifier = Modifier.weight(1f))
                 }
@@ -191,10 +196,11 @@ private fun StrategyTableSectionCard(section: StrategyTableSection) {
                         ActionCell(
                             action = cell.action,
                             isDeviation = cell.isDeviation,
-                            description = buildString {
-                                append("${row.handLabel} vs $upcard: ${actionMeaning(cell.action)}")
-                                if (cell.isDeviation) append(", count deviation")
-                            },
+                            description = stringResource(
+                                if (cell.isDeviation) R.string.chart_cell_description_deviation else R.string.chart_cell_description,
+                                stringResource(R.string.hand_vs_dealer, row.handLabel, upcard),
+                                actionMeaning(cell.action)
+                            ),
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -294,14 +300,15 @@ private fun actionColors(action: String): Pair<Color, Color> = when {
     else -> ChartHit to ChartOnHit
 }
 
+@Composable
 private fun actionMeaning(action: String): String = when (action) {
-    "H" -> "Hit"
-    "S" -> "Stand"
-    "D" -> "Double, else hit"
-    "Ds" -> "Double, else stand"
-    "P" -> "Split"
-    "Rh" -> "Surrender, else hit"
-    "Rs" -> "Surrender, else stand"
-    "Rp" -> "Surrender, else split"
+    "H" -> stringResource(R.string.action_hit)
+    "S" -> stringResource(R.string.action_stand)
+    "D" -> stringResource(R.string.chart_double_else_hit)
+    "Ds" -> stringResource(R.string.chart_double_else_stand)
+    "P" -> stringResource(R.string.action_split)
+    "Rh" -> stringResource(R.string.chart_surrender_else_hit)
+    "Rs" -> stringResource(R.string.chart_surrender_else_stand)
+    "Rp" -> stringResource(R.string.chart_surrender_else_split)
     else -> action
 }

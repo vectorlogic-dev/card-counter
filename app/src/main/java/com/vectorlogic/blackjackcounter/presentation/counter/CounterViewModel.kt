@@ -2,6 +2,7 @@ package com.vectorlogic.blackjackcounter.presentation.counter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemsCatalog
@@ -16,6 +17,7 @@ import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
+import com.vectorlogic.blackjackcounter.presentation.uiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,13 +55,6 @@ class CounterViewModel private constructor(
 
     val countingSystemGuides: List<CountingSystemGuide> =
         CounterHelpContentFactory.buildCountingSystemGuides(allSystems)
-
-    val basicStrategySections: List<StrategyChartSection> =
-        CounterHelpContentFactory.basicStrategySections
-
-    fun getSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
-        return CounterHelpContentFactory.buildSplitDeviationSections(tableRules)
-    }
 
     fun activeCountingSystem(): CountingSystem {
         return getSelectedSystem(_sessionState.value.selectedCountingSystemId)
@@ -329,7 +324,7 @@ class CounterViewModel private constructor(
             runningCount = state.runningCount,
             trueCount = trueCount,
             recommendedBetUnits = recommendedBetUnits,
-            betSizingCountLabel = if (usesTrueCount) "TC" else "RC",
+            betSizingCountLabel = uiText(if (usesTrueCount) R.string.count_tc else R.string.count_rc),
             betSizingCountValue = betSizingCountValue,
             deckPenetrationPercent = calculateDeckPenetrationPercent(state),
             totalDecks = state.totalDecks,

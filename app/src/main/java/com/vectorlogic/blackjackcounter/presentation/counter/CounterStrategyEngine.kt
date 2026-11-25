@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.TrueCountScaling
 import com.vectorlogic.blackjackcounter.domain.model.CounterSessionState
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
@@ -7,6 +8,8 @@ import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
+import com.vectorlogic.blackjackcounter.presentation.UiText
+import com.vectorlogic.blackjackcounter.presentation.uiText
 import java.util.Locale
 
 object CounterStrategyEngine {
@@ -84,15 +87,15 @@ object CounterStrategyEngine {
 
         return StrategyChartModel(
             trueCountLabel = if (supportsTrueCount) {
-                String.format(Locale.US, "TC %.1f", trueCount)
+                uiText(R.string.chart_tc_value, String.format(Locale.US, "%.1f", trueCount))
             } else {
-                "TC N/A"
+                uiText(R.string.chart_tc_not_available)
             },
             supportsTrueCount = supportsTrueCount,
             sections = listOf(
-                StrategyTableSection(title = "Hard Totals", rows = hardRows),
-                StrategyTableSection(title = "Soft Totals", rows = softRows),
-                StrategyTableSection(title = "Pairs", rows = pairRows)
+                StrategyTableSection(title = uiText(R.string.chart_section_hard), rows = hardRows),
+                StrategyTableSection(title = uiText(R.string.chart_section_soft), rows = softRows),
+                StrategyTableSection(title = uiText(R.string.chart_section_pairs), rows = pairRows)
             )
         )
     }
@@ -108,15 +111,15 @@ object CounterStrategyEngine {
             return listOfNotNull(
                 keyCount?.let {
                     StrategyDeviationRow(
-                        playLabel = "Key Count (${state.totalDecks}D)",
-                        indexLabel = "RC $it",
+                        playLabel = uiText(R.string.deviation_key_count, state.totalDecks),
+                        indexLabel = uiText(R.string.deviation_rc_value, it),
                         trigger = DeviationTrigger(threshold = it.toDouble())
                     )
                 },
                 pivot?.let {
                     StrategyDeviationRow(
-                        playLabel = "Pivot (${state.totalDecks}D)",
-                        indexLabel = "RC $it",
+                        playLabel = uiText(R.string.deviation_pivot, state.totalDecks),
+                        indexLabel = uiText(R.string.deviation_rc_value, it),
                         trigger = DeviationTrigger(threshold = it.toDouble())
                     )
                 }
@@ -126,8 +129,11 @@ object CounterStrategyEngine {
         val rules = state.tableRules
         val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
         val insuranceRow = StrategyDeviationRow(
-            playLabel = "Insurance vs A",
-            indexLabel = "Take at TC ${formatAtOrAbove(nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale))}",
+            playLabel = uiText(R.string.deviation_insurance),
+            indexLabel = uiText(
+                R.string.deviation_insurance_take_at,
+                formatAtOrAbove(nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale))
+            ),
             trigger = DeviationTrigger(threshold = nativeIndex(INSURANCE_HI_LO_INDEX, trueCountScale).toDouble())
         )
         val playRows = playIndices.mapNotNull { index ->
@@ -141,13 +147,22 @@ object CounterStrategyEngine {
                 // Surrender takes precedence, so the surrender index row covers this hand.
                 surrenderAllowed && surrenderIndices(rules).any { it.sameHandAs(index) } -> null
                 surrenderAllowed && baseAction.startsWith("R") ->
-                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "Surrender (any TC)")
+                    StrategyDeviationRow(
+                        playLabel = index.handLabel(),
+                        indexLabel = uiText(R.string.deviation_any_tc, uiText(R.string.action_surrender))
+                    )
                 // The chart never shows a double the table forbids (e.g. 10 vs 10 without a peek on 10).
                 index.isBlockedBy(rules) ->
-                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "No double (rules)")
+                    StrategyDeviationRow(
+                        playLabel = index.handLabel(),
+                        indexLabel = uiText(R.string.deviation_no_double_rules)
+                    )
                 // Basic strategy already makes this play at every count (11 vs A under H17).
                 baseAction == index.action ->
-                    StrategyDeviationRow(playLabel = index.handLabel(), indexLabel = "${index.verb()} (any TC)")
+                    StrategyDeviationRow(
+                        playLabel = index.handLabel(),
+                        indexLabel = uiText(R.string.deviation_any_tc, index.verb())
+                    )
                 else -> index.toRow(trueCountScale)
             }
         }
@@ -393,37 +408,39 @@ object CounterStrategyEngine {
         return formatSignedCount(index)
     }
 
-    private fun CountIndex.handLabel(): String {
+    private fun CountIndex.handLabel(): UiText {
         val dealerLabel = if (dealerUpcard == 11) "A" else dealerUpcard.toString()
         val handLabel = when (handType) {
             ChartHandType.PAIR -> if (handValue == 11) "A,A" else "$handValue,$handValue"
             ChartHandType.SOFT -> "A,$handValue"
             ChartHandType.HARD -> handValue.toString()
         }
-        return "$handLabel vs $dealerLabel"
+        return uiText(R.string.hand_vs_dealer, handLabel, dealerLabel)
     }
 
     private fun CountIndex.sameHandAs(other: CountIndex): Boolean {
         return handType == other.handType && handValue == other.handValue && dealerUpcard == other.dealerUpcard
     }
 
-    private fun CountIndex.verb(): String = when {
-        action.startsWith("R") -> "Surrender"
-        action == "S" -> "Stand"
-        action == "H" -> "Hit"
-        action == "P" -> "Split"
-        else -> "Double"
-    }
+    private fun CountIndex.verb(): UiText = uiText(
+        when {
+            action.startsWith("R") -> R.string.action_surrender
+            action == "S" -> R.string.action_stand
+            action == "H" -> R.string.action_hit
+            action == "P" -> R.string.action_split
+            else -> R.string.action_double
+        }
+    )
 
     private fun CountIndex.toRow(trueCountScale: Double): StrategyDeviationRow {
         val nativeIndex = nativeIndex(hiLoIndex, trueCountScale)
-        val threshold = when (direction) {
-            IndexDirection.AT_OR_ABOVE -> "at TC ${formatAtOrAbove(nativeIndex)}"
-            IndexDirection.BELOW -> "below TC ${formatSigned(nativeIndex)}"
+        val indexLabel = when (direction) {
+            IndexDirection.AT_OR_ABOVE -> uiText(R.string.deviation_at_tc, verb(), formatAtOrAbove(nativeIndex))
+            IndexDirection.BELOW -> uiText(R.string.deviation_below_tc, verb(), formatSigned(nativeIndex))
         }
         return StrategyDeviationRow(
             playLabel = handLabel(),
-            indexLabel = "${verb()} $threshold",
+            indexLabel = indexLabel,
             trigger = trigger(trueCountScale)
         )
     }

@@ -1,4 +1,241 @@
 <resources>
     <string name="app_name">Counting Edge: Card Counter</string>
     <string name="app_name_short">Counting Edge</string>
+
+    <!-- Counting system selector -->
+    <string name="system_traits">Level %1$d · %2$s · %3$s</string>
+    <string name="system_balanced">Balanced</string>
+    <string name="system_unbalanced">Unbalanced</string>
+    <string name="system_true_count">True count</string>
+    <string name="system_running_count_only">Running count only</string>
+    <string name="system_switch_starts_at">%1$s starts at RC %2$s</string>
+    <plurals name="system_switch_recounted">
+        <item quantity="one">Recounted %1$d card with %2$s: RC %3$s → %4$s</item>
+        <item quantity="other">Recounted %1$d cards with %2$s: RC %3$s → %4$s</item>
+    </plurals>
+
+    <!-- Count abbreviations: running count and true count -->
+    <string name="count_rc">RC</string>
+    <string name="count_tc">TC</string>
+
+    <!-- Blackjack plays, as verbs -->
+    <string name="action_hit">Hit</string>
+    <string name="action_stand">Stand</string>
+    <string name="action_double">Double</string>
+    <string name="action_split">Split</string>
+    <string name="action_surrender">Surrender</string>
+
+    <!-- Strategy chart. %1$s is a hand such as 16 or A,7, %2$s the dealer's upcard. -->
+    <string name="hand_vs_dealer">%1$s vs %2$s</string>
+    <string name="chart_tc_value">TC %1$s</string>
+    <string name="chart_tc_not_available">TC N/A</string>
+    <string name="chart_section_hard">Hard Totals</string>
+    <string name="chart_section_soft">Soft Totals</string>
+    <string name="chart_section_pairs">Pairs</string>
+
+    <!-- Count-based deviations. %1$d is the number of decks; D abbreviates decks. -->
+    <string name="deviation_key_count">Key Count (%1$dD)</string>
+    <string name="deviation_pivot">Pivot (%1$dD)</string>
+    <string name="deviation_rc_value">RC %1$d</string>
+    <string name="deviation_insurance">Insurance vs A</string>
+    <string name="deviation_insurance_take_at">Take at TC %1$s</string>
+    <!-- %1$s is a play such as Stand; %2$s a true count such as +4 or 0+ -->
+    <string name="deviation_at_tc">%1$s at TC %2$s</string>
+    <string name="deviation_below_tc">%1$s below TC %2$s</string>
+    <string name="deviation_any_tc">%1$s (any TC)</string>
+    <string name="deviation_no_double_rules">No double (rules)</string>
+
+    <!-- One-line description of each counting system, shown in Help and the system picker -->
+    <string name="system_explanation_hi_lo">Most common beginner system: balanced +1/-1 tags; the bet ramp and indices are calibrated for it.</string>
+    <string name="system_explanation_ko">Unbalanced running-count system using deck-specific initial running counts, key counts, and a pivot.</string>
+    <string name="system_explanation_reko">Refined KO variant with deck-specific initial running counts and key-count references.</string>
+    <string name="system_explanation_hi_opt_ii">Higher-power level-2 system using Hi-Lo indices scaled to its true count; strongest with an Ace side count.</string>
+    <string name="system_explanation_omega_ii">Advanced level-2 balanced count using Hi-Lo indices scaled to its true count; often paired with Ace side count.</string>
+    <string name="system_explanation_zen_count">Balanced level-2 count with heavier 4-6 tags; uses Hi-Lo indices scaled to its true count.</string>
+    <string name="system_explanation_wong_halves">High-precision balanced system with half-point tags; uses Hi-Lo indices scaled to its true count.</string>
+    <string name="system_explanation_other">Card-counting system with custom tag values for betting and deviation decisions.</string>
+
+    <!-- Shared buttons -->
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+
+    <!-- Drill mode -->
+    <string name="drill_title">Drill mode</string>
+    <string name="drill_instructions">Cards will flash one at a time. Track the running count in your head, then enter the final value.</string>
+    <string name="drill_length">Length</string>
+    <string name="drill_speed">Speed</string>
+    <string name="drill_size_half_deck">½ deck</string>
+    <string name="drill_size_one_deck">1 deck</string>
+    <string name="drill_size_deck_and_a_half">1½ decks</string>
+    <string name="drill_speed_slow">Slow</string>
+    <string name="drill_speed_medium">Medium</string>
+    <string name="drill_speed_fast">Fast</string>
+    <string name="drill_start">Start</string>
+    <string name="drill_submit">Submit</string>
+    <string name="drill_run_again">Run again</string>
+    <!-- Card number during the drill, e.g. 12 / 26 -->
+    <string name="drill_progress">%1$d / %2$d</string>
+    <string name="drill_question">What was the final running count?</string>
+    <string name="drill_result_actual">Actual</string>
+    <string name="drill_result_you_said">You said</string>
+    <string name="drill_result">Result</string>
+    <string name="drill_result_off_by">Off by</string>
+    <string name="drill_result_perfect">PERFECT</string>
+    <string name="drill_result_cards">Cards</string>
+    <string name="drill_result_cards_per_second">%1$s cards/sec</string>
+
+    <!-- Main screen dialogs -->
+    <string name="reset">Reset</string>
+    <string name="reset_confirm_title">Reset count?</string>
+    <plurals name="reset_confirm_message">
+        <item quantity="one">This clears the running count and the %1$d card seen this shoe. It can\'t be undone.</item>
+        <item quantity="other">This clears the running count and the %1$d cards seen this shoe. It can\'t be undone.</item>
+    </plurals>
+    <string name="reset_confirm_message_empty">This clears the running count and refills the shoe. It can\'t be undone.</string>
+    <string name="counting_system_title">Counting System</string>
+    <string name="help_title">Help</string>
+    <string name="table_rules_title">Table Rules</string>
+    <string name="not_available">N/A</string>
+    <string name="count_running">Running</string>
+    <string name="count_true">True</string>
+    <string name="count_edge_percent" formatted="false">Edge %</string>
+    <string name="ace_side_count">Ace side count</string>
+    <string name="menu">Menu</string>
+    <string name="menu_select_counting_system">Select Counting System</string>
+    <string name="menu_reset_count">Reset Count</string>
+    <string name="menu_show_cheat_sheet">Show Cheat Sheet</string>
+    <string name="menu_hide_cheat_sheet">Hide Cheat Sheet</string>
+    <string name="menu_drill_mode">Drill Mode</string>
+    <string name="strategy_chart">Strategy Chart</string>
+    <string name="system_uses_ace_side_count">Uses Ace side count</string>
+    <plurals name="system_switch_recount_note">
+        <item quantity="one">Switching recounts the %1$d card seen this shoe with the new system\'s tags.</item>
+        <item quantity="other">Switching recounts the %1$d cards seen this shoe with the new system\'s tags.</item>
+    </plurals>
+
+    <!-- Recent cards strip -->
+    <string name="recent_cards">Recent Cards</string>
+    <string name="recent_cards_last_of">last %1$d of %2$d, newest last</string>
+    <string name="recent_cards_newest_last">newest last</string>
+    <string name="recent_cards_empty">No cards yet</string>
+    <!-- Screen reader text for the newest card, e.g. "10-K, newest" -->
+    <string name="recent_cards_newest_description">%1$s, newest</string>
+
+    <!-- Bet card -->
+    <string name="bet_ramp">BET RAMP</string>
+    <!-- A count with its value, e.g. "TC +2.5" -->
+    <string name="count_label_value">%1$s %2$s</string>
+    <string name="bet_units_live">units live</string>
+    <!-- Screen reader text, e.g. "Bet ramp 1, 2, 4, 8 units, at 2" -->
+    <string name="bet_ramp_description">Bet ramp %1$s units, at %2$d</string>
+
+    <!-- Count pad -->
+    <string name="count_pad">COUNT PAD</string>
+    <string name="count_pad_hint">Tap cards as they land</string>
+    <string name="undo">Undo</string>
+
+    <!-- Shoe card -->
+    <string name="shoe">SHOE</string>
+    <string name="shoe_decks_value">%1$s decks</string>
+    <!-- Penetration: how much of the shoe has been dealt, e.g. "Pen 25.0%" -->
+    <string name="shoe_penetration_value">Pen %1$s</string>
+    <string name="shoe_drawn">Drawn</string>
+    <string name="shoe_left">Left</string>
+    <string name="shoe_total">Total</string>
+    <!-- Aces seen / aces expected so far -->
+    <string name="shoe_aces_seen">A Seen</string>
+    <string name="shoe_aces_expected">A Exp</string>
+    <string name="shoe_decks">Decks</string>
+    <string name="shoe_remaining">Remaining</string>
+    <string name="ace_outlook_fewer">Ace outlook: fewer aces likely ahead.</string>
+    <string name="ace_outlook_fewer_short">Ace outlook: fewer ahead.</string>
+    <string name="ace_outlook_more">Ace outlook: more aces likely ahead.</string>
+    <string name="ace_outlook_more_short">Ace outlook: more ahead.</string>
+    <string name="ace_outlook_neutral">Ace outlook: near expected.</string>
+    <string name="ace_outlook_neutral_short">Ace outlook: neutral.</string>
+
+    <!-- Cheat sheet. %1$s is a counting system name. -->
+    <string name="cheat_sheet_title">%1$s Cheat Sheet</string>
+    <string name="cheat_sheet_deviations">Strategy Deviations</string>
+    <string name="cheat_sheet_key_counts">Key Counts</string>
+    <string name="cheat_sheet_deviations_hidden">Strategy deviations hidden for running-count systems.</string>
+    <!-- %1$s is a counting system name, %2$s the conversion factor, e.g. 1.79 -->
+    <string name="cheat_sheet_conversion">Hi-Lo indices converted to %1$s true counts (×%2$s).</string>
+    <string name="cheat_sheet_true_count_caption">Highlighted plays apply at the current true count. Verify rules and deck count before using live.</string>
+    <string name="cheat_sheet_running_count_caption">Running-count reference points for this deck count. Highlighted ones have been reached.</string>
+    <!-- Screen reader state for a highlighted deviation row -->
+    <string name="cheat_sheet_applies_now">Applies now</string>
+    <string name="back">Back</string>
+    <!-- %1$s is the count, e.g. "TC +1.5" -->
+    <string name="strategy_chart_title">Strategy Chart (%1$s)</string>
+    <string name="chart_legend_true_count">Actions update with the current true count.</string>
+    <string name="chart_legend_running_count">Running-count system selected. Deviations are disabled.</string>
+    <string name="chart_count_deviation">Count deviation</string>
+    <!-- Column header for the player's hand -->
+    <string name="chart_hand">Hand</string>
+    <string name="chart_double_else_hit">Double, else hit</string>
+    <string name="chart_double_else_stand">Double, else stand</string>
+    <string name="chart_surrender_else_hit">Surrender, else hit</string>
+    <string name="chart_surrender_else_stand">Surrender, else stand</string>
+    <string name="chart_surrender_else_split">Surrender, else split</string>
+    <!-- Screen reader text for a chart cell, e.g. "16 vs 10: Stand" -->
+    <string name="chart_cell_description">%1$s: %2$s</string>
+    <string name="chart_cell_description_deviation">%1$s: %2$s, count deviation</string>
+
+    <!-- Table rules dialog -->
+    <string name="rules_dealer_soft_17">Dealer Soft 17</string>
+    <string name="rules_s17_option">S17 (Stand on soft 17)</string>
+    <string name="rules_h17_option">H17 (Hit soft 17)</string>
+    <string name="rules_dealer_peek">Dealer Peek Rule</string>
+    <string name="rules_peek_ace_and_ten">Peek on Ace and 10</string>
+    <string name="rules_peek_ace_only">Peek on Ace only (no peek on 10)</string>
+    <string name="rules_no_peek_option">No peek (European style)</string>
+    <string name="rules_blackjack_payout">Blackjack Payout</string>
+    <string name="rules_double_down">Double Down Rule</string>
+    <string name="rules_double_any_two">Any 2 cards</string>
+    <string name="rules_double_nine_to_eleven">9-11 only</string>
+    <string name="rules_double_ten_to_eleven">10-11 only</string>
+    <string name="rules_none">None</string>
+    <string name="rules_late_surrender">Late surrender</string>
+    <string name="rules_early_surrender">Early surrender</string>
+    <string name="rules_double_after_split">Double After Split (DAS)</string>
+    <string name="rules_resplit_aces">Resplit Aces</string>
+    <string name="rules_hit_split_aces">Hit Split Aces</string>
+    <string name="rules_six_card_charlie">6-Card Charlie Auto Win</string>
+    <string name="rules_max_split_hands">Max Split Hands</string>
+
+    <!-- Help dialog -->
+    <string name="help_reference_title">Counting Systems Reference</string>
+    <string name="help_reference_line_1">Each system shows level, balance, true-count usage, and tag values.</string>
+    <string name="help_reference_line_2">Each card also includes a quick summary of how that system is typically used.</string>
+    <string name="help_reference_line_3">The Strategy Chart and cheat sheet follow the current table rules below.</string>
+    <!-- %1$s is the soft 17 rule, %2$s the peek rule -->
+    <string name="help_current_core_rule">Current core rule: %1$s, %2$s.</string>
+    <string name="help_current_rules">Current Table Rules</string>
+    <string name="help_rule_dealer_soft_17">Dealer soft 17</string>
+    <string name="help_rule_dealer_peek">Dealer peek</string>
+    <string name="help_rule_blackjack_payout">Blackjack payout</string>
+    <string name="help_rule_double_down">Double down</string>
+    <string name="help_rule_double_after_split">Double after split</string>
+    <string name="help_rule_resplit_aces">Resplit aces</string>
+    <string name="help_rule_hit_split_aces">Hit split aces</string>
+    <string name="help_rule_six_card_charlie">6-card Charlie</string>
+    <string name="help_rule_max_split_hands">Max split hands</string>
+    <string name="help_s17">S17 (Dealer stands on soft 17)</string>
+    <string name="help_h17">H17 (Dealer hits soft 17)</string>
+    <string name="help_no_peek">No peek</string>
+    <string name="help_surrender_late">Late</string>
+    <string name="help_surrender_early">Early</string>
+    <string name="allowed">Allowed</string>
+    <string name="not_allowed">Not allowed</string>
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="help_strategy_title">Strategy and Deviations</string>
+    <string name="help_strategy_chart_body">Button on the main screen. Basic strategy for the current table rules, with count deviations applied at the current true count (marked *).</string>
+    <string name="help_cheat_sheet">Cheat Sheet</string>
+    <string name="help_cheat_sheet_body">Menu &gt; Show Cheat Sheet. Tag values and every deviation index for the selected system, converted to its true count. Plays that apply now are highlighted.</string>
+    <string name="help_indices_used">Indices used</string>
+    <string name="help_indices_used_body">Hi-Lo Illustrious 18 plus 15 vs A, and the Fab 4 surrenders when surrender is offered. KO and ReKO use their key count and pivot instead.</string>
+    <string name="help_ace_side_count_recommended">Ace side count recommended</string>
 </resources>

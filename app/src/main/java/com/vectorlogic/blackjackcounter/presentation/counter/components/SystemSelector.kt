@@ -13,9 +13,13 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
+import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.CountingSystemGuide
 import com.vectorlogic.blackjackcounter.presentation.counter.systemTraitsLabel
 
@@ -36,8 +40,7 @@ fun SystemSelector(
     ) {
         if (cardsSeen > 0) {
             Text(
-                text = "Switching recounts the $cardsSeen ${if (cardsSeen == 1) "card" else "cards"} " +
-                    "seen this shoe with the new system's tags.",
+                text = pluralStringResource(R.plurals.system_switch_recount_note, cardsSeen, cardsSeen),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -71,13 +74,13 @@ fun SystemSelector(
                             level = system.level,
                             isBalanced = system.isBalanced,
                             usesTrueCount = system.usesTrueCount
-                        ),
+                        ).asString(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (system.recommendsAceSideCount) {
                         Text(
-                            text = "Uses Ace side count",
+                            text = stringResource(R.string.system_uses_ace_side_count),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )

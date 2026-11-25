@@ -19,10 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.presentation.counter.formatSignedCount
 
 private val BET_RAMP = listOf(1, 2, 4, 8, 12)
@@ -60,12 +62,12 @@ fun BetRecommendationCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "BET RAMP",
+                        text = stringResource(R.string.bet_ramp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "$countLabel ${formatSignedCount(countValue)}",
+                        text = stringResource(R.string.count_label_value, countLabel, formatSignedCount(countValue)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -84,7 +86,7 @@ fun BetRecommendationCard(
                     color = unitColor
                 )
                 Text(
-                    text = "units live",
+                    text = stringResource(R.string.bet_units_live),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -99,9 +101,10 @@ private fun BetRampPips(units: Int, activeColor: Color, compact: Boolean) {
     val currentStep = BET_RAMP.lastOrNull { units >= it }
     val activePip = if (compact) 8.dp else 10.dp
     val idlePip = if (compact) 6.dp else 8.dp
+    val rampDescription = stringResource(R.string.bet_ramp_description, BET_RAMP.joinToString(", "), units)
     Row(
         modifier = Modifier.semantics(mergeDescendants = true) {
-            contentDescription = "Bet ramp ${BET_RAMP.joinToString(", ")} units, at $units"
+            contentDescription = rampDescription
         },
         horizontalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 4.dp)
     ) {

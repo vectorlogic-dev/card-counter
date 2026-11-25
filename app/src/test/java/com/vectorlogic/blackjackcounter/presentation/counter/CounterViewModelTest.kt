@@ -11,6 +11,7 @@ import com.vectorlogic.blackjackcounter.domain.model.CountingSystemId
 import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
 import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
+import com.vectorlogic.blackjackcounter.presentation.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -138,8 +139,8 @@ class CounterViewModelTest {
         val updated = viewModel.uiState.value
         assertFalse(updated.selectedSystemUsesTrueCount)
         assertFalse(updated.canEstimateEdge)
-        assertTrue(updated.strategyDeviationRows.any { it.playLabel.contains("Key Count") })
-        assertTrue(updated.strategyDeviationRows.any { it.playLabel.contains("Pivot") })
+        assertTrue(updated.strategyDeviationRows.any { it.playLabel.text.contains("Key Count") })
+        assertTrue(updated.strategyDeviationRows.any { it.playLabel.text.contains("Pivot") })
     }
 
     @Test
@@ -149,7 +150,7 @@ class CounterViewModelTest {
         viewModel.setCountingSystem(HiLoCountingSystem.id)
 
         val updated = viewModel.uiState.value
-        assertTrue(updated.strategyDeviationRows.any { it.playLabel == "16 vs 10" && it.indexLabel.contains("TC 0+") })
+        assertTrue(updated.strategyDeviationRows.any { it.playLabel.text == "16 vs 10" && it.indexLabel.text.contains("TC 0+") })
     }
 
     @Test
@@ -179,22 +180,6 @@ class CounterViewModelTest {
     }
 
     @Test
-    fun `split deviations include no-peek adjustments and ace split notes`() {
-        val viewModel = createViewModel()
-        viewModel.setDealerPeekRule(DealerPeekRule.ACE_ONLY)
-        viewModel.setResplitAces(false)
-        viewModel.setHitSplitAces(false)
-
-        val sections = viewModel.getSplitDeviationSections(viewModel.uiState.value.tableRules)
-        val rows = sections.flatMap { it.rows }
-
-        assertTrue(rows.any { it.hand == "10 vs 10 (double deviation)" && it.action.contains("Avoid") })
-        assertTrue(rows.any { it.hand == "A,A re-split" })
-        assertTrue(rows.any { it.hand == "After splitting A,A" })
-        assertTrue(rows.any { it.hand == "A,A vs 10" })
-    }
-
-    @Test
     fun `strategy chart applies count-based 10 vs 10 double deviation`() {
         val viewModel = createViewModel()
         repeat(4) {
@@ -203,7 +188,7 @@ class CounterViewModelTest {
         viewModel.setDecksRemaining(1.0)
 
         val chart = viewModel.buildStrategyChartModel()
-        val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        val hardTenRow = chart.sections.first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "10" }
         val dealerTenCell = hardTenRow.cells[8]
 
         assertTrue(dealerTenCell.action.startsWith("D"))
@@ -220,9 +205,9 @@ class CounterViewModelTest {
         viewModel.setDecksRemaining(1.0)
 
         val chart = viewModel.buildStrategyChartModel()
-        val hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        val hardTenRow = chart.sections.first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "10" }
         val dealerTenCell = hardTenRow.cells[8]
-        val pairsSection = chart.sections.first { it.title == "Pairs" }
+        val pairsSection = chart.sections.first { it.title.text == "Pairs" }
         val acePairRow = pairsSection.rows.first { it.handLabel == "A,A" }
         val dealerAceCell = acePairRow.cells[9]
 
@@ -236,7 +221,7 @@ class CounterViewModelTest {
         viewModel.setDealerPeekRule(DealerPeekRule.NO_PEEK)
 
         val chart = viewModel.buildStrategyChartModel()
-        val pairsSection = chart.sections.first { it.title == "Pairs" }
+        val pairsSection = chart.sections.first { it.title.text == "Pairs" }
         val acePairRow = pairsSection.rows.first { it.handLabel == "A,A" }
         val dealerAceCell = acePairRow.cells[9]
 
@@ -252,7 +237,7 @@ class CounterViewModelTest {
         viewModel.setDecksRemaining(1.0)
 
         val updated = viewModel.uiState.value
-        assertEquals("TC", updated.betSizingCountLabel)
+        assertEquals("TC", updated.betSizingCountLabel.text)
         assertEquals(3.0, updated.betSizingCountValue, 0.0001)
         assertEquals(8, updated.recommendedBetUnits)
     }
@@ -266,7 +251,7 @@ class CounterViewModelTest {
         }
 
         val updated = viewModel.uiState.value
-        assertEquals("RC", updated.betSizingCountLabel)
+        assertEquals("RC", updated.betSizingCountLabel.text)
         assertEquals(-15.0, updated.betSizingCountValue, 0.0001)
         assertEquals(1, updated.recommendedBetUnits)
     }
@@ -322,14 +307,14 @@ class CounterViewModelTest {
         }
         viewModel.setDecksRemaining(0.51)
         var chart = viewModel.buildStrategyChartModel()
-        var hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        var hardTenRow = chart.sections.first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "10" }
         var dealerTenCell = hardTenRow.cells[8]
         assertEquals("H", dealerTenCell.action)
         assertFalse(dealerTenCell.isDeviation)
 
         viewModel.setDecksRemaining(0.49)
         chart = viewModel.buildStrategyChartModel()
-        hardTenRow = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "10" }
+        hardTenRow = chart.sections.first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "10" }
         dealerTenCell = hardTenRow.cells[8]
         assertTrue(dealerTenCell.action.startsWith("D"))
         assertTrue(dealerTenCell.isDeviation)
@@ -412,11 +397,11 @@ class CounterViewModelTest {
 
         // Hi-Lo 12 vs 3 stand at +2 is Omega II +3.6, so it applies at 3.9 too.
         val twelve = omega.buildStrategyChartModel().sections
-            .first { it.title == "Hard Totals" }.rows.first { it.handLabel == "12" }
+            .first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "12" }
         assertEquals("S", twelve.cells[1].action)
         assertTrue(twelve.cells[1].isDeviation)
         assertTrue(omegaState.strategyDeviationRows.any {
-            it.playLabel == "12 vs 3" && it.indexLabel == "Stand at TC +3.6"
+            it.playLabel.text == "12 vs 3" && it.indexLabel.text == "Stand at TC +3.6"
         })
     }
 
@@ -445,19 +430,19 @@ class CounterViewModelTest {
         viewModel.setDecksRemaining(1.11) // -0.90
 
         assertEquals(-0.9, viewModel.uiState.value.trueCount, 0.0001)
-        var hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        var hard = viewModel.buildStrategyChartModel().sections.first { it.title.text == "Hard Totals" }
         assertEquals("H", hard.rows.first { it.handLabel == "16" }.cells[8].action)
         assertEquals("H", hard.rows.first { it.handLabel == "12" }.cells[2].action)
 
         viewModel.setSurrenderRule(SurrenderRule.LATE)
-        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title.text == "Hard Totals" }
         assertEquals("H", hard.rows.first { it.handLabel == "15" }.cells[8].action)
 
         viewModel.undoLastCard() // TC 0
-        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title.text == "Hard Totals" }
         assertEquals("Rh", hard.rows.first { it.handLabel == "15" }.cells[8].action)
         viewModel.setSurrenderRule(SurrenderRule.NONE)
-        hard = viewModel.buildStrategyChartModel().sections.first { it.title == "Hard Totals" }
+        hard = viewModel.buildStrategyChartModel().sections.first { it.title.text == "Hard Totals" }
         assertEquals("S", hard.rows.first { it.handLabel == "16" }.cells[8].action)
         assertEquals("S", hard.rows.first { it.handLabel == "12" }.cells[2].action)
     }
@@ -487,8 +472,8 @@ class CounterViewModelTest {
         viewModel.setCountingSystem(OmegaIICountingSystem.id)
 
         val rows = viewModel.uiState.value.strategyDeviationRows
-        assertTrue(rows.any { it.playLabel == "10 vs 10" && it.indexLabel == "Double at TC +7.2" })
-        assertTrue(rows.any { it.playLabel == "Insurance vs A" && it.indexLabel == "Take at TC +5.4" })
+        assertTrue(rows.any { it.playLabel.text == "10 vs 10" && it.indexLabel.text == "Double at TC +7.2" })
+        assertTrue(rows.any { it.playLabel.text == "Insurance vs A" && it.indexLabel.text == "Take at TC +5.4" })
     }
 
     @Test
@@ -501,10 +486,10 @@ class CounterViewModelTest {
         viewModel.setDecksRemaining(1.0)
 
         val chart = viewModel.buildStrategyChartModel()
-        val sixteen = chart.sections.first { it.title == "Hard Totals" }.rows.first { it.handLabel == "16" }
+        val sixteen = chart.sections.first { it.title.text == "Hard Totals" }.rows.first { it.handLabel == "16" }
         assertEquals("Rh", sixteen.cells[8].action)
         assertTrue(viewModel.uiState.value.strategyDeviationRows.any {
-            it.playLabel == "16 vs 10" && it.indexLabel == "Surrender (any TC)"
+            it.playLabel.text == "16 vs 10" && it.indexLabel.text == "Surrender (any TC)"
         })
     }
 

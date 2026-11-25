@@ -13,6 +13,7 @@ import com.vectorlogic.blackjackcounter.domain.model.DealerSoft17Rule
 import com.vectorlogic.blackjackcounter.domain.model.DoubleDownRule
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
+import com.vectorlogic.blackjackcounter.presentation.text
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -80,7 +81,7 @@ class CounterStrategyEngineTest {
     @Test
     fun `seventeen gets its own row only when it plays differently from eighteen`() {
         fun hardLabels(state: CounterSessionState) = chart(state, 0.0, 1.0).sections
-            .first { it.title == "Hard Totals" }.rows.map { it.handLabel }
+            .first { it.title.text == "Hard Totals" }.rows.map { it.handLabel }
 
         assertEquals("17+", hardLabels(noSurrender).first())
         assertEquals("17+", hardLabels(lateSurrender).first())
@@ -94,8 +95,8 @@ class CounterStrategyEngineTest {
         assertEquals("H", hardCell(h17LateSurrender, 15, 11, -1.1).action)
         assertTrue(hardCell(h17LateSurrender, 15, 11, -1.1).isDeviation)
 
-        assertEquals(listOf("Surrender at TC -1+"), rows(h17LateSurrender, 1.0).filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
-        assertEquals(listOf("Surrender at TC +1"), rows(lateSurrender, 1.0).filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
+        assertEquals(listOf("Surrender at TC -1+"), rows(h17LateSurrender, 1.0).filter { it.playLabel.text == "15 vs A" }.map { it.indexLabel.text })
+        assertEquals(listOf("Surrender at TC +1"), rows(lateSurrender, 1.0).filter { it.playLabel.text == "15 vs A" }.map { it.indexLabel.text })
     }
 
     @Test
@@ -215,17 +216,17 @@ class CounterStrategyEngineTest {
             val scale = TrueCountScaling.hiLoEquivalentScale(system)
             listOf(noSurrender, lateSurrender, h17LateSurrender).forEach { state ->
                 val indexRows = rows(state, scale).filter {
-                    it.playLabel != "Insurance vs A" && thresholdPattern.containsMatchIn(it.indexLabel)
+                    it.playLabel.text != "Insurance vs A" && thresholdPattern.containsMatchIn(it.indexLabel.text)
                 }
                 assertTrue(indexRows.size >= 15)
                 indexRows.forEach { row ->
-                    val threshold = thresholdPattern.find(row.indexLabel)!!.groupValues[1].toDouble()
+                    val threshold = thresholdPattern.find(row.indexLabel.text)!!.groupValues[1].toDouble()
                     val justBelow = CounterCalculations.roundToOneDecimal(threshold - 0.1)
-                    val context = "${system.displayName} ${state.tableRules.surrenderRule} ${row.playLabel} (${row.indexLabel})"
+                    val context = "${system.displayName} ${state.tableRules.surrenderRule} ${row.playLabel.text} (${row.indexLabel.text})"
                     assertTrue(
                         context,
-                        cell(state, row.playLabel, threshold, scale).action !=
-                            cell(state, row.playLabel, justBelow, scale).action
+                        cell(state, row.playLabel.text, threshold, scale).action !=
+                            cell(state, row.playLabel.text, justBelow, scale).action
                     )
                 }
             }
@@ -257,8 +258,8 @@ class CounterStrategyEngineTest {
         assertEquals("Double at TC +1", label(rows, "11 vs A"))
         assertEquals("Hit below TC -1", label(rows, "13 vs 2"))
         assertEquals("Hit below TC -2", label(rows, "13 vs 3"))
-        assertNull(rows.firstOrNull { it.playLabel == "15 vs 9" })
-        assertNull(rows.firstOrNull { it.playLabel == "14 vs 10" })
+        assertNull(rows.firstOrNull { it.playLabel.text == "15 vs 9" })
+        assertNull(rows.firstOrNull { it.playLabel.text == "14 vs 10" })
     }
 
     @Test
@@ -267,10 +268,10 @@ class CounterStrategyEngineTest {
 
         assertEquals("Surrender (any TC)", label(rows, "16 vs 10"))
         assertEquals("Surrender (any TC)", label(rows, "16 vs 9"))
-        assertEquals(listOf("Surrender at TC 0+"), rows.filter { it.playLabel == "15 vs 10" }.map { it.indexLabel })
+        assertEquals(listOf("Surrender at TC 0+"), rows.filter { it.playLabel.text == "15 vs 10" }.map { it.indexLabel.text })
         assertEquals("Surrender at TC +3", label(rows, "14 vs 10"))
         assertEquals("Surrender at TC +2", label(rows, "15 vs 9"))
-        assertEquals(listOf("Surrender at TC +1"), rows.filter { it.playLabel == "15 vs A" }.map { it.indexLabel })
+        assertEquals(listOf("Surrender at TC +1"), rows.filter { it.playLabel.text == "15 vs A" }.map { it.indexLabel.text })
     }
 
     @Test
@@ -292,15 +293,15 @@ class CounterStrategyEngineTest {
         ruleSets.forEach { rules ->
             val state = CounterSessionState(tableRules = rules)
             scales.forEach { scale ->
-                val triggeredRows = rows(state, scale).filter { it.trigger != null && it.playLabel != "Insurance vs A" }
+                val triggeredRows = rows(state, scale).filter { it.trigger != null && it.playLabel.text != "Insurance vs A" }
                 assertTrue(triggeredRows.isNotEmpty())
                 // Thresholds are one-decimal native counts, so step in tenths to hit every boundary.
                 (-120..120).map { it / 10.0 }.forEach { tc ->
                     triggeredRows.forEach { row ->
-                        val cell = cellFor(state, row.playLabel, tc, scale)
-                        val playPrefix = actionPrefix(row.indexLabel)
+                        val cell = cellFor(state, row.playLabel.text, tc, scale)
+                        val playPrefix = actionPrefix(row.indexLabel.text)
                         assertEquals(
-                            "${row.playLabel} (${row.indexLabel}) at TC $tc, scale $scale, $rules",
+                            "${row.playLabel.text} (${row.indexLabel.text}) at TC $tc, scale $scale, $rules",
                             cell.action.startsWith(playPrefix),
                             row.isActiveAt(tc)
                         )
@@ -312,12 +313,12 @@ class CounterStrategyEngineTest {
 
     @Test
     fun `insurance row is active from its converted index`() {
-        val insurance = rows(noSurrender, 1.0).first { it.playLabel == "Insurance vs A" }
+        val insurance = rows(noSurrender, 1.0).first { it.playLabel.text == "Insurance vs A" }
         assertFalse(insurance.isActiveAt(2.0))
         assertTrue(insurance.isActiveAt(3.0))
 
         val zenInsurance = rows(noSurrender, TrueCountScaling.hiLoEquivalentScale(ZenCountSystem))
-            .first { it.playLabel == "Insurance vs A" }
+            .first { it.playLabel.text == "Insurance vs A" }
         // Hi-Lo +3 x Zen scale ~1.789 = 5.4 at one decimal.
         assertFalse(zenInsurance.isActiveAt(5.3))
         assertTrue(zenInsurance.isActiveAt(5.4))
@@ -326,8 +327,8 @@ class CounterStrategyEngineTest {
     @Test
     fun `doubles the table rules forbid are labelled and never highlighted`() {
         val noPeekOnTen = CounterSessionState(tableRules = TableRules(dealerPeekRule = DealerPeekRule.ACE_ONLY))
-        val tenVsTen = rows(noPeekOnTen, 1.0).first { it.playLabel == "10 vs 10" }
-        assertEquals("No double (rules)", tenVsTen.indexLabel)
+        val tenVsTen = rows(noPeekOnTen, 1.0).first { it.playLabel.text == "10 vs 10" }
+        assertEquals("No double (rules)", tenVsTen.indexLabel.text)
         assertNull(tenVsTen.trigger)
         assertFalse(tenVsTen.isActiveAt(10.0))
 
@@ -341,8 +342,8 @@ class CounterStrategyEngineTest {
     @Test
     fun `eleven vs ace doubles at any count under h17`() {
         val h17 = CounterSessionState(tableRules = TableRules(dealerSoft17Rule = DealerSoft17Rule.HIT))
-        val row = rows(h17, 1.0).first { it.playLabel == "11 vs A" }
-        assertEquals("Double (any TC)", row.indexLabel)
+        val row = rows(h17, 1.0).first { it.playLabel.text == "11 vs A" }
+        assertEquals("Double (any TC)", row.indexLabel.text)
         assertNull(row.trigger)
         assertEquals("Double at TC +1", label(rows(noSurrender, 1.0), "11 vs A"))
     }
@@ -356,8 +357,8 @@ class CounterStrategyEngineTest {
             pivot = 4,
             trueCountScale = 1.0
         )
-        val keyCount = rows.first { it.playLabel.startsWith("Key Count") }
-        val pivot = rows.first { it.playLabel.startsWith("Pivot") }
+        val keyCount = rows.first { it.playLabel.text.startsWith("Key Count") }
+        val pivot = rows.first { it.playLabel.text.startsWith("Pivot") }
         assertFalse(keyCount.isActiveAt(-5.0))
         assertTrue(keyCount.isActiveAt(-4.0))
         assertFalse(pivot.isActiveAt(3.0))
@@ -375,7 +376,7 @@ class CounterStrategyEngineTest {
             decisionTrueCount = decisionTrueCount,
             trueCountScale = scale
         )
-        return chart.sections.first { it.title == section }.rows.first { it.handLabel == hand }.cells[dealerUpcard - 2]
+        return chart.sections.first { it.title.text == section }.rows.first { it.handLabel == hand }.cells[dealerUpcard - 2]
     }
 
     private fun chart(state: CounterSessionState, decisionTrueCount: Double, scale: Double): StrategyChartModel {
@@ -395,7 +396,7 @@ class CounterStrategyEngineTest {
         dealerUpcard: Int,
         decisionTrueCount: Double
     ): StrategyTableCell {
-        return chart(state, decisionTrueCount, 1.0).sections.first { it.title == section }
+        return chart(state, decisionTrueCount, 1.0).sections.first { it.title.text == section }
             .rows.first { it.handLabel == handLabel }.cells[dealerUpcard - 2]
     }
 
@@ -441,7 +442,7 @@ class CounterStrategyEngineTest {
             trueCountScale = scale
         )
         val section = if ("," in hand) "Pairs" else "Hard Totals"
-        val row = chart.sections.first { it.title == section }.rows.first { it.handLabel == hand }
+        val row = chart.sections.first { it.title.text == section }.rows.first { it.handLabel == hand }
         return row.cells[dealerUpcard - 2]
     }
 
@@ -456,6 +457,6 @@ class CounterStrategyEngineTest {
     }
 
     private fun label(rows: List<StrategyDeviationRow>, play: String): String {
-        return rows.first { it.playLabel == play }.indexLabel
+        return rows.first { it.playLabel.text == play }.indexLabel.text
     }
 }

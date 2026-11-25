@@ -20,15 +20,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
+import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.components.CheatSheetCard
 import com.vectorlogic.blackjackcounter.presentation.counter.components.HelpDialogContent
 import com.vectorlogic.blackjackcounter.presentation.counter.components.StrategyChartFullScreen
 import com.vectorlogic.blackjackcounter.presentation.counter.components.SystemSelector
 import com.vectorlogic.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.vectorlogic.blackjackcounter.presentation.drill.DrillDialog
+import com.vectorlogic.blackjackcounter.presentation.resolve
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,6 +54,7 @@ fun CounterScreen(
     var showResetConfirm by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val resources = LocalResources.current
 
     // A reset wipes the whole shoe, so ask first unless there is nothing to lose.
     val requestReset = {
@@ -105,14 +112,13 @@ fun CounterScreen(
             val cardsSeen = state.seenCards.size
             AlertDialog(
                 onDismissRequest = { showResetConfirm = false },
-                title = { Text("Reset count?") },
+                title = { Text(stringResource(R.string.reset_confirm_title)) },
                 text = {
                     Text(
                         if (cardsSeen > 0) {
-                            "This clears the running count and the $cardsSeen ${if (cardsSeen == 1) "card" else "cards"} " +
-                                "seen this shoe. It can't be undone."
+                            pluralStringResource(R.plurals.reset_confirm_message, cardsSeen, cardsSeen)
                         } else {
-                            "This clears the running count and refills the shoe. It can't be undone."
+                            stringResource(R.string.reset_confirm_message_empty)
                         }
                     )
                 },
@@ -121,18 +127,18 @@ fun CounterScreen(
                         viewModel.resetCount()
                         showResetConfirm = false
                     }) {
-                        Text("Reset", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.reset), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showResetConfirm = false }) { Text("Cancel") }
+                    TextButton(onClick = { showResetConfirm = false }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }
 
         if (showSystemSelector) {
             CounterAlertDialog(
-                title = "Counting System",
+                title = stringResource(R.string.counting_system_title),
                 onDismiss = { showSystemSelector = false }
             ) {
                 SystemSelector(
@@ -155,7 +161,7 @@ fun CounterScreen(
                             if (message != null) {
                                 scope.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(message, withDismissAction = true)
+                                    snackbarHostState.showSnackbar(message.resolve(resources), withDismissAction = true)
                                 }
                             }
                         }
@@ -166,7 +172,7 @@ fun CounterScreen(
 
         if (showHelpDialog) {
             CounterAlertDialog(
-                title = "Help",
+                title = stringResource(R.string.help_title),
                 onDismiss = { showHelpDialog = false }
             ) {
                 HelpDialogContent(
@@ -178,8 +184,8 @@ fun CounterScreen(
 
         if (showRulesDialog) {
             CounterAlertDialog(
-                title = "Table Rules",
-                confirmLabel = "Done",
+                title = stringResource(R.string.table_rules_title),
+                confirmLabel = stringResource(R.string.done),
                 onDismiss = { showRulesDialog = false }
             ) {
                 TableRulesDialogContent(
@@ -203,7 +209,7 @@ fun CounterScreen(
                 onDismissRequest = { viewModel.setCheatSheetVisible(false) },
                 confirmButton = {
                     TextButton(onClick = { viewModel.setCheatSheetVisible(false) }) {
-                        Text("Close")
+                        Text(stringResource(R.string.close))
                     }
                 },
                 text = {
@@ -217,7 +223,7 @@ fun CounterScreen(
                             .trueCountScale,
                         // The bet-sizing count is the same count the strategy chart decides
                         // deviations with (TC, or RC for KO/ReKO).
-                        decisionCountLabel = state.betSizingCountLabel,
+                        decisionCountLabel = state.betSizingCountLabel.asString(),
                         decisionCount = state.betSizingCountValue
                     )
                 }
@@ -230,13 +236,13 @@ fun CounterScreen(
 private fun CounterAlertDialog(
     title: String,
     onDismiss: () -> Unit,
-    confirmLabel: String = "Close",
+    confirmLabel: String? = null,
     content: @Composable () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(confirmLabel) }
+            TextButton(onClick = onDismiss) { Text(confirmLabel ?: stringResource(R.string.close)) }
         },
         title = { Text(title, style = MaterialTheme.typography.titleLarge) },
         text = content

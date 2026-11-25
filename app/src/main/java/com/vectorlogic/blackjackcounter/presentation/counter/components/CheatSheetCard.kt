@@ -17,10 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
+import com.vectorlogic.blackjackcounter.presentation.asString
 import com.vectorlogic.blackjackcounter.presentation.counter.CheatSheetRow
 import com.vectorlogic.blackjackcounter.presentation.counter.StrategyDeviationRow
 import java.util.Locale
@@ -49,7 +52,7 @@ fun CheatSheetCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "$systemName Cheat Sheet",
+                text = stringResource(R.string.cheat_sheet_title, systemName),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -69,8 +72,14 @@ fun CheatSheetCard(
                 if (strategyRows.isNotEmpty()) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     StrategySectionHeader(
-                        title = if (usesTrueCount) "Strategy Deviations" else "Key Counts",
-                        currentCount = "$decisionCountLabel ${formatSignedCount(decisionCount)}"
+                        title = stringResource(
+                            if (usesTrueCount) R.string.cheat_sheet_deviations else R.string.cheat_sheet_key_counts
+                        ),
+                        currentCount = stringResource(
+                            R.string.count_label_value,
+                            decisionCountLabel,
+                            formatSignedCount(decisionCount)
+                        )
                     )
                     StrategyCaption(
                         systemName = systemName,
@@ -79,15 +88,15 @@ fun CheatSheetCard(
                     )
                     strategyRows.forEach { row ->
                         CheatSheetRow(
-                            label = row.playLabel,
-                            value = row.indexLabel,
+                            label = row.playLabel.asString(),
+                            value = row.indexLabel.asString(),
                             active = row.isActiveAt(decisionCount)
                         )
                     }
                 } else if (!usesTrueCount) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
-                        text = "Strategy deviations hidden for running-count systems.",
+                        text = stringResource(R.string.cheat_sheet_deviations_hidden),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -124,20 +133,19 @@ private fun StrategySectionHeader(title: String, currentCount: String) {
 @Composable
 private fun StrategyCaption(systemName: String, usesTrueCount: Boolean, trueCountScale: Double) {
     val text = if (usesTrueCount) {
-        val conversion = if (abs(trueCountScale - 1.0) > SCALE_TOLERANCE) {
-            String.format(
-                Locale.US,
-                "Hi-Lo indices converted to %s true counts (×%.2f). ",
+        val caption = stringResource(R.string.cheat_sheet_true_count_caption)
+        if (abs(trueCountScale - 1.0) > SCALE_TOLERANCE) {
+            val conversion = stringResource(
+                R.string.cheat_sheet_conversion,
                 systemName,
-                trueCountScale
+                String.format(Locale.US, "%.2f", trueCountScale)
             )
+            "$conversion $caption"
         } else {
-            ""
+            caption
         }
-        conversion + "Highlighted plays apply at the current true count. " +
-            "Verify rules and deck count before using live."
     } else {
-        "Running-count reference points for this deck count. Highlighted ones have been reached."
+        stringResource(R.string.cheat_sheet_running_count_caption)
     }
     Text(
         text = text,
@@ -148,10 +156,11 @@ private fun StrategyCaption(systemName: String, usesTrueCount: Boolean, trueCoun
 
 @Composable
 private fun CheatSheetRow(label: String, value: String, active: Boolean = false) {
+    val appliesNow = stringResource(R.string.cheat_sheet_applies_now)
     val rowModifier = if (active) {
         Modifier
             .background(activeRowColor(), RoundedCornerShape(6.dp))
-            .semantics { stateDescription = "Applies now" }
+            .semantics { stateDescription = appliesNow }
     } else {
         Modifier
     }

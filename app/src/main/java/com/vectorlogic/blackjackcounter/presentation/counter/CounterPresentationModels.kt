@@ -1,8 +1,10 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
+import com.vectorlogic.blackjackcounter.presentation.UiText
 
 data class CheatSheetRow(
     val cardsLabel: String,
@@ -10,8 +12,8 @@ data class CheatSheetRow(
 )
 
 data class StrategyDeviationRow(
-    val playLabel: String,
-    val indexLabel: String,
+    val playLabel: UiText,
+    val indexLabel: UiText,
     // Null when the row doesn't depend on the count (e.g. basic-strategy surrender, or a play the
     // table rules don't allow).
     val trigger: DeviationTrigger? = null
@@ -43,18 +45,8 @@ data class CountingSystemGuide(
     val isBalanced: Boolean,
     val usesTrueCount: Boolean,
     val recommendsAceSideCount: Boolean,
-    val explanation: String,
+    val explanation: UiText,
     val tagRows: List<CheatSheetRow>
-)
-
-data class StrategyChartSection(
-    val title: String,
-    val rows: List<StrategyChartRow>
-)
-
-data class StrategyChartRow(
-    val hand: String,
-    val action: String
 )
 
 data class StrategyTableCell(
@@ -68,12 +60,12 @@ data class StrategyTableRow(
 )
 
 data class StrategyTableSection(
-    val title: String,
+    val title: UiText,
     val rows: List<StrategyTableRow>
 )
 
 data class StrategyChartModel(
-    val trueCountLabel: String,
+    val trueCountLabel: UiText,
     val supportsTrueCount: Boolean,
     val sections: List<StrategyTableSection>
 )
@@ -82,7 +74,7 @@ data class CounterUiState(
     val runningCount: Double = 0.0,
     val trueCount: Double = 0.0,
     val recommendedBetUnits: Int = 1,
-    val betSizingCountLabel: String = "TC",
+    val betSizingCountLabel: UiText = UiText.Res(R.string.count_tc),
     val betSizingCountValue: Double = 0.0,
     val deckPenetrationPercent: Double = 0.0,
     val totalDecks: Int = 6,

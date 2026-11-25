@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.HiLoCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.HiOptIICountingSystem
@@ -9,52 +10,10 @@ import com.vectorlogic.blackjackcounter.data.counting.ReKOCountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.WongHalvesSystem
 import com.vectorlogic.blackjackcounter.data.counting.ZenCountSystem
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
-import com.vectorlogic.blackjackcounter.domain.model.DealerPeekRule
-import com.vectorlogic.blackjackcounter.domain.model.TableRules
+import com.vectorlogic.blackjackcounter.presentation.UiText
+import com.vectorlogic.blackjackcounter.presentation.uiText
 
 object CounterHelpContentFactory {
-
-    // Help no longer shows basicStrategySections or buildSplitDeviationSections: the static prose
-    // disagreed with the rule- and count-aware Strategy Chart and cheat sheet, so the dialog points
-    // to those instead. Both stay only because CounterViewModel still exposes them; remove together.
-    val basicStrategySections: List<StrategyChartSection> = listOf(
-        StrategyChartSection(
-            title = "Hard Totals",
-            rows = listOf(
-                StrategyChartRow("Hard 8 or less", "Hit"),
-                StrategyChartRow("Hard 9", "Double vs 3-6, otherwise Hit"),
-                StrategyChartRow("Hard 10", "Double vs 2-9, otherwise Hit"),
-                StrategyChartRow("Hard 11", "Double (otherwise Hit)"),
-                StrategyChartRow("Hard 12", "Stand vs 4-6, otherwise Hit"),
-                StrategyChartRow("Hard 13-16", "Stand vs 2-6, otherwise Hit"),
-                StrategyChartRow("Hard 17+", "Stand")
-            )
-        ),
-        StrategyChartSection(
-            title = "Soft Totals",
-            rows = listOf(
-                StrategyChartRow("A,2 or A,3", "Double vs 5-6, otherwise Hit"),
-                StrategyChartRow("A,4 or A,5", "Double vs 4-6, otherwise Hit"),
-                StrategyChartRow("A,6", "Double vs 3-6, otherwise Hit"),
-                StrategyChartRow("A,7", "Stand vs 2,7,8; Double vs 3-6; Hit vs 9,10,A"),
-                StrategyChartRow("A,8+", "Stand")
-            )
-        ),
-        StrategyChartSection(
-            title = "Pairs",
-            rows = listOf(
-                StrategyChartRow("A,A", "Split"),
-                StrategyChartRow("10,10", "Stand"),
-                StrategyChartRow("9,9", "Split vs 2-6,8,9; otherwise Stand"),
-                StrategyChartRow("8,8", "Split"),
-                StrategyChartRow("7,7", "Split vs 2-7, otherwise Hit"),
-                StrategyChartRow("6,6", "Split vs 2-6, otherwise Hit"),
-                StrategyChartRow("5,5", "Double vs 2-9, otherwise Hit"),
-                StrategyChartRow("4,4", "Split vs 5-6, otherwise Hit"),
-                StrategyChartRow("3,3 or 2,2", "Split vs 2-7, otherwise Hit")
-            )
-        )
-    )
 
     fun buildCountingSystemGuides(systems: List<CountingSystem>): List<CountingSystemGuide> {
         return systems.map { system ->
@@ -71,47 +30,6 @@ object CounterHelpContentFactory {
         }
     }
 
-    fun buildSplitDeviationSections(tableRules: TableRules): List<StrategyChartSection> {
-        val noPeekOnTen = tableRules.dealerPeekRule == DealerPeekRule.ACE_ONLY ||
-            tableRules.dealerPeekRule == DealerPeekRule.NO_PEEK
-        val noPeekOnAce = tableRules.dealerPeekRule == DealerPeekRule.NO_PEEK
-
-        val baseRows = mutableListOf(
-            StrategyChartRow("10,10 vs 5", "Split at very high TC (commonly around +5)"),
-            StrategyChartRow("10,10 vs 6", "Split at very high TC (commonly around +4)"),
-            StrategyChartRow(
-                "10 vs 10 (double deviation)",
-                if (noPeekOnTen) {
-                    "Avoid if no-peek on 10 is active."
-                } else {
-                    "Double only at high TC (commonly around +4)."
-                }
-            ),
-            StrategyChartRow("9,9 vs 7", "Can shift by count/rules; use your index chart"),
-            StrategyChartRow("All split deviations", "Rule and system dependent; verify table rules")
-        )
-
-        if (!tableRules.resplitAces) {
-            baseRows.add(StrategyChartRow("A,A re-split", "Not allowed at this table."))
-        }
-        if (!tableRules.hitSplitAces) {
-            baseRows.add(StrategyChartRow("After splitting A,A", "No hit after split aces."))
-        }
-        if (noPeekOnTen) {
-            baseRows.add(StrategyChartRow("A,A vs 10", "Use no-peek-on-10 chart adjustments."))
-        }
-        if (noPeekOnAce) {
-            baseRows.add(StrategyChartRow("A,A vs A", "Use no-peek-on-A chart adjustments."))
-        }
-
-        return listOf(
-            StrategyChartSection(
-                title = "Count-Based Split Deviations (Advanced, Hi-Lo style)",
-                rows = baseRows
-            )
-        )
-    }
-
     fun buildCheatSheetRows(system: CountingSystem): List<CheatSheetRow> {
         val grouped = CardRank.entries
             .groupBy { rank -> system.getTagValue(rank) }
@@ -126,18 +44,18 @@ object CounterHelpContentFactory {
         }
     }
 
-    private fun systemExplanation(system: CountingSystem): String {
-        return when (system.id) {
-            HiLoCountingSystem.id -> "Most common beginner system: balanced +1/-1 tags; the bet ramp and indices are calibrated for it."
-            KOCountingSystem.id -> "Unbalanced running-count system using deck-specific initial running counts, key counts, and a pivot."
-            ReKOCountingSystem.id -> "Refined KO variant with deck-specific initial running counts and key-count references."
-            HiOptIICountingSystem.id -> "Higher-power level-2 system using Hi-Lo indices scaled to its true count; strongest with an Ace side count."
-            OmegaIICountingSystem.id -> "Advanced level-2 balanced count using Hi-Lo indices scaled to its true count; often paired with Ace side count."
-            ZenCountSystem.id -> "Balanced level-2 count with heavier 4-6 tags; uses Hi-Lo indices scaled to its true count."
-            WongHalvesSystem.id -> "High-precision balanced system with half-point tags; uses Hi-Lo indices scaled to its true count."
-            else -> "Card-counting system with custom tag values for betting and deviation decisions."
+    private fun systemExplanation(system: CountingSystem): UiText = uiText(
+        when (system.id) {
+            HiLoCountingSystem.id -> R.string.system_explanation_hi_lo
+            KOCountingSystem.id -> R.string.system_explanation_ko
+            ReKOCountingSystem.id -> R.string.system_explanation_reko
+            HiOptIICountingSystem.id -> R.string.system_explanation_hi_opt_ii
+            OmegaIICountingSystem.id -> R.string.system_explanation_omega_ii
+            ZenCountSystem.id -> R.string.system_explanation_zen_count
+            WongHalvesSystem.id -> R.string.system_explanation_wong_halves
+            else -> R.string.system_explanation_other
         }
-    }
+    )
 
     private fun CardRank.toCardLabel(): String {
         return when (this) {

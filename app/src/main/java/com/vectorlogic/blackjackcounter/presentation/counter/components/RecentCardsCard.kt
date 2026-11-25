@@ -18,11 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.vectorlogic.blackjackcounter.R
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -55,16 +57,16 @@ fun RecentCardsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Recent Cards",
+                    text = stringResource(R.string.recent_cards),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 if (totalCardsSeen > 0) {
                     Text(
                         text = if (totalCardsSeen > recentCardLabels.size) {
-                            "last ${recentCardLabels.size} of $totalCardsSeen, newest last"
+                            stringResource(R.string.recent_cards_last_of, recentCardLabels.size, totalCardsSeen)
                         } else {
-                            "newest last"
+                            stringResource(R.string.recent_cards_newest_last)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -74,7 +76,7 @@ fun RecentCardsCard(
 
             if (recentCardLabels.isEmpty()) {
                 Text(
-                    text = "No cards yet",
+                    text = stringResource(R.string.recent_cards_empty),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -107,9 +109,10 @@ internal fun RecentCardChip(
     compact: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val newestDescription = stringResource(R.string.recent_cards_newest_description, label)
     Surface(
         modifier = if (newest) {
-            modifier.clearAndSetSemantics { contentDescription = "$label, newest" }
+            modifier.clearAndSetSemantics { contentDescription = newestDescription }
         } else {
             modifier
         },

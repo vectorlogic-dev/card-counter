@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.domain.drill.DrillConfig
 import com.vectorlogic.blackjackcounter.domain.drill.DrillEngine
@@ -138,16 +140,16 @@ fun DrillDialog(
                     userInput = ""
                     submittedCount = null
                     phase = DrillPhase.COUNTDOWN
-                }) { Text("Start") }
-                DrillPhase.INPUT -> Button(enabled = canSubmit, onClick = submit) { Text("Submit") }
+                }) { Text(stringResource(R.string.drill_start)) }
+                DrillPhase.INPUT -> Button(enabled = canSubmit, onClick = submit) { Text(stringResource(R.string.drill_submit)) }
                 DrillPhase.RESULT -> Button(onClick = { phase = DrillPhase.SETUP }) {
-                    Text("Run again")
+                    Text(stringResource(R.string.drill_run_again))
                 }
                 else -> {}
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         }
     )
 
@@ -186,7 +188,7 @@ fun DrillDialog(
 @Composable
 private fun DrillTitle(systemName: String) {
     Column {
-        Text("Drill mode")
+        Text(stringResource(R.string.drill_title))
         Text(
             text = systemName,
             style = MaterialTheme.typography.bodyMedium,
@@ -204,28 +206,27 @@ private fun SetupContent(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            "Cards will flash one at a time. Track the running count " +
-                "in your head, then enter the final value.",
+            stringResource(R.string.drill_instructions),
             style = MaterialTheme.typography.bodySmall
         )
-        Text("Length", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.drill_length), style = MaterialTheme.typography.labelLarge)
         // Chips keep their labels on one line and wrap to a new row if the dialog is narrow.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             DrillSize.entries.forEach { size ->
                 FilterChip(
                     selected = config.size == size,
                     onClick = { onConfigChanged(config.copy(size = size)) },
-                    label = { ChipLabel(size.label) }
+                    label = { ChipLabel(stringResource(size.labelRes)) }
                 )
             }
         }
-        Text("Speed", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.drill_speed), style = MaterialTheme.typography.labelLarge)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             DrillSpeed.entries.forEach { speed ->
                 FilterChip(
                     selected = config.speed == speed,
                     onClick = { onConfigChanged(config.copy(speed = speed)) },
-                    label = { ChipLabel(speed.label) }
+                    label = { ChipLabel(stringResource(speed.labelRes)) }
                 )
             }
         }
@@ -287,7 +288,7 @@ private fun RunningContent(rank: CardRank?, position: Int, total: Int) {
             }
         }
         Text(
-            text = "${position.coerceIn(1, total.coerceAtLeast(1))} / $total",
+            text = stringResource(R.string.drill_progress, position.coerceIn(1, total.coerceAtLeast(1)), total),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -308,7 +309,7 @@ private fun InputContent(
         keyboardController?.show()
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("What was the final running count?", style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.drill_question), style = MaterialTheme.typography.bodyMedium)
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -338,21 +339,25 @@ private fun InputContent(
 @Composable
 private fun ResultContent(result: DrillResult) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ResultRow("Actual", formatCount(result.actualRunningCount))
-        ResultRow("You said", formatCount(result.userReportedCount))
+        ResultRow(stringResource(R.string.drill_result_actual), formatCount(result.actualRunningCount))
+        ResultRow(stringResource(R.string.drill_result_you_said), formatCount(result.userReportedCount))
         ResultRow(
-            label = if (result.isExact) "Result" else "Off by",
-            value = if (result.isExact) "PERFECT" else formatCount(result.absoluteError),
+            label = stringResource(if (result.isExact) R.string.drill_result else R.string.drill_result_off_by),
+            value = if (result.isExact) {
+                stringResource(R.string.drill_result_perfect)
+            } else {
+                formatCount(result.absoluteError)
+            },
             valueColor = if (result.isExact) {
                 MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.error
             }
         )
-        ResultRow("Cards", "${result.cards.size}")
+        ResultRow(stringResource(R.string.drill_result_cards), "${result.cards.size}")
         ResultRow(
-            "Speed",
-            "%.1f cards/sec".format(result.cardsPerSecond)
+            stringResource(R.string.drill_speed),
+            stringResource(R.string.drill_result_cards_per_second, "%.1f".format(result.cardsPerSecond))
         )
     }
 }
@@ -394,6 +399,20 @@ private fun CardRank.toDrillLabel(): String = when (this) {
     CardRank.KING -> "K"
     CardRank.ACE -> "A"
 }
+
+private val DrillSize.labelRes: Int
+    get() = when (this) {
+        DrillSize.HALF_DECK -> R.string.drill_size_half_deck
+        DrillSize.DECK -> R.string.drill_size_one_deck
+        DrillSize.DECK_AND_A_HALF -> R.string.drill_size_deck_and_a_half
+    }
+
+private val DrillSpeed.labelRes: Int
+    get() = when (this) {
+        DrillSpeed.SLOW -> R.string.drill_speed_slow
+        DrillSpeed.MEDIUM -> R.string.drill_speed_medium
+        DrillSpeed.FAST -> R.string.drill_speed_fast
+    }
 
 /** Blank time at the end of each card's slot: a fifth of it, kept between 100 and 200 ms. */
 private fun cardGapMs(intervalMs: Long): Long = (intervalMs / 5).coerceIn(100L, 200L)

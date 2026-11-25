@@ -3,7 +3,11 @@ package com.vectorlogic.blackjackcounter.presentation.counter
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
+import com.vectorlogic.blackjackcounter.presentation.UiText
+import com.vectorlogic.blackjackcounter.presentation.pluralText
+import com.vectorlogic.blackjackcounter.presentation.uiText
 import java.util.Locale
 import kotlin.math.round
 
@@ -57,10 +61,10 @@ fun countColor(value: Double): Color = when {
 }
 
 /** Second line in the system selector, e.g. "Level 2 · Balanced · True count". */
-fun systemTraitsLabel(level: Int, isBalanced: Boolean, usesTrueCount: Boolean): String {
-    val balance = if (isBalanced) "Balanced" else "Unbalanced"
-    val count = if (usesTrueCount) "True count" else "Running count only"
-    return "Level $level · $balance · $count"
+fun systemTraitsLabel(level: Int, isBalanced: Boolean, usesTrueCount: Boolean): UiText {
+    val balance = uiText(if (isBalanced) R.string.system_balanced else R.string.system_unbalanced)
+    val count = uiText(if (usesTrueCount) R.string.system_true_count else R.string.system_running_count_only)
+    return uiText(R.string.system_traits, level, balance, count)
 }
 
 /**
@@ -75,17 +79,15 @@ fun systemSwitchMessage(
     newSystemName: String,
     newRunningCount: Double,
     cardsSeen: Int
-): String? {
+): UiText? {
     if (previousSystemId == newSystemId) return null
     val before = formatSignedCount(previousRunningCount)
     val after = formatSignedCount(newRunningCount)
     return when {
-        cardsSeen > 0 -> {
-            val cards = if (cardsSeen == 1) "1 card" else "$cardsSeen cards"
-            "Recounted $cards with $newSystemName: RC $before → $after"
-        }
+        cardsSeen > 0 ->
+            pluralText(R.plurals.system_switch_recounted, cardsSeen, cardsSeen, newSystemName, before, after)
         // No cards yet, but unbalanced systems start from a non-zero IRC.
-        before != after -> "$newSystemName starts at RC $after"
+        before != after -> uiText(R.string.system_switch_starts_at, newSystemName, after)
         else -> null
     }
 }
