@@ -115,7 +115,7 @@ All counting systems are available in the app at no extra cost.
 - Header (floating, no card):
   - Current system name in gold
   - Info icon -> Help dialog
-  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet, Drill Mode
+  - Menu icon -> Select Counting System, Table Rules, Reset Count, Show/Hide Cheat Sheet, Drill Mode, Deviation Quiz
 - Main stats row (3 cards with colored top accent strip):
   - Running Count
   - True Count (or `N/A` for unbalanced systems)
@@ -151,6 +151,20 @@ All counting systems are available in the app at no extra cost.
   covers keyboards without a minus key) and get scored exact or off-by-N, plus cards/sec
 - A drill in progress, including the answer step, survives rotation and isn't cancelled by Back or an
   accidental outside tap; `Close` still ends it
+
+## Deviation Quiz
+- Open from `Menu` -> `Deviation Quiz`; ten questions a round
+- Each question shows your hand, the dealer's upcard and a true count; pick Hit, Stand, Double,
+  Split (pairs only) or Surrender (only when the table rules offer it)
+- Hands are the Illustrious 18 plays plus the Fab 4 surrenders that change with the count under the
+  current table rules, each once before any repeats
+- Counts land on the index or up to two past it about half the time, and one to three short of it
+  otherwise, so you need the index number as well as the play
+- Answers come from the same engine as the Strategy Chart, so they follow the table rules and the
+  selected system's true count (KO and ReKO, which have no true count, are quizzed on Hi-Lo)
+- After each answer the quiz shows the index and whether it applies at that count; the end of the
+  round lists the misses to review
+- A round survives rotation and isn't cancelled by Back or an accidental outside tap
 
 ## Table Rules Supported
 - Dealer soft 17: `S17` / `H17`

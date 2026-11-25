@@ -493,6 +493,21 @@ class CounterViewModelTest {
         })
     }
 
+    @Test
+    fun `deviation quiz uses the selected system, or Hi-Lo for running-count systems`() {
+        val viewModel = createViewModel()
+        viewModel.setCountingSystem(ZenCountSystem.id)
+        val zen = viewModel.buildDeviationQuiz()
+        assertEquals("Zen Count", zen.systemName)
+        assertTrue(zen.usesSelectedSystem)
+
+        viewModel.setCountingSystem(KOCountingSystem.id)
+        val ko = viewModel.buildDeviationQuiz()
+        assertEquals("Hi-Lo", ko.systemName)
+        assertFalse(ko.usesSelectedSystem)
+        assertTrue(ko.items.isNotEmpty())
+    }
+
     private fun createViewModel(): CounterViewModel {
         return CounterViewModel.provideFactory().create(CounterViewModel::class.java)
     }

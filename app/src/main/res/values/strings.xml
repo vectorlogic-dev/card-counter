@@ -238,4 +238,40 @@
     <string name="help_indices_used">Indices used</string>
     <string name="help_indices_used_body">Hi-Lo Illustrious 18 plus 15 vs A, and the Fab 4 surrenders when surrender is offered. KO and ReKO use their key count and pivot instead.</string>
     <string name="help_ace_side_count_recommended">Ace side count recommended</string>
+    <string name="menu_deviation_quiz">Deviation Quiz</string>
+
+    <!-- Deviation quiz: a hand, the dealer's upcard and a true count; the player picks the play. -->
+    <string name="quiz_title">Deviation quiz</string>
+    <!-- Shown under the title for KO and ReKO, which have no true-count indices. %1$s is Hi-Lo. -->
+    <string name="quiz_running_count_system">%1$s indices (this system has no true count)</string>
+    <string name="quiz_no_hands">No plays change with the count under these table rules.</string>
+    <string name="quiz_progress">Question %1$d of %2$d</string>
+    <plurals name="quiz_score_so_far">
+        <item quantity="one">%1$d correct</item>
+        <item quantity="other">%1$d correct</item>
+    </plurals>
+    <string name="quiz_your_hand">Your hand</string>
+    <string name="quiz_dealer_shows">Dealer</string>
+    <string name="quiz_true_count">True count</string>
+    <string name="quiz_question">What\'s the play?</string>
+    <string name="quiz_correct">Correct</string>
+    <!-- %1$s is a play, e.g. Stand -->
+    <string name="quiz_wrong">The play is %1$s</string>
+    <!-- %1$s is a hand such as 16 vs 10, %2$s its index such as Stand at TC 0+ -->
+    <string name="quiz_index_rule">%1$s: %2$s</string>
+    <!-- %1$s is the true count, %2$s the index rule -->
+    <string name="quiz_index_applies">At TC %1$s the index applies (%2$s).</string>
+    <string name="quiz_index_does_not_apply">At TC %1$s the index doesn\'t apply (%2$s), so play basic strategy.</string>
+    <string name="quiz_next">Next</string>
+    <string name="quiz_see_results">See results</string>
+    <!-- %1$d answers right out of %2$d questions -->
+    <plurals name="quiz_result_score">
+        <item quantity="one">%1$d of %2$d correct</item>
+        <item quantity="other">%1$d of %2$d correct</item>
+    </plurals>
+    <string name="quiz_result_perfect">Perfect round. Every index right.</string>
+    <string name="quiz_result_review">To review</string>
+    <!-- %1$s hand, %2$s true count, %3$s right play, %4$s the player's answer -->
+    <string name="quiz_result_miss">%1$s at TC %2$s: %3$s (you said %4$s)</string>
+    <string name="help_quiz_body">Menu &gt; Deviation Quiz. Ten hands at counts on both sides of their index; pick the play. Answers follow the current table rules and system, like the Strategy Chart.</string>
 </resources>

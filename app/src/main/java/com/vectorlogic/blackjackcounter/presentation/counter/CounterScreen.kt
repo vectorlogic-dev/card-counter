@@ -34,6 +34,7 @@ import com.vectorlogic.blackjackcounter.presentation.counter.components.Strategy
 import com.vectorlogic.blackjackcounter.presentation.counter.components.SystemSelector
 import com.vectorlogic.blackjackcounter.presentation.counter.components.TableRulesDialogContent
 import com.vectorlogic.blackjackcounter.presentation.drill.DrillDialog
+import com.vectorlogic.blackjackcounter.presentation.quiz.DeviationQuizDialog
 import com.vectorlogic.blackjackcounter.presentation.resolve
 import kotlinx.coroutines.launch
 
@@ -51,6 +52,7 @@ fun CounterScreen(
     var showHelpDialog by rememberSaveable { mutableStateOf(false) }
     var showStrategyChartDialog by rememberSaveable { mutableStateOf(false) }
     var showDrillDialog by rememberSaveable { mutableStateOf(false) }
+    var showQuizDialog by rememberSaveable { mutableStateOf(false) }
     var showResetConfirm by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -98,6 +100,7 @@ fun CounterScreen(
             onUndo = viewModel::undoLastCard,
             onStrategyChartClick = { showStrategyChartDialog = true },
             onDrillClick = { showDrillDialog = true },
+            onQuizClick = { showQuizDialog = true },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
         )
 
@@ -105,6 +108,15 @@ fun CounterScreen(
             DrillDialog(
                 system = viewModel.activeCountingSystem(),
                 onDismiss = { showDrillDialog = false }
+            )
+        }
+
+        if (showQuizDialog) {
+            // Built once per opening: the table rules can't change while the quiz is up.
+            val quiz = remember { viewModel.buildDeviationQuiz() }
+            DeviationQuizDialog(
+                quiz = quiz,
+                onDismiss = { showQuizDialog = false }
             )
         }
 

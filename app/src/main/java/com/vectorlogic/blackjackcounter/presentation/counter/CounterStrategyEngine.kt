@@ -174,6 +174,63 @@ object CounterStrategyEngine {
         return listOf(insuranceRow) + playRows + surrenderRows
     }
 
+    /**
+     * Hands whose play changes with the count under these rules: the rows of
+     * [buildStrategyDeviationRows] that have a trigger, minus insurance (no chart cell). Plays
+     * that never change (basic-strategy surrender, doubles the rules forbid) are left out.
+     */
+    fun buildDeviationQuizItems(state: CounterSessionState, trueCountScale: Double): List<DeviationQuizItem> {
+        return countDependentIndices(state.tableRules).map { index ->
+            DeviationQuizItem(
+                handLabel = index.handNotation(),
+                dealerLabel = index.dealerNotation(),
+                isPair = index.handType == ChartHandType.PAIR,
+                deviationPlay = StrategyPlay.fromAction(index.action),
+                row = index.toRow(trueCountScale),
+                handType = index.handType,
+                handValue = index.handValue,
+                dealerUpcard = index.dealerUpcard
+            )
+        }
+    }
+
+    /** The play the Strategy Chart shows for [item] at [decisionTrueCount]. */
+    fun playFor(
+        state: CounterSessionState,
+        item: DeviationQuizItem,
+        decisionTrueCount: Double,
+        trueCountScale: Double
+    ): StrategyPlay {
+        val cell = computeChartCell(
+            handType = item.handType,
+            handValue = item.handValue,
+            dealerUpcard = item.dealerUpcard,
+            state = state,
+            supportsTrueCount = true,
+            decisionTrueCount = decisionTrueCount,
+            trueCountScale = trueCountScale
+        )
+        return StrategyPlay.fromAction(cell.action)
+    }
+
+    // Same cases as buildStrategyDeviationRows: these are the play indices that get a count trigger.
+    private fun countDependentIndices(rules: TableRules): List<CountIndex> {
+        val surrenderAllowed = rules.surrenderRule != SurrenderRule.NONE
+        val plays = playIndices.filter { index ->
+            val baseAction = getBaseAction(
+                handType = index.handType,
+                handValue = index.handValue,
+                dealerUpcard = index.dealerUpcard,
+                rules = rules
+            )
+            !(surrenderAllowed && surrenderIndices(rules).any { it.sameHandAs(index) }) &&
+                !(surrenderAllowed && baseAction.startsWith("R")) &&
+                !index.isBlockedBy(rules) &&
+                baseAction != index.action
+        }
+        return if (surrenderAllowed) plays + surrenderIndices(rules) else plays
+    }
+
     private fun computeChartCell(
         handType: ChartHandType,
         handValue: Int,
@@ -409,13 +466,15 @@ object CounterStrategyEngine {
     }
 
     private fun CountIndex.handLabel(): UiText {
-        val dealerLabel = if (dealerUpcard == 11) "A" else dealerUpcard.toString()
-        val handLabel = when (handType) {
-            ChartHandType.PAIR -> if (handValue == 11) "A,A" else "$handValue,$handValue"
-            ChartHandType.SOFT -> "A,$handValue"
-            ChartHandType.HARD -> handValue.toString()
-        }
-        return uiText(R.string.hand_vs_dealer, handLabel, dealerLabel)
+        return uiText(R.string.hand_vs_dealer, handNotation(), dealerNotation())
+    }
+
+    private fun CountIndex.dealerNotation(): String = if (dealerUpcard == 11) "A" else dealerUpcard.toString()
+
+    private fun CountIndex.handNotation(): String = when (handType) {
+        ChartHandType.PAIR -> if (handValue == 11) "A,A" else "$handValue,$handValue"
+        ChartHandType.SOFT -> "A,$handValue"
+        ChartHandType.HARD -> handValue.toString()
     }
 
     private fun CountIndex.sameHandAs(other: CountIndex): Boolean {
@@ -551,7 +610,7 @@ object CounterStrategyEngine {
         }
     }
 
-    private enum class ChartHandType {
+    enum class ChartHandType {
         HARD,
         SOFT,
         PAIR

@@ -6,6 +6,7 @@ import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystem
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemProfiles
 import com.vectorlogic.blackjackcounter.data.counting.CountingSystemsCatalog
+import com.vectorlogic.blackjackcounter.data.counting.HiLoCountingSystem
 import com.vectorlogic.blackjackcounter.domain.model.BlackjackPayoutRule
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.CounterCalculations
@@ -17,11 +18,12 @@ import com.vectorlogic.blackjackcounter.domain.model.SeenCard
 import com.vectorlogic.blackjackcounter.domain.model.SurrenderRule
 import com.vectorlogic.blackjackcounter.domain.model.TableRules
 import com.vectorlogic.blackjackcounter.domain.persistence.SessionPersister
+import com.vectorlogic.blackjackcounter.presentation.quiz.DeviationQuiz
 import com.vectorlogic.blackjackcounter.presentation.uiText
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.math.roundToInt
 
 private data class RunningCountTotals(
     val runningCount: Double,
@@ -58,6 +60,23 @@ class CounterViewModel private constructor(
 
     fun activeCountingSystem(): CountingSystem {
         return getSelectedSystem(_sessionState.value.selectedCountingSystemId)
+    }
+
+    /**
+     * A deviation quiz for the current table rules and system. KO and ReKO play by key count and
+     * pivot rather than true-count indices, so they are quizzed on Hi-Lo.
+     */
+    fun buildDeviationQuiz(): DeviationQuiz {
+        val state = _sessionState.value
+        val selectedSystem = getSelectedSystem(state.selectedCountingSystemId)
+        val usesSelectedSystem = selectedSystem.usesTrueCount()
+        val quizSystem = if (usesSelectedSystem) selectedSystem else HiLoCountingSystem
+        return DeviationQuiz(
+            state = state,
+            trueCountScale = profileFor(quizSystem.id).trueCountScale,
+            systemName = quizSystem.displayName,
+            usesSelectedSystem = usesSelectedSystem
+        )
     }
 
     fun buildStrategyChartModel(): StrategyChartModel {

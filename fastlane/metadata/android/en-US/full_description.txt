@@ -25,6 +25,7 @@
 <p><b>Practice tools</b></p>
 <ul>
 <li>Drill Mode: watch 26, 52 or 78 cards flash past, then enter the final count</li>
+<li>Deviation Quiz: pick the play for a hand at a given true count, with the index explained after each answer</li>
 <li>Undo and a recent-cards list for mistaps</li>
 <li>Your session is saved on the device and restored when you reopen the app</li>
 </ul>

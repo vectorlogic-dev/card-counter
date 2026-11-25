@@ -149,6 +149,10 @@ private fun StrategyGuideCard() {
                 body = stringResource(R.string.help_cheat_sheet_body)
             )
             GuideEntry(
+                title = stringResource(R.string.quiz_title),
+                body = stringResource(R.string.help_quiz_body)
+            )
+            GuideEntry(
                 title = stringResource(R.string.help_indices_used),
                 body = stringResource(R.string.help_indices_used_body)
             )

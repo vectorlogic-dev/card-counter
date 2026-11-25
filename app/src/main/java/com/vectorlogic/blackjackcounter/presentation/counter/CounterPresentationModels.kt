@@ -1,5 +1,6 @@
 package com.vectorlogic.blackjackcounter.presentation.counter
 
+import androidx.annotation.StringRes
 import com.vectorlogic.blackjackcounter.R
 import com.vectorlogic.blackjackcounter.domain.model.CardRank
 import com.vectorlogic.blackjackcounter.domain.model.SeenCard
@@ -30,6 +31,40 @@ data class DeviationTrigger(
         return if (atOrAbove) decisionCount >= threshold else decisionCount < threshold
     }
 }
+
+/** A play the player can choose; the chart's codes (H, S, D, Ds, P, Rh...) map onto these. */
+enum class StrategyPlay(@StringRes val labelRes: Int) {
+    HIT(R.string.action_hit),
+    STAND(R.string.action_stand),
+    DOUBLE(R.string.action_double),
+    SPLIT(R.string.action_split),
+    SURRENDER(R.string.action_surrender);
+
+    companion object {
+        fun fromAction(action: String): StrategyPlay = when {
+            action.startsWith("R") -> SURRENDER
+            action.startsWith("D") -> DOUBLE
+            action.startsWith("P") -> SPLIT
+            action.startsWith("S") -> STAND
+            else -> HIT
+        }
+    }
+}
+
+/**
+ * One count-dependent hand for the deviation quiz. [row] carries the cheat-sheet labels and the
+ * trigger (always non-null here); the hand fields let the engine look up the chart's play.
+ */
+data class DeviationQuizItem(
+    val handLabel: String,
+    val dealerLabel: String,
+    val isPair: Boolean,
+    val deviationPlay: StrategyPlay,
+    val row: StrategyDeviationRow,
+    val handType: CounterStrategyEngine.ChartHandType,
+    val handValue: Int,
+    val dealerUpcard: Int
+)
 
 data class CountingSystemOption(
     val id: String,

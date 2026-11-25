@@ -63,6 +63,7 @@ fun CounterScreenContent(
     onUndo: () -> Unit,
     onStrategyChartClick: () -> Unit,
     onDrillClick: () -> Unit,
+    onQuizClick: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHost: @Composable () -> Unit = {}
 ) {
@@ -104,6 +105,7 @@ fun CounterScreenContent(
                 onResetClick = onResetClick,
                 onToggleCheatSheet = onToggleCheatSheet,
                 onDrillClick = onDrillClick,
+                onQuizClick = onQuizClick,
                 showCheatSheet = state.showCheatSheet,
                 compact = compactLayout
             )
@@ -307,6 +309,7 @@ private fun CounterHeader(
     onResetClick: () -> Unit,
     onToggleCheatSheet: () -> Unit,
     onDrillClick: () -> Unit,
+    onQuizClick: () -> Unit,
     showCheatSheet: Boolean,
     compact: Boolean
 ) {
@@ -405,6 +408,13 @@ private fun CounterHeader(
                         text = { Text(stringResource(R.string.menu_drill_mode)) },
                         onClick = {
                             onDrillClick()
+                            onMenuExpandedChange(false)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.menu_deviation_quiz)) },
+                        onClick = {
+                            onQuizClick()
                             onMenuExpandedChange(false)
                         }
                     )
