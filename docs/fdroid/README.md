@@ -18,7 +18,7 @@ What the first pipeline caught, now fixed in the recipe:
 
 - **GitLab identity verification.** Pipelines on a new fork don't start until the GitLab account verifies its identity. Without that, leave a note asking a maintainer to trigger CI.
 - **`rewritemeta` formatting.** CI's `rewritemeta` wraps the long `Binaries:` URL onto its own indented line, with a trailing space after `Binaries:`. The PyPI release of fdroidserver formats it differently, so check against CI's output, not a local run.
-- **Scanner and the foojay resolver.** The scanner rejects the `org.gradle.toolchains.foojay-resolver-convention` plugin in `settings.gradle.kts`, so `prebuild` deletes that line. The scanner also removes `gradle/gradle-daemon-jvm.properties`. A v1.1.0 rebuild with both changes is still byte for byte identical to the published APK.
+- **Scanner and the foojay resolver.** The scanner rejects the `org.gradle.toolchains.foojay-resolver-convention` plugin in `settings.gradle.kts`, so `prebuild` deletes that line. The scanner also removes `gradle/gradle-daemon-jvm.properties`. A v1.1.0 rebuild with both changes is still byte for byte identical to the published APK. Both are gone from the repo after v1.1.0, so the `prebuild` line has nothing left to do.
 
 ## Every future release
 
@@ -28,7 +28,7 @@ F-Droid picks up new versions from git tags (`UpdateCheckMode: Tags`), so nothin
 - a higher `versionCode` and a matching `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (500 characters max);
 - a reproducible build: release from a clean, committed tree with JDK 21, and leave `dependenciesInfo` disabled in `app/build.gradle.kts`.
 
-New build entries copy the previous one's fields, including the `prebuild` that strips the foojay plugin. Removing the plugin from `settings.gradle.kts` would make that line a harmless no-op.
+New build entries copy the previous one's fields, including the `prebuild` that strips the foojay plugin. The plugin is no longer in `settings.gradle.kts`, so on later versions that `sed` matches nothing and does no harm. It can be dropped from new build entries whenever the recipe is next edited.
 
 To check reproducibility before or after a release, build `assembleRelease` from a fresh clone of the tag (no `keystore.properties`, so the APK is unsigned) and compare it with the published APK minus its signing block. The two must be identical.
 

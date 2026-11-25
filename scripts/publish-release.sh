@@ -53,6 +53,17 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
+# Release APKs must be built with JDK 21 to stay byte for byte reproducible
+# (F-Droid rebuilds them and compares). Gradle runs on JAVA_HOME, else PATH.
+JAVA_BIN="${JAVA_HOME:+$JAVA_HOME/bin/}java"
+JAVA_MAJOR="$("$JAVA_BIN" -XshowSettings:properties -version 2>&1 | awk -F'= ' '/java.specification.version/ {print $2}')"
+if [[ "$JAVA_MAJOR" != "21" ]]; then
+  echo "ERROR: release builds need JDK 21, found '${JAVA_MAJOR:-none}' ($JAVA_BIN)." >&2
+  echo "On macOS, Android Studio's JDK works:" >&2
+  echo '  export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"' >&2
+  exit 1
+fi
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "ERROR: working tree has uncommitted changes. Commit or stash first." >&2
   git status --short >&2

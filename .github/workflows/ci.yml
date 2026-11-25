@@ -19,13 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Gradle itself only needs JDK 17+; the daemon JVM (JDK 21, see
-      # gradle/gradle-daemon-jvm.properties) is picked up from the runner's
-      # preinstalled JDKs or provisioned by Gradle.
+      # JDK 21 matches release builds and F-Droid's build server.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
 

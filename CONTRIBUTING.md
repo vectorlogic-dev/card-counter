@@ -12,7 +12,7 @@ Open a GitHub issue with:
 ## Development setup
 
 Requirements:
-- Android Studio (latest stable) or JDK 17+ and the Android SDK on the command line (Gradle runs its daemon on JDK 21 and downloads one if none is installed)
+- Android Studio (latest stable), or JDK 21 and the Android SDK on the command line
 - Android SDK platform 36 (compile), minimum 24
 
 ```bash
